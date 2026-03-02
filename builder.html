@@ -381,6 +381,8 @@ var launchCSS = '\
 .testimonials-section{padding:50px 0}.testimonial-card{text-align:center;padding:24px 40px;max-width:700px;margin:0 auto}.testimonial-card blockquote{font-size:18px;line-height:1.7;color:#333;font-style:italic}.testimonial-card cite{font-size:14px;color:#888}\
 .launch-footer{background:#29292d;color:#888;padding:20px 0;font-size:12px}.launch-footer .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.launch-footer a{color:#2F80ED}\
 .container{max-width:1140px;margin:0 auto;padding:0 15px}\
+.gjs-resize-handle{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:48px;height:8px;background:#6c5ce7;border-radius:0 0 4px 4px;cursor:ns-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,width 0.15s}.gjs-resize-handle:hover{opacity:1;width:64px}.gjs-resize-handle::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:2px;background:rgba(255,255,255,0.6);border-radius:1px}\
+.gjs-resize-handle-side{position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:8px;height:48px;background:#6c5ce7;border-radius:0 4px 4px 0;cursor:ew-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,height 0.15s}.gjs-resize-handle-side:hover{opacity:1;height:64px}.gjs-resize-handle-side::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:20px;background:rgba(255,255,255,0.6);border-radius:1px}\
 ';
 
 // ════════════════════════════════════════════════════════
@@ -683,6 +685,85 @@ editor.on('load', function() {
 
 editor.on('component:add', injectCSS);
 
+// ════════════════════════════════════════════════════════
+// RESIZE HANDLES
+// ════════════════════════════════════════════════════════
+var resizeState = { active: false, type: null, startY: 0, startX: 0, startH: 0, startW: 0, el: null, comp: null };
+
+function addResizeHandles(component) {
+  removeResizeHandles();
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  var el = component.getEl();
+  if (!el) return;
+
+  // Make sure element has relative/absolute/sticky positioning for handle placement
+  var pos = window.getComputedStyle(el).position;
+  if (pos === 'static') el.style.position = 'relative';
+
+  // Bottom handle (height resize)
+  var bottomHandle = doc.createElement('div');
+  bottomHandle.className = 'gjs-resize-handle';
+  bottomHandle.setAttribute('data-resize', 'bottom');
+  el.appendChild(bottomHandle);
+
+  // Right handle (width resize)
+  var rightHandle = doc.createElement('div');
+  rightHandle.className = 'gjs-resize-handle-side';
+  rightHandle.setAttribute('data-resize', 'right');
+  el.appendChild(rightHandle);
+
+  // Bottom handle drag
+  bottomHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeState = { active: true, type: 'height', startY: e.clientY, startH: el.offsetHeight, el: el, comp: component, startX: 0, startW: 0 };
+  });
+
+  // Right handle drag
+  rightHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeState = { active: true, type: 'width', startX: e.clientX, startW: el.offsetWidth, el: el, comp: component, startY: 0, startH: 0 };
+  });
+}
+
+function removeResizeHandles() {
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  doc.querySelectorAll('.gjs-resize-handle, .gjs-resize-handle-side').forEach(function(h) { h.remove(); });
+}
+
+// Listen for mousemove/mouseup on the canvas iframe
+editor.on('load', function() {
+  var canvasDoc = editor.Canvas.getDocument();
+  if (!canvasDoc) return;
+
+  canvasDoc.addEventListener('mousemove', function(e) {
+    if (!resizeState.active) return;
+    if (resizeState.type === 'height') {
+      var newH = Math.max(20, resizeState.startH + (e.clientY - resizeState.startY));
+      resizeState.el.style.height = newH + 'px';
+      resizeState.el.style.minHeight = newH + 'px';
+    } else if (resizeState.type === 'width') {
+      var newW = Math.max(40, resizeState.startW + (e.clientX - resizeState.startX));
+      resizeState.el.style.width = newW + 'px';
+      resizeState.el.style.maxWidth = newW + 'px';
+    }
+  });
+
+  canvasDoc.addEventListener('mouseup', function() {
+    if (!resizeState.active) return;
+    // Sync the style back to the GrapesJS component model
+    if (resizeState.comp) {
+      if (resizeState.type === 'height') {
+        resizeState.comp.addStyle({ 'height': resizeState.el.style.height, 'min-height': resizeState.el.style.minHeight });
+      } else if (resizeState.type === 'width') {
+        resizeState.comp.addStyle({ 'width': resizeState.el.style.width, 'max-width': resizeState.el.style.maxWidth });
+      }
+    }
+    resizeState.active = false;
+  });
+});
+
 editor.on('component:selected', function(component) {
   showPanel('styles', document.querySelector('.sidebar-tabs button:nth-child(2)'));
   document.getElementById('img-actions').style.display = '';
@@ -699,6 +780,9 @@ editor.on('component:selected', function(component) {
   } else {
     linkInput.value = '';
   }
+
+  // Add resize handles
+  setTimeout(function() { addResizeHandles(component); }, 50);
 });
 
 editor.on('component:deselected', function() {
@@ -706,6 +790,7 @@ editor.on('component:deselected', function() {
   document.getElementById('img-actions').style.display = 'none';
   document.getElementById('link-actions').style.display = 'none';
   document.getElementById('align-actions').style.display = 'none';
+  removeResizeHandles();
 });
 
 editor.DomComponents.addType('link', {
