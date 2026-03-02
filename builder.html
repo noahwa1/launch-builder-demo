@@ -96,10 +96,9 @@
   .block-item {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 10px 6px; border: 1px solid var(--border); border-radius: 8px;
-    cursor: grab; gap: 6px; transition: all 0.15s; min-height: 58px;
+    cursor: pointer; gap: 6px; transition: all 0.15s; min-height: 58px;
   }
   .block-item:hover { border-color: var(--accent); background: var(--accent-soft); }
-  .block-item:active { cursor: grabbing; }
   .block-item i { font-size: 18px; color: var(--text-secondary); }
   .block-item:hover i { color: var(--accent); }
   .block-item span { font-size: 10px; color: var(--text-secondary); font-weight: 500; line-height: 1.2; }
@@ -264,7 +263,7 @@
       </div>
       <div id="panel-styles" class="sidebar-panel">
         <div id="img-actions" class="img-actions" style="display:none;">
-          <div class="img-actions-title">Image</div>
+          <div class="img-actions-title">Media</div>
           <div class="img-actions-row">
             <label class="img-action-btn">
               <i class="fas fa-image"></i> Background
@@ -381,6 +380,10 @@ var launchCSS = '\
 .testimonials-section{padding:50px 0}.testimonial-card{text-align:center;padding:24px 40px;max-width:700px;margin:0 auto}.testimonial-card blockquote{font-size:18px;line-height:1.7;color:#333;font-style:italic}.testimonial-card cite{font-size:14px;color:#888}\
 .launch-footer{background:#29292d;color:#888;padding:20px 0;font-size:12px}.launch-footer .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.launch-footer a{color:#2F80ED}\
 .container{max-width:1140px;margin:0 auto;padding:0 15px}\
+';
+
+// Editor-only CSS for resize handles (NOT included in export/save)
+var resizeHandleCSS = '\
 .gjs-resize-handle{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:48px;height:8px;background:#6c5ce7;border-radius:0 0 4px 4px;cursor:ns-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,width 0.15s}.gjs-resize-handle:hover{opacity:1;width:64px}.gjs-resize-handle::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:2px;background:rgba(255,255,255,0.6);border-radius:1px}\
 .gjs-resize-handle-side{position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:8px;height:48px;background:#6c5ce7;border-radius:0 4px 4px 0;cursor:ew-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,height 0.15s}.gjs-resize-handle-side:hover{opacity:1;height:64px}.gjs-resize-handle-side::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:20px;background:rgba(255,255,255,0.6);border-radius:1px}\
 ';
@@ -487,9 +490,6 @@ var editor = grapesjs.init({
         { type: 'select', property: 'float', label: 'Float', options: [
           { id:'none',label:'None' },{ id:'left',label:'Left' },{ id:'right',label:'Right' },
         ]},
-        { type: 'select', property: 'display', label: 'Display', options: [
-          { id:'block',label:'Block' },{ id:'inline-block',label:'Inline Block' },{ id:'flex',label:'Flex' },{ id:'inline',label:'Inline' },{ id:'none',label:'Hidden' },
-        ]},
       ]},
       { name: 'Typography', open: true, properties: [
         { type: 'select', property: 'font-family', options: [
@@ -593,15 +593,7 @@ function buildBlocksSidebar() {
     cat.blocks.forEach(function(b) {
       var item = document.createElement('div');
       item.className = 'block-item';
-      item.draggable = true;
       item.innerHTML = '<i class="fas ' + b.icon + '"></i><span>' + b.label + '</span>';
-      item.addEventListener('dragstart', function(e) {
-        if (b.content === 'CUSTOM_HTML_PROMPT') { e.preventDefault(); handleCustomHtmlBlock(); return; }
-        editor.select(null);
-        var content = typeof b.content === 'object' ? JSON.stringify(b.content) : b.content;
-        e.dataTransfer.setData('text/html', content);
-        e.dataTransfer.effectAllowed = 'copy';
-      });
       item.addEventListener('click', function() {
         if (b.content === 'CUSTOM_HTML_PROMPT') { handleCustomHtmlBlock(); return; }
         if (typeof b.content === 'string') { editor.addComponents(b.content); }
@@ -660,6 +652,13 @@ function injectCSS() {
   style.id = 'launch-css';
   style.innerHTML = launchCSS;
   doc.head.appendChild(style);
+  // Inject editor-only resize handle CSS (separate so it's never exported)
+  if (!doc.getElementById('resize-handle-css')) {
+    var rStyle = doc.createElement('style');
+    rStyle.id = 'resize-handle-css';
+    rStyle.innerHTML = resizeHandleCSS;
+    doc.head.appendChild(rStyle);
+  }
 }
 
 editor.on('load', function() {
@@ -698,7 +697,8 @@ function addResizeHandles(component) {
   if (!el) return;
 
   // Make sure element has relative/absolute/sticky positioning for handle placement
-  var pos = window.getComputedStyle(el).position;
+  var iframeWin = doc.defaultView || window;
+  var pos = iframeWin.getComputedStyle(el).position;
   if (pos === 'static') el.style.position = 'relative';
 
   // Bottom handle (height resize)
@@ -924,6 +924,7 @@ function loadTemplate(i) {
 }
 
 function openCode() {
+  removeResizeHandles(); // Clean up editor-only elements before export
   var full = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Launch Page</title>\n  <style>\n' + launchCSS + '\n' + editor.getCss() + '\n  </style>\n</head>\n<body>\n' + editor.getHtml() + '\n</body>\n</html>';
   document.getElementById('codeOutput').value = full;
   document.getElementById('codeModal').classList.add('active');
@@ -939,6 +940,7 @@ function copyCode() {
 // HTML EDITOR
 // ════════════════════════════════════════════════════════
 function openHtmlEditor() {
+  removeResizeHandles(); // Clean up editor-only elements before reading HTML
   var ta = document.getElementById('htmlEditorOutput');
   ta.value = editor.getHtml();
   ta.readOnly = false;
@@ -995,25 +997,31 @@ function showToast(msg, type) {
 }
 
 function saveToServer() {
+  removeResizeHandles(); // Clean up editor-only elements before saving
   var btn = document.querySelector('.actions .btn-success');
   var origHTML = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   btn.disabled = true;
 
+  var html = editor.getHtml();
+  var css = editor.getCss();
   var formData = new FormData();
-  formData.append('builder_html', editor.getHtml());
-  formData.append('builder_css', editor.getCss());
+  formData.append('builder_html', html);
+  formData.append('builder_css', css);
 
   // LOCAL TEST: Save to localStorage
   try {
-    localStorage.setItem('launch-builder-html', editor.getHtml());
-    localStorage.setItem('launch-builder-css', editor.getCss());
-    document.getElementById('saved-builder-html').value = editor.getHtml();
-    document.getElementById('saved-builder-css').value = editor.getCss();
+    localStorage.setItem('launch-builder-html', html);
+    localStorage.setItem('launch-builder-css', css);
+    document.getElementById('saved-builder-html').value = html;
+    document.getElementById('saved-builder-css').value = css;
     setTimeout(function() {
       btn.innerHTML = origHTML;
       btn.disabled = false;
       showToast('Saved! (localStorage)', 'success');
+      // Re-add resize handles if a component is selected
+      var sel = editor.getSelected();
+      if (sel) addResizeHandles(sel);
     }, 300);
   } catch(e) {
     btn.innerHTML = origHTML;
