@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launch Page — Public Preview</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap">
+  <style>
+    /* Launch CSS — same as what's injected into the builder canvas */
+    *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Open Sans',sans-serif;color:#18191f}img{max-width:100%}a{text-decoration:none}
+    .bg-launch-blue1{background-color:#477cb2}.bg-launch-green{background-color:#219653}.bg-launch-dark{background-color:#29292d}.bg-launch-yellow{background-color:#f2c94c}.text-white{color:#fff}.text-launch-darkblue{color:#333}
+    .section-wrapper{background-size:cover;background-position:center center;background-repeat:no-repeat;width:100%}.section-intro{padding-top:120px;min-height:90vh}
+    .ff-montserrat{font-family:'Montserrat',sans-serif}.ff-opensans{font-family:'Open Sans',sans-serif}.page-headline{font-size:74px;font-weight:800;line-height:80px}.page-headline2{font-size:55px;font-weight:800;line-height:60px}.text-shadow{text-shadow:1px 1px 2px #000}
+    .btn{display:inline-block;padding:11px 32px;border-radius:4px;font-weight:600;cursor:pointer;border:none}.order-btn{background:#219653;color:#fff;font-size:16px}.order-btn:hover{opacity:0.9}.btn-order{background:#219653;color:#fff!important;padding:8px 20px;border-radius:4px;font-size:14px}
+    .project-header{background:rgba(255,255,255,0.95);padding:12px 0;position:relative;z-index:100}.project-header.sticky-nav{position:sticky;top:0;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.project-header .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;align-items:center;justify-content:space-between}.project-header .nav-links{display:flex;gap:24px;align-items:center}.project-header .nav-links a{color:#18191f;font-size:14px;font-weight:500}
+    .steps-section{padding:50px 0}.steps-row{display:flex;gap:16px;max-width:1140px;margin:0 auto;padding:24px 15px 0}.step-card{flex:1;border:1px solid rgba(255,255,255,0.3);padding:16px;height:185px;text-align:center;color:#fff}.step-number{font-size:72px;font-weight:800;color:rgba(244,245,247,0.2);line-height:1}.step-caption{font-size:24px;font-weight:800;margin-top:-35px}.step-desc{font-size:14px;line-height:21px;margin-top:8px}
+    .two-col{display:flex;flex-wrap:wrap;max-width:1140px;margin:0 auto;padding:0 15px;gap:30px;align-items:center}.two-col .col-left{flex:1;min-width:300px}.two-col .col-right{flex:1;min-width:300px}.order-step-number{font-size:48px;font-weight:800;line-height:60px;vertical-align:super;padding:0 8px;color:#fff;display:inline-block}.order-caption{font-size:64px;font-weight:800;line-height:80px}
+    .bg-form{background:rgba(255,255,255,0.9);box-shadow:0 0 4px rgba(0,0,0,0.15);padding:20px;border-radius:4px}.field-group{background:#fff;border:1px solid rgba(0,0,0,0.15);padding:12px;margin-bottom:10px}.field-group label{font-size:11px;line-height:20px;color:#626262;text-transform:uppercase;display:block;margin-bottom:2px;font-weight:600}.field-group input,.field-group select{width:100%;border:0;outline:none;height:28px;font-size:14px;font-family:'Open Sans',sans-serif}.btn-submit{background:#219653;color:#fff;border:none;padding:12px;width:100%;font-size:16px;font-weight:500;cursor:pointer;margin-top:10px;border-radius:4px}.btn-submit:hover{background:#1c884a}.name-row{display:flex;gap:10px}.name-row .field-group{flex:1}
+    .book-section{padding:50px 0}.book-section .container{max-width:1140px;margin:0 auto;padding:0 15px}.book-row{display:flex;flex-wrap:wrap;gap:30px}.book-cover{flex:0 0 33%;min-width:250px}.book-cover img{width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.15)}.book-detail{flex:1;min-width:300px}.book-headline1{font-size:50px;font-weight:300;line-height:55px;color:#121212;font-family:'Montserrat',sans-serif}.book-headline1 strong{font-weight:700}.book-headline2{color:#2c2c2c;font-weight:600;font-size:18px;line-height:28px;margin:12px 0}.book-desc{color:#4a4a4a;font-size:14px;line-height:25px}
+    .author-section{padding:50px 0;background:#f7f8fa}.author-section .container{max-width:1140px;margin:0 auto;padding:0 15px}.author-row{display:flex;flex-wrap:wrap;gap:30px}.author-image{flex:0 0 33%;min-width:250px;min-height:400px}.author-image img{width:100%}.author-detail{flex:1;min-width:300px}.author-headline1{font-size:50px;font-weight:300;line-height:55px;color:#121212;font-family:'Montserrat',sans-serif}.author-headline1 strong{font-weight:700}.author-desc{color:#4a4a4a;font-size:14px;line-height:25px;margin-top:12px}
+    .retailer-grid{display:flex;flex-wrap:wrap;gap:0;justify-content:center}.retailer-card{flex:0 0 33.33%;padding:20px;border:1px solid #eee;text-align:center;display:flex;align-items:center;justify-content:center;min-height:80px;background:#fff}.retailer-name{font-size:13px;font-weight:600;color:#333}@media(max-width:480px){.retailer-card{flex:0 0 50%}.page-headline{font-size:36px;line-height:42px}.page-headline2{font-size:32px;line-height:38px}.order-caption{font-size:36px;line-height:44px}.order-step-number{font-size:32px;line-height:40px}.two-col{gap:20px;padding:0 15px}.steps-row{flex-direction:column;gap:12px}.step-card{height:auto;min-height:120px}.book-row,.author-row{flex-direction:column}.book-cover,.author-image{flex:none;width:100%;min-width:0}.author-image{min-height:auto}}
+    .testimonials-section{padding:50px 0}.testimonial-card{text-align:center;padding:24px 40px;max-width:700px;margin:0 auto}.testimonial-card blockquote{font-size:18px;line-height:1.7;color:#333;font-style:italic}.testimonial-card cite{font-size:14px;color:#888}
+    .launch-footer{background:#29292d;color:#888;padding:20px 0;font-size:12px}.launch-footer .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.launch-footer a{color:#2F80ED}
+    .container{max-width:1140px;margin:0 auto;padding:0 15px}
+
+    /* Empty state */
+    .empty-state {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; font-family: -apple-system, sans-serif; color: #666;
+    }
+    .empty-state h2 { font-size: 24px; color: #333; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; margin-bottom: 24px; }
+    .empty-state a {
+      display: inline-block; background: #6c5ce7; color: #fff; padding: 12px 28px;
+      border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 14px;
+    }
+    .empty-state a:hover { background: #7f71ed; }
+
+    /* Admin bar */
+    .admin-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: rgba(30,30,45,0.95); color: #fff; padding: 8px 20px;
+      font-size: 12px; display: flex; align-items: center; justify-content: space-between;
+      font-family: -apple-system, sans-serif; backdrop-filter: blur(8px);
+    }
+    .admin-bar a { color: #a29bfe; text-decoration: none; margin-left: 16px; font-weight: 600; }
+    .admin-bar a:hover { color: #fff; }
+    body.has-admin-bar { padding-top: 36px; }
+  </style>
+</head>
+<body class="has-admin-bar">
+
+  <div class="admin-bar">
+    <span>Public Page Preview — This is what visitors will see</span>
+    <div>
+      <a href="index.html">Back to Admin</a>
+      <a href="builder.html">Edit in Builder</a>
+    </div>
+  </div>
+
+  <div id="page-content"></div>
+
+  <script>
+    var savedHtml = localStorage.getItem('launch-builder-html');
+    var savedCss = localStorage.getItem('launch-builder-css');
+    var container = document.getElementById('page-content');
+
+    if (savedHtml && savedHtml.trim().length > 0) {
+      // Render the builder page
+      if (savedCss) {
+        var style = document.createElement('style');
+        style.textContent = savedCss;
+        document.head.appendChild(style);
+      }
+      container.innerHTML = savedHtml;
+    } else {
+      // No builder content yet
+      container.innerHTML = '<div class="empty-state">' +
+        '<div>' +
+        '<h2>No page built yet</h2>' +
+        '<p>Open the Visual Page Builder to design your page, then save it.<br>The public page will render here.</p>' +
+        '<a href="builder.html">Open Visual Page Builder</a>' +
+        '</div>' +
+        '</div>';
+    }
+  </script>
+</body>
+</html>

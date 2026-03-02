@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Launch: Admin — Edit Project</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', -apple-system, sans-serif; background: #f4f5f7; color: #333; }
+
+    /* Admin sidebar */
+    .admin-sidebar {
+      position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+      background: #1e1e2d; color: #a2a3b7; padding: 0; z-index: 100;
+      overflow-y: auto;
+    }
+    .admin-sidebar .brand {
+      padding: 20px 16px; font-size: 18px; font-weight: 700; color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .admin-sidebar .brand span { color: #6c5ce7; }
+    .admin-sidebar .nav-section { padding: 12px 0; }
+    .admin-sidebar .nav-section-title {
+      padding: 6px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #565674; font-weight: 700;
+    }
+    .admin-sidebar a {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+      color: #a2a3b7; text-decoration: none; font-size: 13px; transition: all 0.15s;
+    }
+    .admin-sidebar a:hover { color: #fff; background: rgba(255,255,255,0.04); }
+    .admin-sidebar a.active { color: #6c5ce7; background: rgba(108,92,231,0.08); }
+    .admin-sidebar a i { width: 18px; text-align: center; font-size: 14px; }
+
+    /* Admin header */
+    .admin-header {
+      position: fixed; top: 0; left: 220px; right: 0; height: 56px;
+      background: #fff; border-bottom: 1px solid #ebedf3; z-index: 90;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    }
+    .admin-header h1 { font-size: 16px; font-weight: 600; color: #333; }
+    .admin-header .user-info { font-size: 13px; color: #888; display: flex; align-items: center; gap: 8px; }
+    .admin-header .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: #6c5ce7; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+    }
+
+    /* Main content */
+    .main-content { margin-left: 220px; margin-top: 56px; padding: 24px; }
+
+    /* Form layout */
+    .form-wrapper { display: flex; gap: 24px; max-width: 1200px; }
+    .form-sidebar {
+      width: 220px; flex-shrink: 0; position: sticky; top: 80px; align-self: flex-start;
+    }
+    .form-sidebar .card {
+      background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .form-sidebar h6 {
+      font-size: 14px; text-align: center; margin-bottom: 16px; color: #333; font-weight: 600;
+    }
+    .form-sidebar .nav-btn {
+      display: block; width: 100%; padding: 8px 12px; margin-bottom: 4px; border: none;
+      background: #f7f8fa; color: #555; font-size: 12px; text-align: left; border-radius: 4px;
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .form-sidebar .nav-btn:hover { background: #eee; color: #333; }
+
+    .save-btn {
+      display: block; width: 100%; padding: 10px; margin-top: 12px; border: none;
+      background: #219653; color: #fff; font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer;
+    }
+    .save-btn:hover { background: #1c884a; }
+    .preview-btn {
+      display: block; width: 100%; padding: 10px; margin-top: 8px; border: none;
+      background: #2F80ED; color: #fff; font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer;
+      text-align: center; text-decoration: none;
+    }
+    .builder-btn {
+      display: block; width: 100%; padding: 10px; margin-top: 8px; border: none;
+      background: #6c5ce7; color: #fff; font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer;
+      text-align: center; text-decoration: none; transition: all 0.15s;
+    }
+    .builder-btn:hover { background: #7f71ed; color: #fff; }
+    .builder-btn i { margin-right: 4px; }
+
+    .form-main { flex: 1; }
+
+    /* Section containers */
+    .section-container {
+      background: #fff; border-radius: 8px; padding: 0; margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;
+    }
+    .section-header {
+      padding: 16px 20px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;
+    }
+    .section-header h5 { font-size: 15px; font-weight: 600; color: #333; margin: 0; }
+    .section-content { padding: 20px; }
+
+    /* Form fields */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 11px; text-transform: uppercase; color: #888;
+      font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px;
+      font-size: 14px; font-family: inherit; background: #fff; color: #333;
+    }
+    .form-control:focus { outline: none; border-color: #6c5ce7; }
+    .form-row { display: flex; gap: 16px; }
+    .form-row .form-group { flex: 1; }
+
+    /* Project type cards */
+    .type-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .type-card {
+      border: 2px solid #dee2e6; border-radius: 8px; padding: 16px; text-align: center;
+      cursor: pointer; transition: all 0.15s; background: #fff;
+    }
+    .type-card:hover { border-color: #aaa; }
+    .type-card.selected { border-color: #007bff; background: #f0f7ff; }
+    .type-card i { font-size: 24px; color: #adb5bd; margin-bottom: 8px; display: block; }
+    .type-card.selected i { color: #007bff; }
+    .type-card h6 { font-size: 12px; font-weight: 600; margin: 0; }
+    .type-card p { font-size: 10px; color: #999; margin-top: 4px; line-height: 1.4; }
+
+    /* Color inputs */
+    .color-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .color-input {
+      display: flex; align-items: center; gap: 8px; background: #f8f9fa;
+      padding: 6px 10px; border-radius: 6px; border: 1px solid #eee;
+    }
+    .color-input input[type="color"] {
+      width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer;
+      padding: 0; background: none;
+    }
+    .color-input span { font-size: 11px; color: #666; font-weight: 600; }
+
+    /* Alert */
+    .alert-info {
+      background: #e8f4fd; border: none; border-radius: 6px; padding: 12px 16px;
+      font-size: 13px; color: #0c5460; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Badge for builder status */
+    .builder-status {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .builder-status.active { background: rgba(108,92,231,0.1); color: #6c5ce7; }
+    .builder-status.inactive { background: #f0f0f0; color: #999; }
+
+    /* Demo notice */
+    .demo-banner {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff;
+      padding: 10px 24px; font-size: 13px; text-align: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    }
+    .demo-banner a { color: #fff; text-decoration: underline; }
+    .admin-sidebar { top: 36px; height: calc(100vh - 36px); }
+    .admin-header { top: 36px; }
+    .main-content { margin-top: 92px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .admin-sidebar { display: none; }
+      .admin-header { left: 0; }
+      .main-content { margin-left: 0; }
+      .form-wrapper { flex-direction: column; }
+      .form-sidebar { width: 100%; position: static; }
+      .type-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Demo banner -->
+  <div class="demo-banner">
+    This is a demo of the Launch admin with the new Visual Page Builder integration — <a href="builder.html">Jump straight to the builder</a>
+  </div>
+
+  <!-- Admin Sidebar -->
+  <div class="admin-sidebar">
+    <div class="brand">Launch <span>Admin</span></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Management</div>
+      <a href="#" class="active"><i class="fas fa-project-diagram"></i> Projects</a>
+      <a href="#"><i class="fas fa-shopping-cart"></i> Orders</a>
+      <a href="#"><i class="fas fa-users"></i> Users</a>
+      <a href="#"><i class="fas fa-book"></i> Books</a>
+      <a href="#"><i class="fas fa-user-edit"></i> Authors</a>
+      <a href="#"><i class="fas fa-building"></i> Publishers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Content</div>
+      <a href="#"><i class="fas fa-quote-right"></i> Testimonials</a>
+      <a href="#"><i class="fas fa-file-alt"></i> Templates</a>
+      <a href="#"><i class="fas fa-chart-bar"></i> Reports</a>
+    </div>
+  </div>
+
+  <!-- Admin Header -->
+  <div class="admin-header">
+    <h1><i class="fas fa-arrow-left" style="color:#aaa;margin-right:10px;font-size:14px;cursor:pointer;"></i> Edit Project</h1>
+    <div class="user-info">
+      <span>Noah Ansley</span>
+      <div class="avatar">NA</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="form-wrapper">
+
+      <!-- LEFT SIDEBAR (sticky nav) -->
+      <div class="form-sidebar">
+        <div class="card">
+          <h6>Edit Project</h6>
+          <button class="nav-btn" onclick="scrollToSection('project-type')">Project Type</button>
+          <button class="nav-btn" onclick="scrollToSection('project-settings')">Project Settings</button>
+          <button class="nav-btn" onclick="scrollToSection('design-appearance')">Design & Appearance</button>
+          <button class="nav-btn" onclick="scrollToSection('top-banner')">Top Banner</button>
+          <button class="nav-btn" onclick="scrollToSection('html-content')">HTML Content</button>
+          <button class="nav-btn" onclick="scrollToSection('book-details')">Book, Author and Publisher</button>
+          <button class="nav-btn" onclick="scrollToSection('purchase-links')">Purchase Links</button>
+          <button class="nav-btn" onclick="scrollToSection('email-templates')">Email Templates</button>
+          <br>
+          <button class="save-btn">Save Project</button>
+          <a href="preview.html" target="_blank" class="preview-btn" style="display:block;margin-top:8px;">Preview</a>
+          <a href="builder.html" target="_blank" class="builder-btn"><i class="fas fa-paint-brush"></i> Visual Page Builder</a>
+        </div>
+      </div>
+
+      <!-- MAIN FORM -->
+      <div class="form-main">
+
+        <!-- Project Type -->
+        <div class="section-container" id="project-type">
+          <div class="section-header"><h5>Project Type</h5></div>
+          <div class="section-content">
+            <div class="type-cards">
+              <div class="type-card selected">
+                <i class="fas fa-video"></i>
+                <h6>Personalized Videos</h6>
+                <p>Video messages from authors to readers</p>
+              </div>
+              <div class="type-card">
+                <i class="fas fa-map-marker-alt"></i>
+                <h6>Address Capture</h6>
+                <p>Collect shipping addresses for giveaways</p>
+              </div>
+              <div class="type-card">
+                <i class="fas fa-gift"></i>
+                <h6>Preorder Incentive</h6>
+                <p>Bonus content for pre-orders</p>
+              </div>
+              <div class="type-card">
+                <i class="fas fa-globe"></i>
+                <h6>Landing Page</h6>
+                <p>Book showcase with retailer links</p>
+              </div>
+              <div class="type-card">
+                <i class="fas fa-envelope"></i>
+                <h6>Address + Email</h6>
+                <p>Address capture with email confirmation</p>
+              </div>
+              <div class="type-card">
+                <i class="fas fa-film"></i>
+                <h6>Pageless Video</h6>
+                <p>Video incentive without landing page</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Settings -->
+        <div class="section-container" id="project-settings">
+          <div class="section-header"><h5>Project Settings</h5></div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Project Name</label>
+                <input type="text" class="form-control" value="The Art of Tomorrow — Personalized Video Campaign">
+              </div>
+              <div class="form-group">
+                <label>Site URL</label>
+                <input type="text" class="form-control" value="artoftomorrow.premierebooklaunch.com">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Mailer From Address</label>
+                <input type="text" class="form-control" value="noreply@premierebooklaunch.com">
+              </div>
+              <div class="form-group">
+                <label>Promotion Start</label>
+                <input type="text" class="form-control" value="03/15/2026">
+              </div>
+              <div class="form-group">
+                <label>Promotion End</label>
+                <input type="text" class="form-control" value="06/15/2026">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Design & Appearance -->
+        <div class="section-container" id="design-appearance">
+          <div class="section-header"><h5>Design & Appearance</h5></div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Site Colors</label>
+              <div class="color-row">
+                <div class="color-input"><input type="color" value="#2F80ED"><span>Primary</span></div>
+                <div class="color-input"><input type="color" value="#219653"><span>Success</span></div>
+                <div class="color-input"><input type="color" value="#F2C94C"><span>Warning</span></div>
+                <div class="color-input"><input type="color" value="#EB5757"><span>Danger</span></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Headline Font</label>
+                <input type="text" class="form-control" value="Montserrat">
+              </div>
+              <div class="form-group">
+                <label>Button BG Color</label>
+                <div class="color-input" style="margin-top:4px;"><input type="color" value="#219653"><span>#219653</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Banner -->
+        <div class="section-container" id="top-banner">
+          <div class="section-header"><h5>Top Banner</h5></div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Banner Headline</label>
+                <input type="text" class="form-control" value="Get Your Personalized Video Message">
+              </div>
+              <div class="form-group">
+                <label>Banner Subhead</label>
+                <input type="text" class="form-control" value="Order the book and receive a personal video from the author">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HTML Content -->
+        <div class="section-container" id="html-content">
+          <div class="section-header">
+            <h5 style="display:flex;align-items:center;justify-content:space-between;">
+              HTML Content
+              <span class="builder-status active" id="builder-status"><i class="fas fa-paint-brush"></i> Visual Builder Available</span>
+            </h5>
+          </div>
+          <div class="section-content">
+            <div class="alert-info" style="margin-bottom:20px;">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Visual Page Builder:</strong> You can now use the drag & drop page builder to design your page visually.
+                Click the purple <strong>"Visual Page Builder"</strong> button in the sidebar, or continue using the form fields below for step-by-step content.
+              </div>
+            </div>
+
+            <div style="text-align:center;padding:20px;border:2px dashed #6c5ce7;border-radius:12px;background:rgba(108,92,231,0.03);margin-bottom:24px;">
+              <i class="fas fa-paint-brush" style="font-size:32px;color:#6c5ce7;margin-bottom:12px;display:block;"></i>
+              <h6 style="margin-bottom:8px;font-size:16px;">Want to design your page visually?</h6>
+              <p style="color:#888;font-size:13px;margin-bottom:16px;">Use the drag & drop builder with templates, blocks, and full style controls.</p>
+              <a href="builder.html" target="_blank" class="builder-btn" style="display:inline-block;width:auto;padding:12px 28px;border-radius:8px;text-decoration:none;">
+                <i class="fas fa-paint-brush"></i> Open Visual Page Builder
+              </a>
+            </div>
+
+            <p style="text-align:center;color:#aaa;font-size:12px;margin-bottom:20px;">— or configure content with the form fields below —</p>
+
+            <div class="form-group">
+              <label>How To Steps - Step 1 (Order)</label>
+              <input type="text" class="form-control" value="Pre-order your paperback edition of The Art of Tomorrow">
+            </div>
+            <div class="form-group">
+              <label>How To Steps - Step 2 (Confirm)</label>
+              <input type="text" class="form-control" value="Submit your details and receipt picture">
+            </div>
+            <div class="form-group">
+              <label>How To Steps - Step 3 (Record)</label>
+              <input type="text" class="form-control" value="Author will record personal video within 5 days">
+            </div>
+            <div class="form-group">
+              <label>How To Steps - Step 4 (Email)</label>
+              <input type="text" class="form-control" value="You'll receive a link to view and save your video">
+            </div>
+          </div>
+        </div>
+
+        <!-- Book Details -->
+        <div class="section-container" id="book-details">
+          <div class="section-header"><h5>Book, Author and Publisher</h5></div>
+          <div class="section-content">
+            <div class="form-group">
+              <label>Book</label>
+              <select class="form-control"><option>The Art of Tomorrow — Sarah Mitchell</option></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Author</label>
+                <input type="text" class="form-control" value="Sarah Mitchell">
+              </div>
+              <div class="form-group">
+                <label>Publisher</label>
+                <input type="text" class="form-control" value="Crown Publishing">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Purchase Links -->
+        <div class="section-container" id="purchase-links">
+          <div class="section-header"><h5>Purchase Links</h5></div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Premiere Collectibles (Primary)</label>
+                <input type="text" class="form-control" value="https://premierecollectibles.com/art-of-tomorrow">
+              </div>
+              <div class="form-group">
+                <label>Amazon</label>
+                <input type="text" class="form-control" value="https://amazon.com/dp/B0EXAMPLE">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Barnes & Noble</label>
+                <input type="text" class="form-control" value="https://barnesandnoble.com/w/art-of-tomorrow">
+              </div>
+              <div class="form-group">
+                <label>Bookshop.org</label>
+                <input type="text" class="form-control" value="https://bookshop.org/p/art-of-tomorrow">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="section-container" id="email-templates">
+          <div class="section-header"><h5>Email Templates</h5></div>
+          <div class="section-content">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Confirmation Email Subject</label>
+                <input type="text" class="form-control" value="Your order has been confirmed!">
+              </div>
+              <div class="form-group">
+                <label>Confirmation Email Header</label>
+                <input type="text" class="form-control" value="Thank you for your order">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+</html>
