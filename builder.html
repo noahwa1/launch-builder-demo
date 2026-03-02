@@ -242,7 +242,8 @@
   <div class="actions">
     <button class="btn-action btn-secondary" onclick="openTemplates()"><i class="fas fa-th-large"></i> Templates</button>
     <button class="btn-action btn-secondary" onclick="togglePreview()"><i class="fas fa-eye"></i> Preview</button>
-    <button class="btn-action btn-secondary" onclick="openCode()"><i class="fas fa-code"></i> Code</button>
+    <button class="btn-action btn-secondary" onclick="openCode()"><i class="fas fa-code"></i> Export</button>
+    <button class="btn-action btn-secondary" onclick="openHtmlEditor()"><i class="fas fa-file-code"></i> Edit HTML</button>
     <button class="btn-action btn-success" onclick="saveToServer()"><i class="fas fa-save"></i> Save</button>
   </div>
 </div>
@@ -328,6 +329,23 @@
   </div>
 </div>
 
+<!-- HTML Editor Modal -->
+<div class="modal-overlay" id="htmlEditorModal" onclick="if(event.target===this)closeHtmlEditor()">
+  <div class="builder-modal code-modal" style="max-width:1000px;width:95%;">
+    <div class="modal-header">
+      <h2>Edit HTML</h2>
+      <button class="modal-close" onclick="closeHtmlEditor()"><i class="fas fa-times"></i></button>
+    </div>
+    <p class="modal-subtitle">Edit the page HTML directly. Changes will replace the current canvas content.</p>
+    <textarea id="htmlEditorOutput" style="height:450px;color:#e8e8ef;"></textarea>
+    <div class="btn-row">
+      <button class="btn-action btn-primary" onclick="applyHtmlEdit()"><i class="fas fa-check"></i> Apply Changes</button>
+      <button class="btn-action btn-secondary" onclick="pasteHtmlSnippet()"><i class="fas fa-paste"></i> Insert Snippet at Cursor</button>
+      <button class="btn-action btn-secondary" onclick="closeHtmlEditor()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <textarea id="saved-builder-html" style="display:none;"></textarea>
 <textarea id="saved-builder-css" style="display:none;"></textarea>
 
@@ -397,6 +415,7 @@ var blockDefs = [
     { id: 'divider', icon: 'fa-minus', label: 'Divider', content: '<hr style="border:none;border-top:1px solid #ddd;margin:24px 0;">' },
     { id: 'spacer', icon: 'fa-arrows-up-down', label: 'Spacer', content: '<div style="height:60px;"></div>' },
     { id: 'columns2', icon: 'fa-columns', label: '2 Columns', content: '<div style="display:flex;gap:24px;padding:20px;flex-wrap:wrap;"><div style="flex:1;min-width:200px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 1</p></div><div style="flex:1;min-width:200px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 2</p></div></div>' },
+    { id: 'customhtml', icon: 'fa-file-code', label: 'Custom HTML', content: 'CUSTOM_HTML_PROMPT' },
   ]},
 ];
 
@@ -575,12 +594,14 @@ function buildBlocksSidebar() {
       item.draggable = true;
       item.innerHTML = '<i class="fas ' + b.icon + '"></i><span>' + b.label + '</span>';
       item.addEventListener('dragstart', function(e) {
+        if (b.content === 'CUSTOM_HTML_PROMPT') { e.preventDefault(); handleCustomHtmlBlock(); return; }
         editor.select(null);
         var content = typeof b.content === 'object' ? JSON.stringify(b.content) : b.content;
         e.dataTransfer.setData('text/html', content);
         e.dataTransfer.effectAllowed = 'copy';
       });
       item.addEventListener('click', function() {
+        if (b.content === 'CUSTOM_HTML_PROMPT') { handleCustomHtmlBlock(); return; }
         if (typeof b.content === 'string') { editor.addComponents(b.content); }
         else { editor.addComponents([b.content]); }
       });
@@ -643,7 +664,7 @@ editor.on('load', function() {
   injectCSS();
   buildBlocksSidebar();
 
-  // Load saved project from server data (or localStorage for local test)
+  // Load saved project from server data
   var savedHtml = document.getElementById('saved-builder-html').value || localStorage.getItem('launch-builder-html') || '';
   var savedCss = document.getElementById('saved-builder-css').value || localStorage.getItem('launch-builder-css') || '';
   var loaded = false;
@@ -830,6 +851,53 @@ function copyCode() {
 }
 
 // ════════════════════════════════════════════════════════
+// HTML EDITOR
+// ════════════════════════════════════════════════════════
+function openHtmlEditor() {
+  var ta = document.getElementById('htmlEditorOutput');
+  ta.value = editor.getHtml();
+  ta.readOnly = false;
+  document.getElementById('htmlEditorModal').classList.add('active');
+  setTimeout(function() { ta.focus(); }, 100);
+}
+function closeHtmlEditor() { document.getElementById('htmlEditorModal').classList.remove('active'); }
+
+function applyHtmlEdit() {
+  var html = document.getElementById('htmlEditorOutput').value;
+  if (!html.trim()) { showToast('HTML is empty', 'error'); return; }
+  if (!confirm('This will replace the entire page with your edited HTML. Continue?')) return;
+  editor.DomComponents.clear();
+  editor.CssComposer.clear();
+  editor.setComponents(html);
+  injectCSS();
+  setTimeout(injectCSS, 150);
+  closeHtmlEditor();
+  showToast('HTML applied!', 'success');
+}
+
+function pasteHtmlSnippet() {
+  var ta = document.getElementById('htmlEditorOutput');
+  var snippet = prompt('Paste your HTML snippet:');
+  if (!snippet) return;
+  // Insert at cursor position in the textarea
+  var start = ta.selectionStart;
+  var end = ta.selectionEnd;
+  var text = ta.value;
+  ta.value = text.substring(0, start) + snippet + text.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + snippet.length;
+  ta.focus();
+}
+
+// Custom HTML block — prompts for HTML when dropped
+function handleCustomHtmlBlock() {
+  var html = prompt('Paste your HTML:');
+  if (html && html.trim()) {
+    editor.addComponents(html);
+    injectCSS();
+  }
+}
+
+// ════════════════════════════════════════════════════════
 // SAVE TO SERVER
 // ════════════════════════════════════════════════════════
 function showToast(msg, type) {
@@ -847,17 +915,20 @@ function saveToServer() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   btn.disabled = true;
 
-  // LOCAL TEST: Save to localStorage (on the real server this hits PATCH /manage/projects/:id/save_builder)
+  var formData = new FormData();
+  formData.append('builder_html', editor.getHtml());
+  formData.append('builder_css', editor.getCss());
+
+  // LOCAL TEST: Save to localStorage
   try {
     localStorage.setItem('launch-builder-html', editor.getHtml());
     localStorage.setItem('launch-builder-css', editor.getCss());
-    // Also update the hidden textareas so reload works
     document.getElementById('saved-builder-html').value = editor.getHtml();
     document.getElementById('saved-builder-css').value = editor.getCss();
     setTimeout(function() {
       btn.innerHTML = origHTML;
       btn.disabled = false;
-      showToast('Saved successfully! (localStorage — server save when deployed)', 'success');
+      showToast('Saved! (localStorage)', 'success');
     }, 300);
   } catch(e) {
     btn.innerHTML = origHTML;
@@ -871,6 +942,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     if (document.getElementById('templateModal').classList.contains('active')) closeTemplates();
     if (document.getElementById('codeModal').classList.contains('active')) closeCode();
+    if (document.getElementById('htmlEditorModal').classList.contains('active')) closeHtmlEditor();
   }
 });
 </script>
