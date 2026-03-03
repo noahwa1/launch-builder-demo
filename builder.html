@@ -200,6 +200,8 @@
   .gjs-trt-trait { padding: 5px 0 !important; }
   .gjs-trt-trait .gjs-label-wrp { width: 80px !important; font-size: 11px !important; }
   .gjs-blocks-cs { display: none !important; }
+  /* Hide GrapesJS built-in component toolbar — we use our own #element-toolbar */
+  .gjs-toolbar { display: none !important; }
 
   /* ── Modals ───────────────────────────────── */
   .modal-overlay {
@@ -1086,10 +1088,12 @@ editor.on('component:selected', function(component) {
     linkInput.value = '';
   }
 
-  // Add resize handles + floating toolbar
+  // Add resize handles + floating toolbar (skip if RTE text editing is active)
   setTimeout(function() {
-    addResizeHandles(component);
-    showElementToolbar(component);
+    if (!rteActive) {
+      addResizeHandles(component);
+      showElementToolbar(component);
+    }
     showEffectsPanel(component);
   }, 50);
 });
@@ -1102,6 +1106,22 @@ editor.on('component:deselected', function() {
   removeResizeHandles();
   hideElementToolbar();
   hideEffectsPanel();
+});
+
+// Hide element toolbar when RTE (inline text editor) is active to prevent overlap
+var rteActive = false;
+editor.on('rte:enable', function() {
+  rteActive = true;
+  hideElementToolbar();
+  removeResizeHandles();
+});
+editor.on('rte:disable', function() {
+  rteActive = false;
+  var sel = editor.getSelected();
+  if (sel) {
+    showElementToolbar(sel);
+    addResizeHandles(sel);
+  }
 });
 
 editor.DomComponents.addType('link', {
@@ -1793,6 +1813,7 @@ editor.on('load', function() {
   var canvasDoc = editor.Canvas.getDocument();
   if (canvasDoc) {
     canvasDoc.addEventListener('scroll', function() {
+      if (rteActive) return;
       var sel = editor.getSelected();
       if (sel) showElementToolbar(sel);
     }, true);
