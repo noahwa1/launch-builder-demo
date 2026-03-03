@@ -89,8 +89,8 @@ Rails.application.configure do
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
   end
 
-  # Allow Railway host
-  config.hosts << "launch-builder-demo-production.up.railway.app"
+  # Allow all hosts (Railway generates dynamic hostnames)
+  config.hosts.clear
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
