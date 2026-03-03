@@ -1,4 +1,4 @@
-class CreateSubmissions < ActiveRecord::Migration[5.2]
+class CreateSubmissions < ActiveRecord::Migration[7.0]
   def change
     create_table :submissions do |t|
       t.integer  :author_id, null: false

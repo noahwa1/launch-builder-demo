@@ -1,4 +1,4 @@
-class CreateRoyaltyRates < ActiveRecord::Migration[5.2]
+class CreateRoyaltyRates < ActiveRecord::Migration[7.0]
   def change
     create_table :royalty_rates do |t|
       t.integer :author_id, null: false
