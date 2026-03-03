@@ -638,17 +638,6 @@ var editor = grapesjs.init({
   styleManager: {
     appendTo: '#styles-container',
     sectors: [
-      { name: 'Alignment', open: true, properties: [
-        { type: 'radio', property: 'text-align', label: 'Text / Inline Align', options: [
-          { id:'left',label:'L' },{ id:'center',label:'C' },{ id:'right',label:'R' },
-        ]},
-        { type: 'radio', property: 'margin-left', label: 'Block Align', options: [
-          { id:'0',label:'L' },{ id:'auto',label:'C' },
-        ]},
-        { type: 'select', property: 'float', label: 'Float', options: [
-          { id:'none',label:'None' },{ id:'left',label:'Left' },{ id:'right',label:'Right' },
-        ]},
-      ]},
       { name: 'Typography', open: true, properties: [
         { type: 'select', property: 'font-family', options: [
           { id: "'Open Sans', sans-serif", label: 'Open Sans' }, { id: "'Montserrat', sans-serif", label: 'Montserrat' },
@@ -681,7 +670,7 @@ var editor = grapesjs.init({
         ]},
         { property: 'opacity', type: 'number', min: 0, max: 1, step: 0.05 },
       ]},
-      { name: 'Size & Spacing', open: false, properties: [
+      { name: 'Size & Spacing', open: true, properties: [
         { property: 'width', type: 'number', units: ['px','%','vw','auto'] },
         { property: 'max-width', type: 'number', units: ['px','%','none'] },
         { property: 'height', type: 'number', units: ['px','%','vh','auto'] },
@@ -1392,10 +1381,33 @@ function showElementToolbar(component) {
   var el = component.getEl();
   if (!el) { toolbar.style.display = 'none'; return; }
 
-  // Set label
+  // Set label — show a friendly name based on classes/tag
   var tag = component.get('tagName') || 'div';
-  var cls = (component.getClasses() || []).join('.');
-  var label = tag + (cls ? '.' + cls : '');
+  var classes = component.getClasses() || [];
+  var label = tag;
+  var friendlyMap = {
+    'project-header': 'Nav Bar', 'section-wrapper': 'Section', 'section-intro': 'Hero',
+    'steps-section': 'Steps', 'step-card': 'Step Card', 'book-section': 'Book',
+    'author-section': 'Author', 'testimonials-section': 'Testimonials',
+    'launch-footer': 'Footer', 'two-col': '2 Columns', 'col-left': 'Left Col',
+    'col-right': 'Right Col', 'container': 'Container', 'bg-form': 'Form',
+    'field-group': 'Field', 'retailer-grid': 'Retailers', 'retailer-card': 'Retailer',
+    'book-cover': 'Book Cover', 'book-detail': 'Book Info', 'author-image': 'Author Photo',
+    'author-detail': 'Author Info', 'testimonial-card': 'Quote', 'nav-links': 'Nav Links',
+    'btn-order': 'Order Btn', 'btn-submit': 'Submit Btn', 'order-btn': 'Order Btn',
+  };
+  for (var i = 0; i < classes.length; i++) {
+    if (friendlyMap[classes[i]]) { label = friendlyMap[classes[i]]; break; }
+  }
+  if (label === tag) {
+    var tagMap = { 'h1': 'Heading 1', 'h2': 'Heading 2', 'h3': 'Heading 3', 'h4': 'Heading 4',
+      'p': 'Paragraph', 'a': 'Link', 'img': 'Image', 'section': 'Section', 'nav': 'Nav',
+      'footer': 'Footer', 'button': 'Button', 'div': 'Block', 'span': 'Text',
+      'blockquote': 'Quote', 'cite': 'Citation', 'hr': 'Divider', 'select': 'Dropdown',
+      'input': 'Input', 'label': 'Label', 'form': 'Form', 'video': 'Video',
+    };
+    label = tagMap[tag] || tag;
+  }
   document.getElementById('tb-label').textContent = label;
 
   // Set color swatch to current background
@@ -1414,7 +1426,6 @@ function showElementToolbar(component) {
       colorInput.value = hex;
     }
   } else {
-    swatch.style.background = '#transparent';
     swatch.style.background = 'repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50%/8px 8px';
   }
 
