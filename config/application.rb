@@ -29,5 +29,8 @@ module LaunchBuilderDemo
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Disable host authorization (Railway uses dynamic hostnames)
+    config.host_authorization = { exclude: ->(request) { true } }
   end
 end
