@@ -8,6 +8,7 @@
     <title>Launch Page Builder — Test Project</title>
     <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.13/dist/css/grapes.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
 <style>
   :root {
@@ -215,6 +216,38 @@
   .save-toast.success { background: rgba(33,150,83,0.9); color: #fff; }
   .save-toast.error { background: rgba(233,69,96,0.9); color: #fff; }
 
+  /* ── Effects Panel ──────────────────────── */
+  #effects-panel { display: none; border-bottom: 1px solid var(--border); }
+  #effects-panel.visible { display: block; }
+  .fx-section { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .fx-section:last-child { border-bottom: none; }
+  .fx-title {
+    font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .fx-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+  .fx-btn {
+    padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--bg-tertiary); color: var(--text-secondary); font-size: 10px;
+    font-weight: 500; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .fx-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .fx-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .fx-select {
+    width: 100%; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 5px; padding: 6px 8px; color: var(--text-primary); font-size: 11px;
+    outline: none; cursor: pointer;
+  }
+  .fx-select:focus { border-color: var(--accent); }
+  .fx-row { display: flex; gap: 8px; margin-top: 6px; }
+  .fx-row label { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+  .fx-row input[type="number"] {
+    width: 56px; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 6px; color: var(--text-primary); font-size: 11px;
+    outline: none;
+  }
+  .fx-row input[type="number"]:focus { border-color: var(--accent); }
+
   /* ── Floating Element Toolbar ──────────── */
   #element-toolbar {
     position: fixed; z-index: 99998; display: none;
@@ -344,6 +377,67 @@
             <button class="link-remove-btn" onclick="removeLink()"><i class="fas fa-unlink"></i></button>
           </div>
         </div>
+        <div id="effects-panel">
+          <div class="fx-section">
+            <div class="fx-title">Hover Effects</div>
+            <div class="fx-grid">
+              <button class="fx-btn" data-hover="hover-lift" onclick="toggleHover('hover-lift',this)"><i class="fas fa-arrow-up" style="margin-right:3px;font-size:9px;"></i>Lift</button>
+              <button class="fx-btn" data-hover="hover-scale" onclick="toggleHover('hover-scale',this)"><i class="fas fa-expand" style="margin-right:3px;font-size:9px;"></i>Scale</button>
+              <button class="fx-btn" data-hover="hover-glow" onclick="toggleHover('hover-glow',this)"><i class="fas fa-sun" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+              <button class="fx-btn" data-hover="hover-brighten" onclick="toggleHover('hover-brighten',this)"><i class="fas fa-lightbulb" style="margin-right:3px;font-size:9px;"></i>Bright</button>
+              <button class="fx-btn" data-hover="hover-shadow" onclick="toggleHover('hover-shadow',this)"><i class="fas fa-clone" style="margin-right:3px;font-size:9px;"></i>Shadow</button>
+              <button class="fx-btn" data-hover="hover-darken" onclick="toggleHover('hover-darken',this)"><i class="fas fa-moon" style="margin-right:3px;font-size:9px;"></i>Darken</button>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Scroll Animation</div>
+            <select class="fx-select" id="aos-select" onchange="setAosAnimation(this.value)">
+              <option value="">None</option>
+              <optgroup label="Fade">
+                <option value="fade-up">Fade Up</option>
+                <option value="fade-down">Fade Down</option>
+                <option value="fade-left">Fade Left</option>
+                <option value="fade-right">Fade Right</option>
+              </optgroup>
+              <optgroup label="Zoom">
+                <option value="zoom-in">Zoom In</option>
+                <option value="zoom-out">Zoom Out</option>
+                <option value="zoom-in-up">Zoom In Up</option>
+              </optgroup>
+              <optgroup label="Flip &amp; Slide">
+                <option value="flip-up">Flip Up</option>
+                <option value="flip-left">Flip Left</option>
+                <option value="slide-up">Slide Up</option>
+                <option value="slide-right">Slide Right</option>
+              </optgroup>
+            </select>
+            <div class="fx-row" id="aos-options" style="display:none;">
+              <label>Duration <input type="number" id="aos-duration" value="800" min="100" max="3000" step="100" onchange="setAosDuration(this.value)">ms</label>
+              <label>Delay <input type="number" id="aos-delay" value="0" min="0" max="2000" step="100" onchange="setAosDelay(this.value)">ms</label>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Box Shadow</div>
+            <div class="fx-grid">
+              <button class="fx-btn" onclick="setShadow('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+              <button class="fx-btn" onclick="setShadow('subtle',this)">Subtle</button>
+              <button class="fx-btn" onclick="setShadow('medium',this)">Medium</button>
+              <button class="fx-btn" onclick="setShadow('heavy',this)">Heavy</button>
+              <button class="fx-btn" onclick="setShadow('glow',this)"><i class="fas fa-star" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+              <button class="fx-btn" onclick="setShadow('warm',this)">Warm</button>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Overlay</div>
+            <div class="fx-grid">
+              <button class="fx-btn" onclick="setOverlay('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+              <button class="fx-btn" onclick="setOverlay('darken',this)">Darken</button>
+              <button class="fx-btn" onclick="setOverlay('lighten',this)">Lighten</button>
+              <button class="fx-btn" onclick="setOverlay('gradient-dark',this)">Grad Dark</button>
+              <button class="fx-btn" onclick="setOverlay('gradient-color',this)">Grad Color</button>
+            </div>
+          </div>
+        </div>
         <div id="traits-container"></div>
         <div id="styles-container"></div>
       </div>
@@ -403,6 +497,7 @@
 
 
     <script src="https://unpkg.com/grapesjs@0.21.13/dist/grapes.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/index.js"></script>
 
 <script>
@@ -433,6 +528,16 @@ var launchCSS = '\
 .testimonials-section{padding:50px 0}.testimonial-card{text-align:center;padding:24px 40px;max-width:700px;margin:0 auto}.testimonial-card blockquote{font-size:18px;line-height:1.7;color:#333;font-style:italic}.testimonial-card cite{font-size:14px;color:#888}\
 .launch-footer{background:#29292d;color:#888;padding:20px 0;font-size:12px}.launch-footer .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.launch-footer a{color:#2F80ED}\
 .container{max-width:1140px;margin:0 auto;padding:0 15px}\
+.hover-lift{transition:transform 0.3s ease,box-shadow 0.3s ease;cursor:pointer}.hover-lift:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,0.15)}\
+.hover-scale{transition:transform 0.3s ease;cursor:pointer}.hover-scale:hover{transform:scale(1.05)}\
+.hover-glow{transition:box-shadow 0.3s ease;cursor:pointer}.hover-glow:hover{box-shadow:0 0 25px rgba(108,92,231,0.5)}\
+.hover-brighten{transition:filter 0.3s ease;cursor:pointer}.hover-brighten:hover{filter:brightness(1.15)}\
+.hover-shadow{transition:box-shadow 0.3s ease;cursor:pointer}.hover-shadow:hover{box-shadow:0 15px 40px rgba(0,0,0,0.25)}\
+.hover-darken{transition:filter 0.3s ease;cursor:pointer}.hover-darken:hover{filter:brightness(0.85)}\
+.overlay-darken{position:relative}.overlay-darken::before{content:\"\";position:absolute;inset:0;background:rgba(0,0,0,0.4);pointer-events:none;z-index:1}\
+.overlay-lighten{position:relative}.overlay-lighten::before{content:\"\";position:absolute;inset:0;background:rgba(255,255,255,0.3);pointer-events:none;z-index:1}\
+.overlay-gradient-dark{position:relative}.overlay-gradient-dark::before{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));pointer-events:none;z-index:1}\
+.overlay-gradient-color{position:relative}.overlay-gradient-color::before{content:\"\";position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(233,69,96,0.3));pointer-events:none;z-index:1}\
 ';
 
 // Editor-only CSS for resize handles (NOT included in export/save)
@@ -712,6 +817,33 @@ function injectCSS() {
     rStyle.innerHTML = resizeHandleCSS;
     doc.head.appendChild(rStyle);
   }
+  // Inject AOS CSS into canvas for scroll animation previews
+  if (!doc.getElementById('aos-css')) {
+    var aosLink = doc.createElement('link');
+    aosLink.id = 'aos-css';
+    aosLink.rel = 'stylesheet';
+    aosLink.href = 'https://unpkg.com/aos@2.3.4/dist/aos.css';
+    doc.head.appendChild(aosLink);
+  }
+  // Inject AOS JS into canvas and initialize
+  if (!doc.getElementById('aos-js')) {
+    var aosScript = doc.createElement('script');
+    aosScript.id = 'aos-js';
+    aosScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
+    aosScript.onload = function() {
+      if (doc.defaultView && doc.defaultView.AOS) {
+        doc.defaultView.AOS.init({ once: true, duration: 800 });
+      }
+    };
+    doc.body.appendChild(aosScript);
+  }
+}
+
+function refreshAOS() {
+  var doc = editor.Canvas.getDocument();
+  if (doc && doc.defaultView && doc.defaultView.AOS) {
+    doc.defaultView.AOS.refreshHard();
+  }
 }
 
 editor.on('load', function() {
@@ -838,6 +970,7 @@ editor.on('component:selected', function(component) {
   setTimeout(function() {
     addResizeHandles(component);
     showElementToolbar(component);
+    showEffectsPanel(component);
   }, 50);
 });
 
@@ -848,6 +981,7 @@ editor.on('component:deselected', function() {
   document.getElementById('align-actions').style.display = 'none';
   removeResizeHandles();
   hideElementToolbar();
+  hideEffectsPanel();
 });
 
 editor.DomComponents.addType('link', {
@@ -982,7 +1116,12 @@ function loadTemplate(i) {
 
 function openCode() {
   removeResizeHandles(); // Clean up editor-only elements before export
-  var full = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Launch Page</title>\n  <style>\n' + launchCSS + '\n' + editor.getCss() + '\n  </style>\n</head>\n<body>\n' + editor.getHtml() + '\n</body>\n</html>';
+  // Check if any elements use AOS
+  var html = editor.getHtml();
+  var hasAOS = html.indexOf('data-aos') !== -1;
+  var aosHead = hasAOS ? '\n  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">' : '';
+  var aosFoot = hasAOS ? '\n  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"><\/script>\n  <script>AOS.init({once:true,duration:800});<\/script>' : '';
+  var full = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Launch Page</title>' + aosHead + '\n  <style>\n' + launchCSS + '\n' + editor.getCss() + '\n  </style>\n</head>\n<body>\n' + html + aosFoot + '\n</body>\n</html>';
   document.getElementById('codeOutput').value = full;
   document.getElementById('codeModal').classList.add('active');
 }
@@ -1085,6 +1224,146 @@ function saveToServer() {
     btn.disabled = false;
     showToast('Save failed — ' + e.message, 'error');
   }
+}
+
+// ════════════════════════════════════════════════════════
+// EFFECTS PANEL
+// ════════════════════════════════════════════════════════
+var hoverClasses = ['hover-lift','hover-scale','hover-glow','hover-brighten','hover-shadow','hover-darken'];
+var overlayClasses = ['overlay-darken','overlay-lighten','overlay-gradient-dark','overlay-gradient-color'];
+var shadowPresets = {
+  'none': 'none',
+  'subtle': '0 2px 8px rgba(0,0,0,0.08)',
+  'medium': '0 4px 16px rgba(0,0,0,0.12)',
+  'heavy': '0 10px 40px rgba(0,0,0,0.2)',
+  'glow': '0 0 30px rgba(108,92,231,0.35)',
+  'warm': '0 0 30px rgba(255,160,50,0.3)',
+};
+
+function showEffectsPanel(component) {
+  var panel = document.getElementById('effects-panel');
+  panel.classList.add('visible');
+
+  // Update hover button states
+  var classes = component.getClasses() || [];
+  document.querySelectorAll('.fx-btn[data-hover]').forEach(function(btn) {
+    btn.classList.toggle('active', classes.indexOf(btn.getAttribute('data-hover')) !== -1);
+  });
+
+  // Update AOS dropdown
+  var attrs = component.getAttributes();
+  var aosVal = attrs['data-aos'] || '';
+  document.getElementById('aos-select').value = aosVal;
+  document.getElementById('aos-options').style.display = aosVal ? 'flex' : 'none';
+  if (aosVal) {
+    document.getElementById('aos-duration').value = attrs['data-aos-duration'] || '800';
+    document.getElementById('aos-delay').value = attrs['data-aos-delay'] || '0';
+  }
+
+  // Update shadow buttons
+  var currentShadow = (component.getStyle()['box-shadow'] || 'none').trim();
+  document.querySelectorAll('.fx-section:nth-child(3) .fx-btn').forEach(function(btn) { btn.classList.remove('active'); });
+  Object.keys(shadowPresets).forEach(function(key) {
+    if (shadowPresets[key] === currentShadow) {
+      var btns = document.querySelectorAll('.fx-section:nth-child(3) .fx-btn');
+      var map = { 'none': 0, 'subtle': 1, 'medium': 2, 'heavy': 3, 'glow': 4, 'warm': 5 };
+      if (btns[map[key]]) btns[map[key]].classList.add('active');
+    }
+  });
+
+  // Update overlay buttons
+  document.querySelectorAll('.fx-section:nth-child(4) .fx-btn').forEach(function(btn) { btn.classList.remove('active'); });
+  var hasOverlay = false;
+  overlayClasses.forEach(function(cls) {
+    if (classes.indexOf(cls) !== -1) {
+      hasOverlay = true;
+      var map = { 'overlay-darken': 1, 'overlay-lighten': 2, 'overlay-gradient-dark': 3, 'overlay-gradient-color': 4 };
+      var btns = document.querySelectorAll('.fx-section:nth-child(4) .fx-btn');
+      if (btns[map[cls]]) btns[map[cls]].classList.add('active');
+    }
+  });
+  if (!hasOverlay) {
+    document.querySelectorAll('.fx-section:nth-child(4) .fx-btn')[0].classList.add('active');
+  }
+}
+
+function hideEffectsPanel() {
+  document.getElementById('effects-panel').classList.remove('visible');
+}
+
+function toggleHover(className, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var has = (sel.getClasses() || []).indexOf(className) !== -1;
+  if (has) {
+    sel.removeClass(className);
+    btn.classList.remove('active');
+  } else {
+    // Remove other hover classes first (one at a time)
+    hoverClasses.forEach(function(c) { sel.removeClass(c); });
+    document.querySelectorAll('.fx-btn[data-hover]').forEach(function(b) { b.classList.remove('active'); });
+    sel.addClass(className);
+    btn.classList.add('active');
+  }
+}
+
+function setAosAnimation(value) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  if (value) {
+    sel.addAttributes({ 'data-aos': value });
+    document.getElementById('aos-options').style.display = 'flex';
+    // Set default duration/delay if not set
+    var attrs = sel.getAttributes();
+    if (!attrs['data-aos-duration']) sel.addAttributes({ 'data-aos-duration': '800' });
+  } else {
+    sel.removeAttributes('data-aos');
+    sel.removeAttributes('data-aos-duration');
+    sel.removeAttributes('data-aos-delay');
+    sel.removeAttributes('data-aos-offset');
+    document.getElementById('aos-options').style.display = 'none';
+  }
+  setTimeout(refreshAOS, 200);
+}
+
+function setAosDuration(val) {
+  var sel = editor.getSelected();
+  if (sel) sel.addAttributes({ 'data-aos-duration': val });
+  setTimeout(refreshAOS, 100);
+}
+
+function setAosDelay(val) {
+  var sel = editor.getSelected();
+  if (sel) {
+    if (parseInt(val) > 0) sel.addAttributes({ 'data-aos-delay': val });
+    else sel.removeAttributes('data-aos-delay');
+  }
+  setTimeout(refreshAOS, 100);
+}
+
+function setShadow(preset, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  sel.addStyle({ 'box-shadow': shadowPresets[preset] || 'none' });
+  // Update button states
+  var parent = btn.parentElement;
+  parent.querySelectorAll('.fx-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function setOverlay(type, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  // Remove all overlay classes
+  overlayClasses.forEach(function(cls) { sel.removeClass(cls); });
+  // Add new one
+  if (type !== 'none') {
+    sel.addClass('overlay-' + type);
+  }
+  // Update button states
+  var parent = btn.parentElement;
+  parent.querySelectorAll('.fx-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
 }
 
 // ════════════════════════════════════════════════════════
