@@ -318,6 +318,7 @@
   <button class="danger" onclick="tbDelete()" title="Delete"><i class="fas fa-trash-alt"></i></button>
   <div class="tb-sep"></div>
   <button onclick="tbUploadImage()" title="Upload Image"><i class="fas fa-camera"></i></button>
+  <button id="tb-front-btn" onclick="tbBringToFront()" title="Bring to Front"><i class="fas fa-layer-group"></i></button>
   <div class="tb-sep"></div>
   <div class="tb-color" id="tb-color-swatch" title="Background Color">
     <input type="color" id="tb-color-input" value="#ffffff" onchange="tbSetBgColor(this.value)">
@@ -1465,6 +1466,11 @@ function showElementToolbar(component) {
     opacityLabel.textContent = '100%';
   }
 
+  // Update bring-to-front button state
+  var zIndex = component.getStyle()['z-index'] || '';
+  var frontBtn = document.getElementById('tb-front-btn');
+  if (frontBtn) frontBtn.classList.toggle('active', zIndex && parseInt(zIndex) > 0);
+
   // Position toolbar above the element
   toolbar.style.display = 'flex';
   positionToolbar(el, toolbar);
@@ -1571,6 +1577,22 @@ function hexToRgba(hex, alpha) {
   var b = parseInt(hex.slice(5,7), 16);
   if (alpha >= 1) return hex;
   return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(2) + ')';
+}
+
+function tbBringToFront() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var current = sel.getStyle()['z-index'] || '';
+  if (current && parseInt(current) > 0) {
+    // Already in front — toggle it off
+    sel.addStyle({ 'z-index': '', 'position': '' });
+    document.getElementById('tb-front-btn').classList.remove('active');
+    showToast('Layer reset', 'success');
+  } else {
+    sel.addStyle({ 'position': 'relative', 'z-index': '10' });
+    document.getElementById('tb-front-btn').classList.add('active');
+    showToast('Brought to front', 'success');
+  }
 }
 
 function tbUploadImage() {
