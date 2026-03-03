@@ -1,0 +1,42 @@
+<% content_for :page_title, "Messages" %>
+
+<div class="card">
+  <h3>Creator Threads</h3>
+  <% if @threads.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Creator</th>
+            <th>Last Message</th>
+            <th>Unread</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @threads.each do |thread| %>
+            <tr>
+              <td style="font-weight: 500;"><%= thread[:creator].full_name %></td>
+              <td style="color: #86868b; font-size: 13px;">
+                <%= truncate(thread[:last_message].body, length: 60) %>
+                <br><span style="font-size: 11px;"><%= thread[:last_message].created_at.strftime('%b %d at %I:%M %p') %></span>
+              </td>
+              <td>
+                <% if thread[:unread] > 0 %>
+                  <span style="background: #ff453a; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: 600;"><%= thread[:unread] %></span>
+                <% else %>
+                  <span style="color: #86868b;">0</span>
+                <% end %>
+              </td>
+              <td><%= link_to 'View', manage_portal_message_path(thread[:creator]), class: 'btn btn-secondary btn-sm' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div style="text-align: center; padding: 48px; color: #86868b;">
+      <p>No messages yet.</p>
+    </div>
+  <% end %>
+</div>

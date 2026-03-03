@@ -1,0 +1,23 @@
+<h2>Royalty Payment Processed</h2>
+<p>Hi <%= @creator.first_name || @creator.email %>,</p>
+<p>A royalty payment has been processed for your account:</p>
+
+<table style="border-collapse: collapse; width: 100%; max-width: 400px; margin: 20px 0;">
+  <tr>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">Amount</td>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; font-size: 18px;">$<%= number_with_precision(@payment.amount, precision: 2) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">Period</td>
+    <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= @payment.period_label %></td>
+  </tr>
+  <% if @payment.reference.present? %>
+    <tr>
+      <td style="padding: 8px; color: #666;">Reference</td>
+      <td style="padding: 8px;"><%= @payment.reference %></td>
+    </tr>
+  <% end %>
+</table>
+
+<p><a href="<%= portal_royalty_url(@payment) %>" style="display: inline-block; padding: 10px 20px; background: #0071e3; color: #fff; text-decoration: none; border-radius: 6px;">View Statement</a></p>
+<p style="color: #666; margin-top: 24px;">— The Launch Publishing Team</p>

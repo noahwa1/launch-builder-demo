@@ -1,0 +1,30 @@
+<% content_for :page_title, "Messages: #{@creator.full_name}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', manage_portal_messages_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card">
+  <% if @messages.any? %>
+    <div class="message-list">
+      <% @messages.each do |msg| %>
+        <div class="message-item <%= 'from-creator' if msg.sender.creator? %>">
+          <div class="meta">
+            <span class="sender"><%= msg.sender.full_name %> (<%= msg.sender.role %>)</span>
+            <span><%= msg.created_at.strftime('%b %d, %Y at %I:%M %p') %></span>
+          </div>
+          <div class="body"><%= msg.body %></div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p style="color: #86868b; font-size: 14px;">No general messages yet.</p>
+  <% end %>
+
+  <%= form_for PortalMessage.new, url: manage_portal_messages_path, style: 'margin-top: 20px; border-top: 1px solid #e5e5e7; padding-top: 16px;' do |f| %>
+    <%= f.hidden_field :thread_owner_id, value: @creator.id %>
+    <div class="form-group" style="margin-bottom: 8px;">
+      <%= f.text_area :body, placeholder: "Reply to #{@creator.full_name}...", rows: 3 %>
+    </div>
+    <%= f.submit 'Send', class: 'btn btn-primary' %>
+  <% end %>
+</div>

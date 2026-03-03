@@ -1,0 +1,61 @@
+<% content_for :page_title, "New Payment" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', manage_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card" style="max-width: 700px;">
+  <%= form_for @payment, url: manage_royalties_path do |f| %>
+    <% if @payment.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 20px;">
+        <strong><%= pluralize(@payment.errors.count, "error") %>:</strong>
+        <ul style="margin-top: 8px; padding-left: 20px;">
+          <% @payment.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :author_id, 'Author' %>
+      <%= f.collection_select :author_id, @authors, :id, :full_name, { include_blank: 'Select author...' } %>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <%= f.label :period_start %>
+        <%= f.date_field :period_start %>
+      </div>
+      <div class="form-group">
+        <%= f.label :period_end %>
+        <%= f.date_field :period_end %>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <%= f.label :amount %>
+        <%= f.number_field :amount, step: 0.01, min: 0, placeholder: '0.00' %>
+      </div>
+      <div class="form-group">
+        <%= f.label :status %>
+        <%= f.select :status, RoyaltyPayment.statuses.keys.map { |s| [s.titleize, s] } %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :reference, 'Payment Reference' %>
+      <%= f.text_field :reference, placeholder: 'Check #, wire ref, etc.' %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :notes %>
+      <%= f.text_area :notes, rows: 3, placeholder: 'Optional notes...' %>
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <%= f.submit 'Create Payment', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', manage_royalties_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,46 @@
+<% content_for :page_title, "Submissions" %>
+<% content_for :page_actions do %>
+  <%= link_to '+ New Submission', new_portal_submission_path, class: 'btn btn-primary' %>
+<% end %>
+
+<div class="card">
+  <% if @submissions.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>ISBN</th>
+            <th>Genre</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @submissions.each do |sub| %>
+            <tr>
+              <td><%= link_to sub.title, portal_submission_path(sub), style: 'color: #0071e3; text-decoration: none; font-weight: 500;' %></td>
+              <td style="color: #86868b; font-size: 13px;"><%= sub.isbn || '—' %></td>
+              <td><%= sub.genre || '—' %></td>
+              <td><span class="status-badge status-<%= sub.status %>"><%= sub.status.titleize %></span></td>
+              <td style="color: #86868b; font-size: 13px;"><%= sub.submitted_at&.strftime('%b %d, %Y') || '—' %></td>
+              <td>
+                <% if sub.draft? %>
+                  <%= link_to 'Edit', edit_portal_submission_path(sub), class: 'btn btn-secondary btn-sm' %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @submissions %>
+  <% else %>
+    <div class="empty-state">
+      <h3>No submissions yet</h3>
+      <p>Submit your first title to get started.</p>
+      <%= link_to '+ New Submission', new_portal_submission_path, class: 'btn btn-primary' %>
+    </div>
+  <% end %>
+</div>

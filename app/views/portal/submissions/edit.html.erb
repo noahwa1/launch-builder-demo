@@ -1,0 +1,8 @@
+<% content_for :page_title, "Edit: #{@submission.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', portal_submission_path(@submission), class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card" style="max-width: 700px;">
+  <%= render 'form', submission: @submission %>
+</div>

@@ -1,0 +1,47 @@
+<% content_for :page_title, "Royalties" %>
+<% content_for :page_actions do %>
+  <%= link_to '+ New Payment', new_manage_royalty_path, class: 'btn btn-primary' %>
+  <%= link_to 'Rates', rates_manage_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card">
+  <h3>Payments</h3>
+  <% if @payments.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Author</th>
+            <th>Period</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Paid</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @payments.each do |payment| %>
+            <tr>
+              <td><%= payment.author.full_name %></td>
+              <td><%= payment.period_label %></td>
+              <td style="font-weight: 600;">$<%= number_with_precision(payment.amount, precision: 2) %></td>
+              <td><span class="status-badge status-<%= payment.status %>"><%= payment.status.titleize %></span></td>
+              <td style="color: #86868b; font-size: 13px;"><%= payment.paid_at&.strftime('%b %d, %Y') || '—' %></td>
+              <td>
+                <%= link_to 'View', manage_royalty_path(payment), class: 'btn btn-secondary btn-sm' %>
+                <% unless payment.paid? || payment.cancelled? %>
+                  <%= link_to 'Mark Paid', mark_paid_manage_royalty_path(payment), method: :patch, class: 'btn btn-success btn-sm', data: { confirm: 'Mark as paid?' } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @payments %>
+  <% else %>
+    <div style="text-align: center; padding: 48px; color: #86868b;">
+      <p>No payments yet.</p>
+    </div>
+  <% end %>
+</div>

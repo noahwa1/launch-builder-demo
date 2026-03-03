@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login — Launch Creators Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #1d1d1f; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-card h1 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .login-card .subtitle { text-align: center; color: #86868b; font-size: 14px; margin-bottom: 32px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #1d1d1f; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 12px 14px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-group input:focus { outline: none; border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,0.1); }
+    .remember { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 13px; color: #86868b; }
+    .remember input { width: auto; }
+    .btn-login { display: block; width: 100%; padding: 12px; background: #0071e3; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; }
+    .btn-login:hover { background: #0077ed; }
+    .flash { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
+    .flash-alert { background: #fce8e6; color: #c5221f; }
+    .flash-notice { background: #e6f4ea; color: #137333; }
+    .demo-info { margin-top: 24px; padding: 16px; background: #f5f5f7; border-radius: 8px; font-size: 12px; color: #86868b; }
+    .demo-info strong { color: #1d1d1f; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>Launch</h1>
+    <div class="subtitle">Creators Portal</div>
+
+    <% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+    <% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
+
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+      <div class="form-group">
+        <%= f.label :email %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password %>
+        <%= f.password_field :password, autocomplete: "current-password", placeholder: "Password" %>
+      </div>
+
+      <div class="remember">
+        <%= f.check_box :remember_me %>
+        <%= f.label :remember_me, "Remember me" %>
+      </div>
+
+      <%= f.submit "Sign in", class: "btn-login" %>
+    <% end %>
+
+    <div class="demo-info">
+      <strong>Demo accounts:</strong><br>
+      Creator: creator@launch.com / password<br>
+      Admin: admin@launch.com / password
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<% content_for :page_title, "New Royalty Rate" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', rates_manage_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card" style="max-width: 600px;">
+  <%= form_for @rate, url: create_rate_manage_royalties_path do |f| %>
+    <% if @rate.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 20px;">
+        <ul style="padding-left: 20px;">
+          <% @rate.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :author_id, 'Author' %>
+      <%= f.collection_select :author_id, @authors, :id, :full_name, { include_blank: 'Select author...' } %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :book_id, 'Book (optional — leave blank for default author rate)' %>
+      <%= f.collection_select :book_id, Book.order(:title), :id, :title, { include_blank: 'All books (default rate)' } %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :rate, 'Rate (decimal, e.g. 0.15 = 15%)' %>
+      <%= f.number_field :rate, step: 0.0001, min: 0, max: 1, placeholder: '0.1500' %>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <%= f.label :effective_from %>
+        <%= f.date_field :effective_from %>
+      </div>
+      <div class="form-group">
+        <%= f.label :effective_to, 'Effective To (blank = still active)' %>
+        <%= f.date_field :effective_to %>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <%= f.submit 'Create Rate', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', rates_manage_royalties_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

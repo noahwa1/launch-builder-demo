@@ -1,0 +1,69 @@
+<% content_for :page_title, "Royalty Statement" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Download PDF', portal_royalty_path(@payment, format: :pdf), class: 'btn btn-primary' %>
+  <%= link_to 'Back', portal_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Period</div>
+    <div class="value" style="font-size: 18px;"><%= @payment.period_label %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Total Amount</div>
+    <div class="value">$<%= number_with_precision(@payment.amount, precision: 2) %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Status</div>
+    <div class="value" style="font-size: 18px;"><span class="status-badge status-<%= @payment.status %>"><%= @payment.status.titleize %></span></div>
+  </div>
+  <% if @payment.reference.present? %>
+    <div class="stat-card">
+      <div class="label">Reference</div>
+      <div class="value" style="font-size: 16px;"><%= @payment.reference %></div>
+    </div>
+  <% end %>
+</div>
+
+<div class="card">
+  <h3>Line Items</h3>
+  <% if @statements.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th style="text-align: right;">Units Sold</th>
+            <th style="text-align: right;">Gross Revenue</th>
+            <th style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Royalty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @statements.each do |stmt| %>
+            <tr>
+              <td><%= stmt.book.title %></td>
+              <td style="text-align: right;"><%= number_with_delimiter(stmt.units_sold) %></td>
+              <td style="text-align: right;">$<%= number_with_precision(stmt.gross_revenue, precision: 2) %></td>
+              <td style="text-align: right;"><%= (stmt.royalty_rate * 100).round(2) %>%</td>
+              <td style="text-align: right; font-weight: 600;">$<%= number_with_precision(stmt.royalty_amount, precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid #1d1d1f;">
+            <td colspan="4" style="text-align: right; font-weight: 700;">Total</td>
+            <td style="text-align: right; font-weight: 700;">$<%= number_with_precision(@payment.amount, precision: 2) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  <% end %>
+</div>
+
+<% if @payment.notes.present? %>
+  <div class="card">
+    <h3>Notes</h3>
+    <p style="line-height: 1.6;"><%= @payment.notes %></p>
+  </div>
+<% end %>

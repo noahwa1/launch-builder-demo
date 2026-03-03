@@ -1,0 +1,94 @@
+<% content_for :page_title, @submission.title %>
+<% content_for :page_actions do %>
+  <% if @submission.draft? %>
+    <%= link_to 'Edit', edit_portal_submission_path(@submission), class: 'btn btn-secondary' %>
+    <%= link_to 'Submit for Review', submit_for_review_portal_submission_path(@submission), method: :patch, class: 'btn btn-primary', data: { confirm: 'Submit this title for review? You won\'t be able to edit it after submission.' } %>
+  <% end %>
+  <%= link_to 'Back', portal_submissions_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Details</h3>
+    <div style="display: grid; gap: 16px;">
+      <div>
+        <div style="font-size: 12px; color: #86868b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Status</div>
+        <span class="status-badge status-<%= @submission.status %>"><%= @submission.status.titleize %></span>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #86868b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">ISBN</div>
+        <div><%= @submission.isbn || 'Not assigned' %></div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #86868b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Genre</div>
+        <div><%= @submission.genre || '—' %></div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #86868b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Release Date</div>
+        <div><%= @submission.release_date&.strftime('%B %d, %Y') || 'TBD' %></div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #86868b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Description</div>
+        <div style="line-height: 1.6;"><%= @submission.description || 'No description provided.' %></div>
+      </div>
+      <% if @submission.admin_notes.present? %>
+        <div style="background: #fce8e6; padding: 16px; border-radius: 8px;">
+          <div style="font-size: 12px; color: #c5221f; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Admin Feedback</div>
+          <div style="color: #c5221f;"><%= @submission.admin_notes %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h3>Timeline</h3>
+      <div style="display: grid; gap: 12px;">
+        <div style="font-size: 13px;">
+          <span style="color: #86868b;">Created:</span>
+          <strong><%= @submission.created_at.strftime('%b %d, %Y at %I:%M %p') %></strong>
+        </div>
+        <% if @submission.submitted_at %>
+          <div style="font-size: 13px;">
+            <span style="color: #86868b;">Submitted:</span>
+            <strong><%= @submission.submitted_at.strftime('%b %d, %Y at %I:%M %p') %></strong>
+          </div>
+        <% end %>
+        <% if @submission.reviewed_at %>
+          <div style="font-size: 13px;">
+            <span style="color: #86868b;">Reviewed:</span>
+            <strong><%= @submission.reviewed_at.strftime('%b %d, %Y at %I:%M %p') %></strong>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Messages</h3>
+      <% messages = @submission.portal_messages.order(created_at: :asc) %>
+      <% if messages.any? %>
+        <div class="message-list">
+          <% messages.each do |msg| %>
+            <div class="message-item <%= 'from-admin' if msg.sender.admin? %>">
+              <div class="meta">
+                <span class="sender"><%= msg.sender.full_name %></span>
+                <span><%= msg.created_at.strftime('%b %d, %I:%M %p') %></span>
+              </div>
+              <div class="body"><%= msg.body %></div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p style="color: #86868b; font-size: 14px;">No messages yet.</p>
+      <% end %>
+
+      <%= form_for PortalMessage.new, url: portal_messages_path, style: 'margin-top: 16px;' do |f| %>
+        <%= f.hidden_field :submission_id, value: @submission.id %>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <%= f.text_area :body, placeholder: 'Send a message about this submission...', rows: 2, style: 'font-size: 13px;' %>
+        </div>
+        <%= f.submit 'Send', class: 'btn btn-primary btn-sm' %>
+      <% end %>
+    </div>
+  </div>
+</div>

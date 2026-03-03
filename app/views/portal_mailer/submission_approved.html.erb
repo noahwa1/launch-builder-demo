@@ -1,0 +1,6 @@
+<h2>Great news!</h2>
+<p>Hi <%= @creator.first_name || @creator.email %>,</p>
+<p>Your submission <strong>"<%= @submission.title %>"</strong> has been approved by our editorial team.</p>
+<p>We'll be in touch with next steps for getting your title live.</p>
+<p><a href="<%= portal_submission_url(@submission) %>" style="display: inline-block; padding: 10px 20px; background: #30d158; color: #fff; text-decoration: none; border-radius: 6px;">View Submission</a></p>
+<p style="color: #666; margin-top: 24px;">— The Launch Publishing Team</p>

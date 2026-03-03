@@ -1,0 +1,14 @@
+<h2>Submission Update</h2>
+<p>Hi <%= @creator.first_name || @creator.email %>,</p>
+<p>We've reviewed your submission <strong>"<%= @submission.title %>"</strong> and unfortunately we're unable to move forward with it at this time.</p>
+
+<% if @submission.admin_notes.present? %>
+  <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #ff453a;">
+    <strong>Feedback from our team:</strong><br>
+    <%= @submission.admin_notes %>
+  </div>
+<% end %>
+
+<p>You're welcome to revise and resubmit, or reach out if you have questions.</p>
+<p><a href="<%= portal_submission_url(@submission) %>" style="display: inline-block; padding: 10px 20px; background: #0071e3; color: #fff; text-decoration: none; border-radius: 6px;">View Details</a></p>
+<p style="color: #666; margin-top: 24px;">— The Launch Publishing Team</p>
