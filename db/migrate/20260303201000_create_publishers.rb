@@ -1,4 +1,4 @@
-class CreatePublishers < ActiveRecord::Migration[5.2]
+class CreatePublishers < ActiveRecord::Migration[7.0]
   def change
     create_table :publishers do |t|
       t.string :name, null: false

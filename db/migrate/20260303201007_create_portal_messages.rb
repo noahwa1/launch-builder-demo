@@ -1,4 +1,4 @@
-class CreatePortalMessages < ActiveRecord::Migration[5.2]
+class CreatePortalMessages < ActiveRecord::Migration[7.0]
   def change
     create_table :portal_messages do |t|
       t.integer  :sender_id, null: false

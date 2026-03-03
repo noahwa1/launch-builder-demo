@@ -1,4 +1,4 @@
-class CreateRoyaltyStatements < ActiveRecord::Migration[5.2]
+class CreateRoyaltyStatements < ActiveRecord::Migration[7.0]
   def change
     create_table :royalty_statements do |t|
       t.integer :royalty_payment_id, null: false
