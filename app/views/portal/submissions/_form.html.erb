@@ -1,0 +1,49 @@
+<%= form_for submission, url: submission.persisted? ? portal_submission_path(submission) : portal_submissions_path do |f| %>
+  <% if submission.errors.any? %>
+    <div class="flash flash-alert" style="margin-bottom: 20px;">
+      <strong><%= pluralize(submission.errors.count, "error") %> prevented this submission:</strong>
+      <ul style="margin-top: 8px; padding-left: 20px;">
+        <% submission.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, placeholder: 'Book title' %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :isbn %>
+    <%= f.text_field :isbn, placeholder: '978-0-000-00000-0' %>
+    <div class="hint">Optional. Will be assigned if not provided.</div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :genre %>
+    <%= f.select :genre, options_for_select(['Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 'Romance', 'Biography', 'Self-Help', 'Business', 'Children\'s', 'Young Adult', 'Poetry', 'Other'], submission.genre), { include_blank: 'Select genre...' } %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, placeholder: 'Brief description of the book...', rows: 4 %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :release_date %>
+    <%= f.date_field :release_date %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :cover, 'Cover Image' %>
+    <%= f.file_field :cover %>
+    <div class="hint">JPG, PNG, or WebP. Max 5MB.</div>
+  </div>
+
+  <div style="display: flex; gap: 12px; margin-top: 24px;">
+    <%= f.submit 'Save Draft', class: 'btn btn-primary' %>
+    <%= link_to 'Cancel', portal_submissions_path, class: 'btn btn-secondary' %>
+  </div>
+<% end %>

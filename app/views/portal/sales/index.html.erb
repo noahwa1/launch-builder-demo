@@ -1,0 +1,74 @@
+<% content_for :page_title, "Sales" %>
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 0;">Sales Overview</h3>
+    <% if @books.count > 1 %>
+      <div>
+        <% @books.each do |book| %>
+          <%= link_to book.title, portal_sales_path(book_id: book.id),
+              class: "btn btn-sm #{@selected_book&.id == book.id ? 'btn-primary' : 'btn-secondary'}",
+              style: 'margin-left: 4px;' %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @selected_book && @monthly_sales %>
+    <div class="stats-grid" style="margin-bottom: 24px;">
+      <div class="stat-card">
+        <div class="label">Total Units (12 mo)</div>
+        <div class="value"><%= number_with_delimiter(@total_units) %></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Revenue (12 mo)</div>
+        <div class="value">$<%= number_with_precision(@total_revenue, precision: 2, delimiter: ',') %></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg Units/Month</div>
+        <div class="value"><%= (@total_units / 12.0).round %></div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 16px;">Monthly Units — <%= @selected_book.title %></h3>
+    <% max_units = @monthly_sales.map { |m| m[:units] }.max %>
+    <div class="bar-chart">
+      <% @monthly_sales.each do |month| %>
+        <div class="bar-group">
+          <div class="bar" style="height: <%= (month[:units].to_f / max_units * 180).round %>px;" title="<%= month[:units] %> units"></div>
+          <div class="bar-label"><%= month[:month].split(' ').first %></div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 24px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th style="text-align: right;">Units Sold</th>
+            <th style="text-align: right;">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @monthly_sales.each do |month| %>
+            <tr>
+              <td><%= month[:month] %></td>
+              <td style="text-align: right;"><%= number_with_delimiter(month[:units]) %></td>
+              <td style="text-align: right; font-weight: 500;">$<%= number_with_precision(month[:revenue], precision: 2, delimiter: ',') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <h3>No books yet</h3>
+      <p>Sales data will appear here once you have published books.</p>
+    </div>
+  <% end %>
+</div>
+
+<div style="margin-top: 12px; padding: 12px 16px; background: #fef7e0; border-radius: 8px; font-size: 13px; color: #e37400;">
+  Note: Sales data shown is sample data for demo purposes. Live sales data will be connected when ported to the main Launch app.
+</div>

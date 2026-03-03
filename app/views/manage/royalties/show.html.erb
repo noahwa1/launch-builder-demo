@@ -1,0 +1,56 @@
+<% content_for :page_title, "Payment ##{@payment.id}" %>
+<% content_for :page_actions do %>
+  <% unless @payment.paid? || @payment.cancelled? %>
+    <%= link_to 'Mark Paid', mark_paid_manage_royalty_path(@payment), method: :patch, class: 'btn btn-success', data: { confirm: 'Mark as paid?' } %>
+  <% end %>
+  <%= link_to 'Back', manage_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Author</div>
+    <div class="value" style="font-size: 18px;"><%= @payment.author.full_name %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Amount</div>
+    <div class="value">$<%= number_with_precision(@payment.amount, precision: 2) %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Period</div>
+    <div class="value" style="font-size: 16px;"><%= @payment.period_label %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Status</div>
+    <div class="value"><span class="status-badge status-<%= @payment.status %>"><%= @payment.status.titleize %></span></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Statements</h3>
+  <% if @statements.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th style="text-align: right;">Units</th>
+            <th style="text-align: right;">Revenue</th>
+            <th style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Royalty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @statements.each do |stmt| %>
+            <tr>
+              <td><%= stmt.book.title %></td>
+              <td style="text-align: right;"><%= number_with_delimiter(stmt.units_sold) %></td>
+              <td style="text-align: right;">$<%= number_with_precision(stmt.gross_revenue, precision: 2) %></td>
+              <td style="text-align: right;"><%= (stmt.royalty_rate * 100).round(2) %>%</td>
+              <td style="text-align: right; font-weight: 600;">$<%= number_with_precision(stmt.royalty_amount, precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

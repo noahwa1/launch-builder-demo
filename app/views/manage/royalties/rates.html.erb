@@ -1,0 +1,39 @@
+<% content_for :page_title, "Royalty Rates" %>
+<% content_for :page_actions do %>
+  <%= link_to '+ New Rate', new_rate_manage_royalties_path, class: 'btn btn-primary' %>
+  <%= link_to 'Payments', manage_royalties_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<div class="card">
+  <% if @rates.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Author</th>
+            <th>Book</th>
+            <th>Rate</th>
+            <th>From</th>
+            <th>To</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rates.each do |rate| %>
+            <tr>
+              <td><%= rate.author.full_name %></td>
+              <td><%= rate.book&.title || 'All books (default)' %></td>
+              <td style="font-weight: 600;"><%= rate.percentage %>%</td>
+              <td style="color: #86868b;"><%= rate.effective_from.strftime('%b %d, %Y') %></td>
+              <td style="color: #86868b;"><%= rate.effective_to&.strftime('%b %d, %Y') || 'Active' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @rates %>
+  <% else %>
+    <div style="text-align: center; padding: 48px; color: #86868b;">
+      <p>No rates configured yet.</p>
+    </div>
+  <% end %>
+</div>

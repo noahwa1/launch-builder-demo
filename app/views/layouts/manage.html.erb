@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin — Launch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f5f7; color: #1d1d1f; display: flex; min-height: 100vh; }
+
+    .sidebar { width: 240px; background: #2c2c2e; color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; }
+    .sidebar-brand { padding: 24px 20px; border-bottom: 1px solid #444; }
+    .sidebar-brand h2 { font-size: 18px; font-weight: 700; }
+    .sidebar-brand span { font-size: 12px; color: #ff9f0a; display: block; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 12px 0; }
+    .sidebar-nav a { display: flex; align-items: center; padding: 10px 20px; color: #a1a1a6; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.15s; gap: 10px; }
+    .sidebar-nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .sidebar-nav a.active { color: #fff; background: rgba(255,255,255,0.1); border-right: 3px solid #ff9f0a; }
+    .sidebar-nav .badge { background: #ff453a; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; margin-left: auto; }
+    .sidebar-user { padding: 16px 20px; border-top: 1px solid #444; display: flex; align-items: center; gap: 10px; }
+    .sidebar-user .avatar { width: 36px; height: 36px; border-radius: 50%; background: #ff9f0a; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #000; }
+    .sidebar-user .info { flex: 1; }
+    .sidebar-user .info .name { font-size: 13px; font-weight: 600; }
+    .sidebar-user .info .role { font-size: 11px; color: #86868b; }
+    .sidebar-user .logout { color: #86868b; text-decoration: none; font-size: 12px; }
+    .sidebar-user .logout:hover { color: #ff453a; }
+
+    .main { margin-left: 240px; flex: 1; min-height: 100vh; }
+    .topbar { background: #fff; border-bottom: 1px solid #e5e5e7; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 22px; font-weight: 700; }
+    .content { padding: 32px; }
+
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e7; padding: 24px; margin-bottom: 20px; }
+    .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e7; padding: 20px; }
+    .stat-card .label { font-size: 12px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th { text-align: left; padding: 10px 12px; font-size: 12px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; border-bottom: 1px solid #e5e5e7; }
+    tbody td { padding: 12px; border-bottom: 1px solid #f0f0f2; }
+    tbody tr:hover { background: #f5f5f7; }
+
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-draft { background: #f0f0f2; color: #86868b; }
+    .status-submitted { background: #e8f0fe; color: #1a73e8; }
+    .status-in_review { background: #fef7e0; color: #e37400; }
+    .status-approved { background: #e6f4ea; color: #137333; }
+    .status-live { background: #e6f4ea; color: #137333; }
+    .status-rejected { background: #fce8e6; color: #c5221f; }
+    .status-pending { background: #fef7e0; color: #e37400; }
+    .status-processing { background: #e8f0fe; color: #1a73e8; }
+    .status-paid { background: #e6f4ea; color: #137333; }
+    .status-cancelled { background: #fce8e6; color: #c5221f; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn-primary { background: #ff9f0a; color: #000; }
+    .btn-primary:hover { background: #ffb340; }
+    .btn-secondary { background: #f0f0f2; color: #1d1d1f; }
+    .btn-secondary:hover { background: #e5e5e7; }
+    .btn-success { background: #30d158; color: #fff; }
+    .btn-success:hover { background: #28b84c; }
+    .btn-danger { background: #ff453a; color: #fff; }
+    .btn-danger:hover { background: #e03e35; }
+    .btn-sm { padding: 5px 12px; font-size: 13px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #1d1d1f; margin-bottom: 6px; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #ff9f0a; box-shadow: 0 0 0 3px rgba(255,159,10,0.1); }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-group .error { font-size: 12px; color: #ff453a; margin-top: 4px; }
+
+    .flash { padding: 12px 20px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+    .flash-notice { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+    .flash-alert { background: #fce8e6; color: #c5221f; border: 1px solid #f5c6c2; }
+
+    .message-list { display: flex; flex-direction: column; gap: 12px; }
+    .message-item { padding: 16px; border-radius: 8px; border: 1px solid #e5e5e7; }
+    .message-item.from-creator { background: #f0f7ff; border-color: #c2dcf5; }
+    .message-item .meta { font-size: 12px; color: #86868b; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .message-item .meta .sender { font-weight: 600; color: #1d1d1f; }
+    .message-item .body { font-size: 14px; line-height: 1.5; }
+
+    .pagination { display: flex; gap: 4px; margin-top: 20px; justify-content: center; }
+    .pagination a, .pagination span { padding: 6px 12px; border-radius: 6px; font-size: 13px; text-decoration: none; color: #1d1d1f; }
+    .pagination a:hover { background: #e5e5e7; }
+    .pagination .current { background: #ff9f0a; color: #000; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-bar a { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; color: #86868b; background: #f0f0f2; transition: all 0.15s; }
+    .filter-bar a:hover { background: #e5e5e7; color: #1d1d1f; }
+    .filter-bar a.active { background: #ff9f0a; color: #000; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Launch</h2>
+      <span>Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="<%= manage_root_path %>" class="<%= 'active' if controller_name == 'submissions' %>">
+        &#x1F4D6; Submissions
+        <% pending = Submission.pending_review.count %>
+        <% if pending > 0 %><span class="badge"><%= pending %></span><% end %>
+      </a>
+      <a href="<%= manage_portal_messages_path %>" class="<%= 'active' if controller_name == 'portal_messages' %>">
+        &#x1F4AC; Messages
+        <% if defined?(unread_admin_message_count) && unread_admin_message_count > 0 %>
+          <span class="badge"><%= unread_admin_message_count %></span>
+        <% end %>
+      </a>
+      <a href="<%= manage_royalties_path %>" class="<%= 'active' if controller_name == 'royalties' %>">
+        &#x1F4B0; Royalties
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="avatar"><%= current_user.initials %></div>
+      <div class="info">
+        <div class="name"><%= current_user.full_name %></div>
+        <div class="role">Admin</div>
+      </div>
+      <%= link_to 'Logout', destroy_user_session_path, method: :delete, class: 'logout' %>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1><%= yield :page_title %></h1>
+      <div><%= yield :page_actions %></div>
+    </div>
+    <div class="content">
+      <% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
+      <% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+      <%= yield %>
+    </div>
+  </div>
+</body>
+</html>

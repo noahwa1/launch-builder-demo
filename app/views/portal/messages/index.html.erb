@@ -1,0 +1,55 @@
+<% content_for :page_title, "Messages" %>
+
+<div class="two-col">
+  <div class="card">
+    <h3>General Messages</h3>
+    <% if @messages.any? %>
+      <div class="message-list">
+        <% @messages.each do |msg| %>
+          <div class="message-item <%= 'from-admin' if msg.sender.admin? %>">
+            <div class="meta">
+              <span class="sender"><%= msg.sender.full_name %></span>
+              <span><%= msg.created_at.strftime('%b %d, %Y at %I:%M %p') %></span>
+            </div>
+            <div class="body"><%= msg.body %></div>
+          </div>
+        <% end %>
+      </div>
+      <%= paginate @messages %>
+    <% else %>
+      <p style="color: #86868b; font-size: 14px;">No messages yet. Start a conversation below.</p>
+    <% end %>
+
+    <%= form_for PortalMessage.new, url: portal_messages_path, style: 'margin-top: 20px; border-top: 1px solid #e5e5e7; padding-top: 16px;' do |f| %>
+      <div class="form-group" style="margin-bottom: 8px;">
+        <%= f.text_area :body, placeholder: 'Send a message to your publishing team...', rows: 3 %>
+      </div>
+      <%= f.submit 'Send Message', class: 'btn btn-primary' %>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h3>Submission Threads</h3>
+    <% threads = current_author.submissions.includes(:portal_messages).where.not(portal_messages: { id: nil }).distinct %>
+    <% if threads.any? %>
+      <div style="display: grid; gap: 8px;">
+        <% threads.each do |sub| %>
+          <% unread = sub.portal_messages.where(thread_owner: current_user).where.not(sender: current_user).unread.count %>
+          <%= link_to submission_thread_portal_messages_path(submission_id: sub.id), style: 'display: block; padding: 12px; border: 1px solid #e5e5e7; border-radius: 8px; text-decoration: none; color: #1d1d1f; transition: background 0.15s;' do %>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; font-size: 14px;"><%= sub.title %></div>
+                <div style="font-size: 12px; color: #86868b;"><%= sub.portal_messages.count %> messages</div>
+              </div>
+              <% if unread > 0 %>
+                <span class="badge" style="background: #0071e3; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px;"><%= unread %></span>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <p style="color: #86868b; font-size: 14px;">No submission threads yet.</p>
+    <% end %>
+  </div>
+</div>

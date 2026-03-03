@@ -1,0 +1,23 @@
+<h2>New Title Submission</h2>
+<p><strong><%= @author.full_name %></strong> has submitted a new title for review:</p>
+
+<table style="border-collapse: collapse; width: 100%; max-width: 500px; margin: 20px 0;">
+  <tr>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">Title</td>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;"><%= @submission.title %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">ISBN</td>
+    <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= @submission.isbn || 'Not assigned' %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">Genre</td>
+    <td style="padding: 8px; border-bottom: 1px solid #eee;"><%= @submission.genre || '—' %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; color: #666;">Release Date</td>
+    <td style="padding: 8px;"><%= @submission.release_date&.strftime('%B %d, %Y') || 'TBD' %></td>
+  </tr>
+</table>
+
+<p><a href="<%= manage_submission_url(@submission) %>" style="display: inline-block; padding: 10px 20px; background: #0071e3; color: #fff; text-decoration: none; border-radius: 6px;">Review Submission</a></p>

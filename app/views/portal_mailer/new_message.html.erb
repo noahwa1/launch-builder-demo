@@ -1,0 +1,13 @@
+<h2>New Message</h2>
+<p>Hi <%= @recipient.first_name || @recipient.email %>,</p>
+<p>You have a new message from <strong><%= @message.sender.full_name %></strong>:</p>
+
+<div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #0071e3;">
+  <%= @message.body %>
+</div>
+
+<% if @message.submission.present? %>
+  <p style="color: #666; font-size: 13px;">Re: submission "<%= @message.submission.title %>"</p>
+<% end %>
+
+<p><a href="<%= portal_messages_url %>" style="display: inline-block; padding: 10px 20px; background: #0071e3; color: #fff; text-decoration: none; border-radius: 6px;">View Messages</a></p>

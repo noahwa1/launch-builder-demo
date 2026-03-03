@@ -1,0 +1,73 @@
+<% content_for :page_title, "Royalties" %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Total Earned</div>
+    <div class="value">$<%= number_with_precision(@total_earned, precision: 2, delimiter: ',') %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Pending</div>
+    <div class="value">$<%= number_with_precision(@pending_amount, precision: 2, delimiter: ',') %></div>
+  </div>
+</div>
+
+<% if @rates.any? %>
+  <div class="card">
+    <h3>Current Rates</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>Rate</th>
+            <th>Effective From</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rates.each do |rate| %>
+            <tr>
+              <td><%= rate.book ? rate.book.title : 'All books (default)' %></td>
+              <td style="font-weight: 600;"><%= rate.percentage %>%</td>
+              <td style="color: #86868b;"><%= rate.effective_from.strftime('%b %d, %Y') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
+
+<div class="card">
+  <h3>Payment History</h3>
+  <% if @payments.any? %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Paid</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @payments.each do |payment| %>
+            <tr>
+              <td><%= payment.period_label %></td>
+              <td style="font-weight: 600;">$<%= number_with_precision(payment.amount, precision: 2) %></td>
+              <td><span class="status-badge status-<%= payment.status %>"><%= payment.status.titleize %></span></td>
+              <td style="color: #86868b; font-size: 13px;"><%= payment.paid_at&.strftime('%b %d, %Y') || '—' %></td>
+              <td><%= link_to 'View', portal_royalty_path(payment), class: 'btn btn-secondary btn-sm' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @payments %>
+  <% else %>
+    <div class="empty-state">
+      <p>No payments yet.</p>
+    </div>
+  <% end %>
+</div>
