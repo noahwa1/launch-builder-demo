@@ -596,10 +596,10 @@ var launchCSS = '\
 .hover-brighten{transition:filter 0.3s ease;cursor:pointer}.hover-brighten:hover{filter:brightness(1.15)}\
 .hover-shadow{transition:box-shadow 0.3s ease;cursor:pointer}.hover-shadow:hover{box-shadow:0 15px 40px rgba(0,0,0,0.25)}\
 .hover-darken{transition:filter 0.3s ease;cursor:pointer}.hover-darken:hover{filter:brightness(0.85)}\
-.overlay-darken{position:relative}.overlay-darken::before{content:\"\";position:absolute;inset:0;background:rgba(0,0,0,0.4);pointer-events:none;z-index:1}\
-.overlay-lighten{position:relative}.overlay-lighten::before{content:\"\";position:absolute;inset:0;background:rgba(255,255,255,0.3);pointer-events:none;z-index:1}\
-.overlay-gradient-dark{position:relative}.overlay-gradient-dark::before{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));pointer-events:none;z-index:1}\
-.overlay-gradient-color{position:relative}.overlay-gradient-color::before{content:\"\";position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(233,69,96,0.3));pointer-events:none;z-index:1}\
+.overlay-darken{position:relative}.overlay-darken::before{content:\"\";position:absolute;inset:0;background:rgba(0,0,0,0.4);pointer-events:none;z-index:1}.overlay-darken>*{position:relative;z-index:2}\
+.overlay-lighten{position:relative}.overlay-lighten::before{content:\"\";position:absolute;inset:0;background:rgba(255,255,255,0.3);pointer-events:none;z-index:1}.overlay-lighten>*{position:relative;z-index:2}\
+.overlay-gradient-dark{position:relative}.overlay-gradient-dark::before{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));pointer-events:none;z-index:1}.overlay-gradient-dark>*{position:relative;z-index:2}\
+.overlay-gradient-color{position:relative}.overlay-gradient-color::before{content:\"\";position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(233,69,96,0.3));pointer-events:none;z-index:1}.overlay-gradient-color>*{position:relative;z-index:2}\
 .upload-placeholder{border:2px dashed rgba(0,0,0,0.15);cursor:pointer;transition:border-color 0.2s,background-color 0.2s}.upload-placeholder:hover{border-color:rgba(108,92,231,0.5);background-color:rgba(108,92,231,0.03)}\
 ';
 
@@ -1040,6 +1040,8 @@ editor.on('load', function() {
       }
     }
     resizeState.active = false;
+    resizeState.el = null;
+    resizeState.comp = null;
   });
 });
 
@@ -1232,31 +1234,64 @@ function loadTemplate(i) {
   closeTemplates();
 }
 
+// Strip editor-only artifacts from components before export/save
+function cleanForExport() {
+  removeResizeHandles();
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+  // Remove upload-placeholder class (dashed borders are editor-only)
+  wrapper.find('.upload-placeholder').forEach(function(comp) {
+    comp.removeClass('upload-placeholder');
+  });
+  // Remove data-gjs-was-static attribute if somehow still present
+  var doc = editor.Canvas.getDocument();
+  if (doc) {
+    doc.querySelectorAll('[data-gjs-was-static]').forEach(function(el) {
+      el.removeAttribute('data-gjs-was-static');
+    });
+  }
+}
+
+// Re-add editor-only artifacts after export/save
+function restoreAfterExport() {
+  markUploadPlaceholders();
+  var sel = editor.getSelected();
+  if (sel) addResizeHandles(sel);
+}
+
 function openCode() {
-  removeResizeHandles(); // Clean up editor-only elements before export
+  cleanForExport();
   // Check if any elements use AOS
   var html = editor.getHtml();
   var hasAOS = html.indexOf('data-aos') !== -1;
   var aosHead = hasAOS ? '\n  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">' : '';
   var aosFoot = hasAOS ? '\n  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"><\/script>\n  <script>AOS.init({once:true,duration:800});<\/script>' : '';
   var full = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Launch Page</title>' + aosHead + '\n  <style>\n' + launchCSS + '\n' + editor.getCss() + '\n  </style>\n</head>\n<body>\n' + html + aosFoot + '\n</body>\n</html>';
+  restoreAfterExport();
   document.getElementById('codeOutput').value = full;
   document.getElementById('codeModal').classList.add('active');
 }
 function closeCode() { document.getElementById('codeModal').classList.remove('active'); }
 function copyCode() {
   var ta = document.getElementById('codeOutput'); ta.select();
-  try { navigator.clipboard.writeText(ta.value).then(function() { showToast('Copied!', 'success'); }); }
-  catch(e) { document.execCommand('copy'); showToast('Copied!', 'success'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value)
+      .then(function() { showToast('Copied!', 'success'); })
+      .catch(function() { document.execCommand('copy'); showToast('Copied!', 'success'); });
+  } else {
+    document.execCommand('copy');
+    showToast('Copied!', 'success');
+  }
 }
 
 // ════════════════════════════════════════════════════════
 // HTML EDITOR
 // ════════════════════════════════════════════════════════
 function openHtmlEditor() {
-  removeResizeHandles(); // Clean up editor-only elements before reading HTML
+  cleanForExport();
   var ta = document.getElementById('htmlEditorOutput');
   ta.value = editor.getHtml();
+  restoreAfterExport();
   ta.readOnly = false;
   document.getElementById('htmlEditorModal').classList.add('active');
   setTimeout(function() { ta.focus(); }, 100);
@@ -1311,7 +1346,7 @@ function showToast(msg, type) {
 }
 
 function saveToServer() {
-  removeResizeHandles(); // Clean up editor-only elements before saving
+  cleanForExport();
   var btn = document.querySelector('.actions .btn-success');
   var origHTML = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -1319,6 +1354,8 @@ function saveToServer() {
 
   var html = editor.getHtml();
   var css = editor.getCss();
+  restoreAfterExport();
+
   var formData = new FormData();
   formData.append('builder_html', html);
   formData.append('builder_css', css);
@@ -1333,9 +1370,6 @@ function saveToServer() {
       btn.innerHTML = origHTML;
       btn.disabled = false;
       showToast('Saved! (localStorage)', 'success');
-      // Re-add resize handles if a component is selected
-      var sel = editor.getSelected();
-      if (sel) addResizeHandles(sel);
     }, 300);
   } catch(e) {
     btn.innerHTML = origHTML;
@@ -1665,12 +1699,18 @@ function tbBringToFront() {
   if (!sel) return;
   var current = sel.getStyle()['z-index'] || '';
   if (current && parseInt(current) > 0) {
-    // Already in front — toggle it off
-    sel.addStyle({ 'z-index': '', 'position': '' });
+    // Already in front — toggle it off (only clear z-index, preserve position if user-set)
+    sel.addStyle({ 'z-index': '' });
     document.getElementById('tb-front-btn').classList.remove('active');
     showToast('Layer reset', 'success');
   } else {
-    sel.addStyle({ 'position': 'relative', 'z-index': '10' });
+    // Only add position:relative if currently static
+    var el = sel.getEl();
+    var doc = editor.Canvas.getDocument();
+    var computedPos = (doc && el) ? (doc.defaultView || window).getComputedStyle(el).position : 'static';
+    var styles = { 'z-index': '10' };
+    if (computedPos === 'static') styles['position'] = 'relative';
+    sel.addStyle(styles);
     document.getElementById('tb-front-btn').classList.add('active');
     showToast('Brought to front', 'success');
   }
@@ -1818,8 +1858,9 @@ editor.on('load', function() {
       var el = r.el;
       if (el) {
         var fonts = el.querySelectorAll('font[size="7"]');
+        var ownerDoc = el.ownerDocument || document;
         fonts.forEach(function(font) {
-          var span = document.createElement('span');
+          var span = ownerDoc.createElement('span');
           span.style.fontSize = size;
           span.innerHTML = font.innerHTML;
           font.parentNode.replaceChild(span, font);
@@ -1874,6 +1915,8 @@ document.addEventListener('keydown', function(e) {
   if (mod && e.key === 's') { e.preventDefault(); saveToServer(); }
   if (mod && e.key === 'd') { e.preventDefault(); tbDuplicate(); }
   if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
+    // Only delete if no contenteditable or input is focused
+    if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
     var sel = editor.getSelected();
     if (sel) { e.preventDefault(); sel.remove(); }
   }
