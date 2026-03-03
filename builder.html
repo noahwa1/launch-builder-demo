@@ -928,10 +928,17 @@ editor.on('load', function() {
       var newH = Math.max(20, resizeState.startH + (e.clientY - resizeState.startY));
       resizeState.el.style.height = newH + 'px';
       resizeState.el.style.minHeight = newH + 'px';
+      resizeState.el.style.maxHeight = 'none';
+      // Neutralize flex column sizing if parent is a column flex
+      resizeState.el.style.flexShrink = '0';
+      resizeState.el.style.flexBasis = 'auto';
     } else if (resizeState.type === 'width') {
       var newW = Math.max(40, resizeState.startW + (e.clientX - resizeState.startX));
       resizeState.el.style.width = newW + 'px';
-      resizeState.el.style.maxWidth = newW + 'px';
+      resizeState.el.style.minWidth = newW + 'px';
+      resizeState.el.style.maxWidth = 'none';
+      // Neutralize flex so explicit width is respected
+      resizeState.el.style.flex = 'none';
     }
   });
 
@@ -940,9 +947,20 @@ editor.on('load', function() {
     // Sync the style back to the GrapesJS component model
     if (resizeState.comp) {
       if (resizeState.type === 'height') {
-        resizeState.comp.addStyle({ 'height': resizeState.el.style.height, 'min-height': resizeState.el.style.minHeight });
+        resizeState.comp.addStyle({
+          'height': resizeState.el.style.height,
+          'min-height': resizeState.el.style.minHeight,
+          'max-height': 'none',
+          'flex-shrink': '0',
+          'flex-basis': 'auto'
+        });
       } else if (resizeState.type === 'width') {
-        resizeState.comp.addStyle({ 'width': resizeState.el.style.width, 'max-width': resizeState.el.style.maxWidth });
+        resizeState.comp.addStyle({
+          'width': resizeState.el.style.width,
+          'min-width': resizeState.el.style.minWidth,
+          'max-width': 'none',
+          'flex': 'none'
+        });
       }
     }
     resizeState.active = false;
