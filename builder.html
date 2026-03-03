@@ -302,6 +302,8 @@
   <button onclick="tbDuplicate()" title="Duplicate"><i class="fas fa-clone"></i></button>
   <button class="danger" onclick="tbDelete()" title="Delete"><i class="fas fa-trash-alt"></i></button>
   <div class="tb-sep"></div>
+  <button onclick="tbUploadImage()" title="Upload Image"><i class="fas fa-camera"></i></button>
+  <div class="tb-sep"></div>
   <div class="tb-color" id="tb-color-swatch" title="Background Color">
     <input type="color" id="tb-color-input" value="#ffffff" onchange="tbSetBgColor(this.value)">
   </div>
@@ -540,6 +542,7 @@ var launchCSS = '\
 .overlay-lighten{position:relative}.overlay-lighten::before{content:\"\";position:absolute;inset:0;background:rgba(255,255,255,0.3);pointer-events:none;z-index:1}\
 .overlay-gradient-dark{position:relative}.overlay-gradient-dark::before{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));pointer-events:none;z-index:1}\
 .overlay-gradient-color{position:relative}.overlay-gradient-color::before{content:\"\";position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(233,69,96,0.3));pointer-events:none;z-index:1}\
+.upload-placeholder{border:2px dashed rgba(0,0,0,0.15);cursor:pointer;transition:border-color 0.2s,background-color 0.2s}.upload-placeholder:hover{border-color:rgba(108,92,231,0.5);background-color:rgba(108,92,231,0.03)}\
 ';
 
 // Editor-only CSS for resize handles (NOT included in export/save)
@@ -850,7 +853,7 @@ editor.on('load', function() {
     editor.setComponents(savedHtml);
     if (savedCss) editor.setStyle(savedCss);
     loaded = true;
-    setTimeout(injectCSS, 150);
+    setTimeout(function() { injectCSS(); markUploadPlaceholders(); }, 150);
   }
 
   if (!loaded && editor.DomComponents.getComponents().length === 0) {
@@ -858,7 +861,12 @@ editor.on('load', function() {
   }
 });
 
-editor.on('component:add', injectCSS);
+var markTimeout;
+editor.on('component:add', function() {
+  injectCSS();
+  clearTimeout(markTimeout);
+  markTimeout = setTimeout(markUploadPlaceholders, 300);
+});
 
 // ════════════════════════════════════════════════════════
 // RESIZE HANDLES
@@ -1119,7 +1127,7 @@ function loadTemplate(i) {
   if (editor.DomComponents.getComponents().length > 0 && !confirm('Replace current page with this template?')) return;
   editor.DomComponents.clear(); editor.CssComposer.clear();
   editor.setComponents(templates[i].html);
-  injectCSS(); setTimeout(injectCSS, 150);
+  injectCSS(); setTimeout(function() { injectCSS(); markUploadPlaceholders(); }, 150);
   closeTemplates();
 }
 
@@ -1518,6 +1526,78 @@ function tbSetBgColor(color) {
   sel.addStyle({ 'background': '', 'background-image': 'none', 'background-color': color });
   // Update swatch
   document.getElementById('tb-color-swatch').style.background = color;
+}
+
+function tbUploadImage() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var src = ev.target.result;
+      var classes = sel.getClasses() || [];
+      var isPlaceholder = classes.indexOf('upload-placeholder') !== -1;
+      var isRetailer = classes.indexOf('retailer-card') !== -1;
+
+      if (isPlaceholder) {
+        var existingText = sel.getEl() ? sel.getEl().textContent.trim() : 'Image';
+        sel.components('');
+        sel.set('content', '');
+        sel.removeClass('upload-placeholder');
+        if (isRetailer) {
+          sel.append('<img src="' + src + '" alt="' + existingText + '" style="max-height:50px;max-width:80%;object-fit:contain;" />');
+        } else {
+          sel.append('<img src="' + src + '" alt="' + existingText + '" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />');
+        }
+      } else {
+        // Non-placeholder — set as background
+        sel.addStyle({
+          'background-image': 'url(' + src + ')',
+          'background-size': 'cover',
+          'background-position': 'center',
+          'background-repeat': 'no-repeat'
+        });
+      }
+      editor.AssetManager.add([{ src: src, name: file.name, type: 'image' }]);
+      input.remove();
+      showToast('Image uploaded!', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// Auto-detect and mark placeholder elements for upload
+function markUploadPlaceholders() {
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+  // Retailer cards without images
+  wrapper.find('.retailer-card').forEach(function(card) {
+    if (!card.find('img').length) card.addClass('upload-placeholder');
+  });
+  // Book cover placeholders
+  wrapper.find('.book-cover').forEach(function(bc) {
+    bc.components().forEach(function(child) {
+      if (child.get('tagName') !== 'img' && !child.find('img').length) {
+        child.addClass('upload-placeholder');
+      }
+    });
+  });
+  // Author image placeholders
+  wrapper.find('.author-image').forEach(function(ai) {
+    ai.components().forEach(function(child) {
+      if (child.get('tagName') !== 'img' && !child.find('img').length) {
+        child.addClass('upload-placeholder');
+      }
+    });
+  });
 }
 
 // Reposition toolbar on canvas scroll
