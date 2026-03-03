@@ -674,6 +674,7 @@ var editor = grapesjs.init({
   fromElement: false,
   height: '100%',
   width: 'auto',
+  avoidInlineStyle: false,   // Write styles inline per-element, not CSS rules for shared classes
   storageManager: false,
   assetManager: {
     uploadFile: function(e) {
@@ -944,7 +945,10 @@ function addResizeHandles(component) {
   // Make sure element has relative/absolute/sticky positioning for handle placement
   var iframeWin = doc.defaultView || window;
   var pos = iframeWin.getComputedStyle(el).position;
-  if (pos === 'static') el.style.position = 'relative';
+  if (pos === 'static') {
+    el.style.position = 'relative';
+    el.setAttribute('data-gjs-was-static', '1');
+  }
 
   // Bottom handle (height resize)
   var bottomHandle = doc.createElement('div');
@@ -974,6 +978,11 @@ function addResizeHandles(component) {
 function removeResizeHandles() {
   var doc = editor.Canvas.getDocument();
   if (!doc) return;
+  // Restore position on elements that were originally static
+  doc.querySelectorAll('[data-gjs-was-static]').forEach(function(el) {
+    el.style.position = '';
+    el.removeAttribute('data-gjs-was-static');
+  });
   doc.querySelectorAll('.gjs-resize-handle, .gjs-resize-handle-side').forEach(function(h) { h.remove(); });
 }
 
@@ -1004,21 +1013,28 @@ editor.on('load', function() {
 
   canvasDoc.addEventListener('mouseup', function() {
     if (!resizeState.active) return;
-    // Sync the style back to the GrapesJS component model
+    // Sync only the essential properties to the GrapesJS component model
+    // Clean up temporary DOM overrides that shouldn't persist
     if (resizeState.comp) {
       if (resizeState.type === 'height') {
+        var h = resizeState.el.style.height;
+        // Clean up DOM-only overrides
+        resizeState.el.style.maxHeight = '';
+        resizeState.el.style.flexShrink = '';
+        resizeState.el.style.flexBasis = '';
+        // Sync to model — only height and min-height
         resizeState.comp.addStyle({
-          'height': resizeState.el.style.height,
-          'min-height': resizeState.el.style.minHeight,
-          'max-height': 'none',
-          'flex-shrink': '0',
-          'flex-basis': 'auto'
+          'height': h,
+          'min-height': h
         });
       } else if (resizeState.type === 'width') {
+        var w = resizeState.el.style.width;
+        // Clean up DOM-only overrides
+        resizeState.el.style.maxWidth = '';
+        resizeState.el.style.minWidth = '';
+        // Sync to model — width + flex:none so flex layout doesn't override
         resizeState.comp.addStyle({
-          'width': resizeState.el.style.width,
-          'min-width': resizeState.el.style.minWidth,
-          'max-width': 'none',
+          'width': w,
           'flex': 'none'
         });
       }
@@ -1027,7 +1043,31 @@ editor.on('load', function() {
   });
 });
 
+// Template CSS classes — must never be used as CSS rule targets by GrapesJS
+var templateClasses = new Set([
+  'section-wrapper','section-intro','project-header','steps-section','step-card','steps-row',
+  'two-col','col-left','col-right','book-section','book-row','book-cover','book-detail',
+  'author-section','author-row','author-image','author-detail','testimonials-section',
+  'testimonial-card','launch-footer','container','retailer-grid','retailer-card','retailer-name',
+  'bg-form','field-group','name-row','nav-links','btn-submit','btn-order','order-btn',
+  'bg-launch-blue1','bg-launch-green','bg-launch-dark','bg-launch-yellow',
+  'text-white','text-launch-darkblue','page-headline','page-headline2','text-shadow',
+  'ff-montserrat','ff-opensans','step-number','step-caption','step-desc',
+  'order-step-number','order-caption','book-headline1','book-headline2','book-desc',
+  'author-headline1','author-desc','sticky-nav','btn','btn-submit',
+  'hover-lift','hover-scale','hover-glow','hover-brighten','hover-shadow','hover-darken',
+  'overlay-darken','overlay-lighten','overlay-gradient-dark','overlay-gradient-color',
+  'upload-placeholder'
+]);
+
 editor.on('component:selected', function(component) {
+  // Protect template classes — deactivate them so GrapesJS creates unique per-element selectors
+  component.getSelectors().each(function(sel) {
+    if (templateClasses.has(sel.get('name'))) {
+      sel.set('private', true);
+    }
+  });
+
   showPanel('styles', document.querySelector('.sidebar-tabs button:nth-child(2)'));
   document.getElementById('img-actions').style.display = '';
   document.getElementById('align-actions').style.display = '';
@@ -1833,7 +1873,7 @@ document.addEventListener('keydown', function(e) {
   if (mod && e.key === 'y') { e.preventDefault(); doRedo(); }
   if (mod && e.key === 's') { e.preventDefault(); saveToServer(); }
   if (mod && e.key === 'd') { e.preventDefault(); tbDuplicate(); }
-  if (e.key === 'Delete' || e.key === 'Backspace' && !mod) {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
     var sel = editor.getSelected();
     if (sel) { e.preventDefault(); sel.remove(); }
   }
