@@ -373,7 +373,7 @@
 <div class="top-bar">
   <div class="top-bar-left">
     <div class="logo">LAUNCH <span>BUILDER</span></div>
-    <a href="<%= portal_landing_page_path(campaign_id: @campaign.id) %>" class="back-link"><i class="fas fa-arrow-left"></i> Back to Landing Page</a>
+    <a href="<%= portal_campaign_landing_page_path(@campaign) %>" class="back-link"><i class="fas fa-arrow-left"></i> Back to Landing Page</a>
   </div>
 
   <div class="toolbar">
@@ -568,7 +568,7 @@
 // CONFIG
 // ════════════════════════════════════════════════════════
 var CAMPAIGN_ID = '<%= @campaign.id %>';
-var SAVE_URL = '<%= portal_landing_page_path(campaign_id: @campaign.id, format: :json) %>';
+var SAVE_URL = '<%= portal_campaign_landing_page_path(@campaign, format: :json) %>';
 var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 
 // ════════════════════════════════════════════════════════

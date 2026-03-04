@@ -13,7 +13,7 @@ module Portal
       @asset.original_filename = params[:campaign_asset][:file]&.original_filename if params.dig(:campaign_asset, :file)
 
       if @asset.save
-        redirect_to portal_campaign_assets_path(campaign_id: @campaign.id), notice: 'Asset uploaded successfully.'
+        redirect_to portal_campaign_campaign_assets_path(@campaign), notice: 'Asset uploaded successfully.'
       else
         @assets = @campaign.campaign_assets.order(created_at: :desc)
         @photos = @assets.where("asset_type LIKE ?", "photo_%")
@@ -25,7 +25,7 @@ module Portal
     def destroy
       asset = @campaign.campaign_assets.find(params[:id])
       asset.destroy
-      redirect_to portal_campaign_assets_path(campaign_id: @campaign.id), notice: 'Asset removed.'
+      redirect_to portal_campaign_campaign_assets_path(@campaign), notice: 'Asset removed.'
     end
 
     private

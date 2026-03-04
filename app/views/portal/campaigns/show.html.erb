@@ -72,10 +72,10 @@
     <% end %>
     <div class="quick-actions">
       <%= link_to 'Links', links_portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
-      <%= link_to 'Content', portal_campaign_assets_path(campaign_id: @campaign.id), class: 'btn btn-secondary btn-sm' %>
+      <%= link_to 'Content', portal_campaign_campaign_assets_path(@campaign), class: 'btn btn-secondary btn-sm' %>
       <%= link_to 'Ad Access', ad_access_portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
       <%= link_to 'Logistics', logistics_portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
-      <%= link_to 'Landing Page', portal_landing_page_path(campaign_id: @campaign.id), class: 'btn btn-secondary btn-sm' %>
+      <%= link_to 'Landing Page', portal_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm' %>
     </div>
   </div>
 
@@ -92,7 +92,7 @@
     <% else %>
       <div style="text-align:center;padding:24px;color:var(--text-muted);">No assets uploaded yet.</div>
     <% end %>
-    <%= link_to 'Upload Content', portal_campaign_assets_path(campaign_id: @campaign.id), class: 'btn btn-primary btn-sm', style: 'margin-top:12px;' %>
+    <%= link_to 'Upload Content', portal_campaign_campaign_assets_path(@campaign), class: 'btn btn-primary btn-sm', style: 'margin-top:12px;' %>
   </div>
 </div>
 

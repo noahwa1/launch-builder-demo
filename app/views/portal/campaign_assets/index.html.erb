@@ -18,7 +18,7 @@
 <!-- Upload Form -->
 <div class="card upload-section">
   <h3>Upload New Asset</h3>
-  <%= form_with model: CampaignAsset.new, url: portal_campaign_assets_path(campaign_id: @campaign.id), html: { multipart: true } do |f| %>
+  <%= form_with model: CampaignAsset.new, url: portal_campaign_campaign_assets_path(@campaign), html: { multipart: true } do |f| %>
     <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
       <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
         <label>Asset Type</label>
@@ -60,7 +60,7 @@
           </div>
           <div class="asset-actions">
             <span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>" style="font-size:11px;padding:2px 8px;"><%= asset.status.titleize %></span>
-            <%= button_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %>
+            <%= button_to 'Remove', portal_campaign_campaign_asset_path(@campaign, asset), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %>
           </div>
           <% if asset.needs_changes? && asset.admin_notes.present? %>
             <div style="padding:0 12px 12px;">
@@ -90,7 +90,7 @@
               <td><%= asset.asset_type.titleize %></td>
               <td><span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>"><%= asset.status.titleize %></span></td>
               <td class="text-muted"><%= asset.created_at.strftime('%b %d, %Y') %></td>
-              <td><%= button_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %></td>
+              <td><%= button_to 'Remove', portal_campaign_campaign_asset_path(@campaign, asset), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %></td>
             </tr>
             <% if asset.needs_changes? && asset.admin_notes.present? %>
               <tr>

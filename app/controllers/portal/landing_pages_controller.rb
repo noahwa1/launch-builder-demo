@@ -17,7 +17,7 @@ module Portal
     def update
       if @landing_page.update(landing_page_params)
         respond_to do |format|
-          format.html { redirect_to portal_landing_page_path(campaign_id: @campaign.id), notice: 'Landing page saved.' }
+          format.html { redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Landing page saved.' }
           format.json { render json: { success: true } }
         end
       else
@@ -30,12 +30,12 @@ module Portal
 
     def publish
       @landing_page.publish!
-      redirect_to portal_landing_page_path(campaign_id: @campaign.id), notice: "Page published at /pages/#{@landing_page.slug}"
+      redirect_to portal_campaign_landing_page_path(@campaign), notice: "Page published at /pages/#{@landing_page.slug}"
     end
 
     def unpublish
       @landing_page.unpublish!
-      redirect_to portal_landing_page_path(campaign_id: @campaign.id), notice: 'Page unpublished.'
+      redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Page unpublished.'
     end
 
     private
