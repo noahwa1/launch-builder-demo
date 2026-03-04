@@ -1,0 +1,9 @@
+<h2>Asset Approved</h2>
+
+<p>Hi <%= @creator.first_name %>,</p>
+
+<p>Your uploaded asset "<strong><%= @asset.original_filename || @asset.asset_type.titleize %></strong>" for the campaign "<strong><%= @campaign.title %></strong>" has been approved by our team.</p>
+
+<p>Keep up the great work! Check your campaign hub to see your updated progress.</p>
+
+<p>— The Launch Team</p>

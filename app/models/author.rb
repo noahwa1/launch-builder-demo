@@ -3,6 +3,7 @@ class Author < ApplicationRecord
 
   has_many :books
   has_many :submissions
+  has_many :campaigns
   has_many :royalty_rates
   has_many :royalty_payments
   has_one  :user, as: :account

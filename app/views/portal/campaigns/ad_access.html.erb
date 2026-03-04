@@ -1,0 +1,81 @@
+<% content_for :page_title, 'Ad Access' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .access-toggle { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 10px; transition: all 0.15s; }
+  .access-toggle:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+  .access-info { display: flex; align-items: center; gap: 12px; }
+  .access-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .access-icon.fb { background: rgba(59,89,152,0.1); color: #3B5998; }
+  .access-icon.ig { background: rgba(225,48,108,0.1); color: #E1306C; }
+  .access-icon.tt { background: rgba(0,0,0,0.06); color: #000; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border-strong); border-radius: 24px; transition: 0.2s; }
+  .toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+</style>
+
+<div class="card">
+  <h3>Grant Ad Access</h3>
+  <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Toggle access for each platform so our team can run paid campaigns on your behalf. Follow the instructions below for each platform.</p>
+
+  <%= form_with model: @campaign, url: update_ad_access_portal_campaign_path(@campaign), method: :patch, id: 'ad-access-form' do |f| %>
+    <div class="access-toggle">
+      <div class="access-info">
+        <div class="access-icon fb">f</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">Facebook</div>
+          <div class="text-muted" style="font-size:12px;">Grant Page admin access to launch@company.com</div>
+        </div>
+      </div>
+      <label class="toggle-switch">
+        <%= f.check_box :facebook_access, onchange: 'this.form.requestSubmit()' %>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="access-toggle">
+      <div class="access-info">
+        <div class="access-icon ig">&#9679;</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">Instagram</div>
+          <div class="text-muted" style="font-size:12px;">Connect your Instagram business account</div>
+        </div>
+      </div>
+      <label class="toggle-switch">
+        <%= f.check_box :instagram_access, onchange: 'this.form.requestSubmit()' %>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="access-toggle">
+      <div class="access-info">
+        <div class="access-icon tt">T</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">TikTok <span class="optional-tag" style="font-size:10px;background:rgba(0,0,0,0.04);color:var(--text-muted);padding:2px 6px;border-radius:4px;">Optional</span></div>
+          <div class="text-muted" style="font-size:12px;">Grant TikTok Ads Manager access</div>
+        </div>
+      </div>
+      <label class="toggle-switch">
+        <%= f.check_box :tiktok_access, onchange: 'this.form.requestSubmit()' %>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  <% end %>
+</div>
+
+<div class="card">
+  <h3>How-To Instructions</h3>
+  <div style="padding:16px;background:var(--page-bg);border-radius:10px;font-size:14px;color:var(--text-secondary);line-height:1.8;">
+    <strong>Facebook:</strong> Go to your Page Settings → Page Roles → Add "launch@company.com" as an Admin.<br>
+    <strong>Instagram:</strong> Settings → Account → Linked Accounts → Connect your Facebook Page.<br>
+    <strong>TikTok:</strong> TikTok Ads Manager → Account Settings → Add Member → Enter our email.
+  </div>
+  <div style="margin-top:16px;padding:16px;background:#111119;border-radius:10px;color:#888;text-align:center;font-size:13px;">
+    Loom tutorial video coming soon
+  </div>
+</div>

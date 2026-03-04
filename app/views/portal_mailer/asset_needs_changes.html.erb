@@ -1,0 +1,16 @@
+<h2>Changes Requested</h2>
+
+<p>Hi <%= @creator.first_name %>,</p>
+
+<p>Our team has reviewed your uploaded asset "<strong><%= @asset.original_filename || @asset.asset_type.titleize %></strong>" for the campaign "<strong><%= @campaign.title %></strong>" and has requested some changes.</p>
+
+<% if @asset.admin_notes.present? %>
+  <p><strong>Notes from the team:</strong></p>
+  <blockquote style="border-left: 3px solid #6366F1; padding-left: 12px; color: #555;">
+    <%= @asset.admin_notes %>
+  </blockquote>
+<% end %>
+
+<p>Please log in to your Creators Portal to upload a revised version.</p>
+
+<p>— The Launch Team</p>

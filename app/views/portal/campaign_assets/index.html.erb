@@ -1,0 +1,118 @@
+<% content_for :page_title, 'Content' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .asset-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; transition: all 0.15s; }
+  .asset-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .asset-thumb { height: 140px; background: var(--page-bg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 32px; }
+  .asset-info { padding: 12px; }
+  .asset-info .name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .asset-info .type { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .asset-actions { display: flex; align-items: center; justify-content: space-between; padding: 0 12px 12px; }
+  .upload-section { margin-bottom: 24px; }
+</style>
+
+<!-- Upload Form -->
+<div class="card upload-section">
+  <h3>Upload New Asset</h3>
+  <%= form_with model: CampaignAsset.new, url: portal_campaign_assets_path(campaign_id: @campaign.id), html: { multipart: true } do |f| %>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
+        <label>Asset Type</label>
+        <%= f.select :asset_type, [
+          ['Photo — Headshot', 'photo_headshot'],
+          ['Photo — Candid', 'photo_candid'],
+          ['Video — Promo (30-60s)', 'video_promo'],
+          ['Video — Book Excerpt', 'video_excerpt'],
+          ['Video — Signing Clip', 'video_signing'],
+          ['Video — Hook Clip', 'video_hook'],
+          ['Other', 'other']
+        ], {}, { style: 'padding:10px 14px;' } %>
+      </div>
+      <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
+        <label>File</label>
+        <%= f.file_field :file %>
+      </div>
+      <%= f.submit 'Upload', class: 'btn btn-primary', style: 'height:42px;' %>
+    </div>
+  <% end %>
+</div>
+
+<% if @photos.any? %>
+  <div class="card">
+    <h3>Photos (<%= @photos.count %>)</h3>
+    <div class="asset-grid">
+      <% @photos.each do |asset| %>
+        <div class="asset-card">
+          <div class="asset-thumb">
+            <% if asset.file.present? %>
+              <img src="<%= asset.file.url %>" style="width:100%;height:100%;object-fit:cover;" alt="<%= asset.asset_type %>">
+            <% else %>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <% end %>
+          </div>
+          <div class="asset-info">
+            <div class="name"><%= asset.original_filename || asset.asset_type.titleize %></div>
+            <div class="type"><%= asset.asset_type.titleize %></div>
+          </div>
+          <div class="asset-actions">
+            <span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>" style="font-size:11px;padding:2px 8px;"><%= asset.status.titleize %></span>
+            <%= link_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, data: { confirm: 'Remove this asset?' }, class: 'text-muted', style: 'font-size:12px;text-decoration:none;' %>
+          </div>
+          <% if asset.needs_changes? && asset.admin_notes.present? %>
+            <div style="padding:0 12px 12px;">
+              <div style="background:rgba(239,68,68,0.06);padding:8px 10px;border-radius:8px;font-size:12px;color:#DC2626;">
+                <strong>Admin note:</strong> <%= asset.admin_notes %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @videos.any? %>
+  <div class="card">
+    <h3>Videos (<%= @videos.count %>)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Type</th><th>Status</th><th>Uploaded</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% @videos.each do |asset| %>
+            <tr>
+              <td><%= asset.original_filename || 'Video file' %></td>
+              <td><%= asset.asset_type.titleize %></td>
+              <td><span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>"><%= asset.status.titleize %></span></td>
+              <td class="text-muted"><%= asset.created_at.strftime('%b %d, %Y') %></td>
+              <td><%= link_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, data: { confirm: 'Remove?' }, class: 'text-muted', style: 'font-size:12px;text-decoration:none;' %></td>
+            </tr>
+            <% if asset.needs_changes? && asset.admin_notes.present? %>
+              <tr>
+                <td colspan="5" style="padding:4px 14px 14px;">
+                  <div style="background:rgba(239,68,68,0.06);padding:8px 10px;border-radius:8px;font-size:12px;color:#DC2626;">
+                    <strong>Admin note:</strong> <%= asset.admin_notes %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
+
+<% if @photos.empty? && @videos.empty? %>
+  <div class="card">
+    <div class="empty-state">
+      <h3>No content uploaded yet</h3>
+      <p>Upload photos and videos to get your campaign rolling.</p>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,60 @@
+<% content_for :page_title, 'Campaigns' %>
+
+<style>
+  .progress-bar-wrap { background: var(--border); border-radius: 20px; height: 6px; overflow: hidden; width: 120px; display: inline-block; vertical-align: middle; }
+  .progress-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+  .progress-text { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+</style>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Author</th>
+          <th>Campaign</th>
+          <th>Progress</th>
+          <th>Assets Pending</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @campaigns.each do |campaign| %>
+          <tr>
+            <td style="font-weight:500;"><%= campaign.author.full_name %></td>
+            <td><%= campaign.title %></td>
+            <td>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:<%= campaign.progress_percentage %>%"></div>
+              </div>
+              <span class="progress-text"><%= campaign.progress_percentage %>%</span>
+            </td>
+            <td>
+              <% pending = campaign.campaign_assets.pending.count %>
+              <% if pending > 0 %>
+                <span class="status-badge status-pending"><%= pending %> pending</span>
+              <% else %>
+                <span class="text-muted">—</span>
+              <% end %>
+            </td>
+            <td><span class="status-badge status-<%= campaign.status %>"><%= campaign.status.titleize %></span></td>
+            <td class="text-muted"><%= campaign.created_at.strftime('%b %d, %Y') %></td>
+            <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= paginate @campaigns %>
+</div>
+
+<% if @campaigns.empty? %>
+  <div class="card">
+    <div class="empty-state">
+      <h3>No campaigns yet</h3>
+      <p>Campaigns are auto-created when you approve a submission.</p>
+    </div>
+  </div>
+<% end %>

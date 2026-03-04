@@ -1,0 +1,101 @@
+<% content_for :page_title, @campaign.title %>
+<% content_for :page_actions do %>
+  <%= link_to 'All Campaigns', manage_campaigns_path, class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .checklist-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; font-size: 13px; transition: all 0.15s; text-decoration: none; color: var(--text-primary); }
+  .checklist-toggle:hover { border-color: var(--accent); background: var(--accent-wash); }
+  .checklist-toggle.complete { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.2); }
+  .checklist-toggle .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .checklist-toggle .dot.not_started { background: var(--text-muted); }
+  .checklist-toggle .dot.in_progress { background: var(--accent); }
+  .checklist-toggle .dot.complete { background: #22C55E; }
+  .asset-review-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; }
+  .asset-review-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .notes-input { width: 100%; margin-top: 8px; }
+</style>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Author</div>
+    <div style="font-size:16px;font-weight:600;margin-top:8px;"><%= @campaign.author.full_name %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Progress</div>
+    <div class="value"><%= @campaign.progress_percentage %>%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Status</div>
+    <div style="margin-top:8px;"><span class="status-badge status-<%= @campaign.status %>"><%= @campaign.status.titleize %></span></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Pending Review</div>
+    <div class="value"><%= @pending_assets.count %></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Checklist -->
+  <div class="card">
+    <h3>Checklist</h3>
+    <% Campaign::CATEGORIES.each do |cat| %>
+      <% items = @items_by_category[cat] || [] %>
+      <% next if items.empty? %>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px;"><%= cat.titleize %></div>
+        <% items.each do |item| %>
+          <%= link_to toggle_checklist_item_manage_campaign_path(@campaign, checklist_item_id: item.id), method: :patch, class: "checklist-toggle #{item.status}" do %>
+            <span class="dot <%= item.status %>"></span>
+            <%= item.title %>
+            <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);">(optional)</span><% end %>
+          <% end %>
+          <br>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Assets Pending Review -->
+  <div>
+    <div class="card">
+      <h3>Assets Pending Review (<%= @pending_assets.count %>)</h3>
+      <% if @pending_assets.any? %>
+        <% @pending_assets.each do |asset| %>
+          <div class="asset-review-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-weight:600;font-size:14px;"><%= asset.original_filename || 'Unnamed' %></div>
+                <div class="text-muted" style="font-size:12px;"><%= asset.asset_type.titleize %> — uploaded <%= time_ago_in_words(asset.created_at) %> ago</div>
+              </div>
+              <span class="status-badge status-pending">Pending</span>
+            </div>
+            <div class="asset-review-actions">
+              <%= link_to 'Approve', approve_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'btn btn-success btn-sm' %>
+              <%= form_with url: request_changes_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, style: 'display:flex;gap:6px;flex:1;' do %>
+                <input type="text" name="admin_notes" placeholder="Notes for creator..." class="notes-input" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;">
+                <button type="submit" class="btn btn-danger btn-sm">Request Changes</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div style="text-align:center;padding:24px;color:var(--text-muted);">No assets pending review.</div>
+      <% end %>
+    </div>
+
+    <% approved = @all_assets.where(status: :approved) %>
+    <% if approved.any? %>
+      <div class="card">
+        <h3>Approved Assets (<%= approved.count %>)</h3>
+        <% approved.each do |asset| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:14px;"><%= asset.original_filename || asset.asset_type.titleize %></span>
+            <span class="status-badge status-approved">Approved</span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

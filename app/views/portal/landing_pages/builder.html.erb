@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%= csrf_meta_tags %>
+    <title>Launch Page Builder — <%= @campaign.title %></title>
+    <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.13/dist/css/grapes.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+
+<style>
+  :root {
+    --bg-primary: #111119;
+    --bg-secondary: #1a1a24;
+    --bg-tertiary: #22222e;
+    --bg-hover: #2a2a38;
+    --border: #2d2d3d;
+    --text-primary: #e8e8ef;
+    --text-secondary: #8888a0;
+    --text-muted: #55556a;
+    --accent: #6c5ce7;
+    --accent-hover: #7f71ed;
+    --accent-soft: rgba(108,92,231,0.12);
+    --danger: #e94560;
+    --success: #219653;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: var(--bg-primary); color: var(--text-primary); }
+
+  /* ── Top Bar ─────────────────────────────── */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-secondary); padding: 0 16px; height: 48px;
+    border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 14px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-primary); white-space: nowrap; }
+  .logo span { color: var(--accent); }
+  .back-link { color: var(--text-secondary); font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; transition: all 0.15s; }
+  .back-link:hover { border-color: var(--accent); color: var(--accent); }
+  .toolbar { display: flex; align-items: center; gap: 2px; }
+  .toolbar button {
+    background: transparent; border: none; color: var(--text-secondary); padding: 6px 8px;
+    border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.15s;
+  }
+  .toolbar button:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .toolbar button.active { color: var(--accent); background: var(--accent-soft); }
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+  .actions { display: flex; gap: 8px; }
+  .btn-action {
+    padding: 6px 14px; border-radius: 6px; border: none; font-size: 12px;
+    font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--text-primary); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { opacity: 0.9; }
+
+  /* ── Editor Layout ──────────────────────── */
+  .editor-wrap { display: flex; height: calc(100vh - 48px); }
+  #gjs { flex: 1; overflow: hidden; }
+  .sidebar {
+    width: 280px; background: var(--bg-secondary); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-tabs {
+    display: flex; border-bottom: 1px solid var(--border); background: var(--bg-secondary);
+  }
+  .sidebar-tabs button {
+    flex: 1; padding: 10px 0; border: none; background: transparent; color: var(--text-muted);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+    transition: all 0.15s; border-bottom: 2px solid transparent;
+  }
+  .sidebar-tabs button:hover { color: var(--text-secondary); }
+  .sidebar-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .sidebar-content { flex: 1; overflow-y: auto; }
+  .sidebar-panel { display: none; }
+  .sidebar-panel.active { display: block; }
+
+  /* ── Block Sidebar ──────────────────────── */
+  .block-category { border-bottom: 1px solid var(--border); }
+  .block-category.collapsed .block-grid { display: none; }
+  .block-category.collapsed .chevron { transform: rotate(-90deg); }
+  .block-category-title {
+    padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex;
+    align-items: center; justify-content: space-between; transition: color 0.15s;
+  }
+  .block-category-title:hover { color: var(--text-primary); }
+  .chevron { font-size: 10px; transition: transform 0.2s; }
+  .block-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 10px; }
+  .block-grid.single-col { grid-template-columns: 1fr; }
+  .block-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 6px; border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; gap: 6px; transition: all 0.15s; min-height: 58px;
+  }
+  .block-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .block-item i { font-size: 18px; color: var(--text-secondary); }
+  .block-item:hover i { color: var(--accent); }
+  .block-item span { font-size: 10px; color: var(--text-secondary); font-weight: 500; line-height: 1.2; }
+
+  /* ── Image Actions (in styles panel) ─────── */
+  .img-actions { padding: 12px; border-bottom: 1px solid var(--border); }
+  .img-actions-title {
+    font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .img-actions-row { display: flex; gap: 6px; }
+  .img-action-btn {
+    flex: 1; padding: 8px 6px; border-radius: 6px; border: 1px dashed var(--border);
+    background: var(--bg-tertiary); color: var(--text-secondary); font-size: 11px;
+    font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s;
+  }
+  .img-action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .img-action-btn i { display: block; font-size: 16px; margin-bottom: 4px; }
+  .img-action-btn input { display: none; }
+
+  /* Link actions for images */
+  .link-actions { padding: 12px; border-bottom: 1px solid var(--border); }
+  .link-actions-title {
+    font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .link-input-row { display: flex; gap: 6px; }
+  .link-input-row input {
+    flex: 1; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; color: var(--text-primary); font-size: 12px; outline: none;
+  }
+  .link-input-row input:focus { border-color: var(--accent); }
+  .link-input-row button {
+    padding: 6px 10px; border-radius: 6px; border: none; font-size: 11px;
+    font-weight: 600; cursor: pointer;
+  }
+  .link-apply-btn { background: var(--accent); color: #fff; }
+  .link-remove-btn { background: var(--bg-tertiary); color: var(--danger); border: 1px solid var(--border) !important; }
+
+  /* ── GrapesJS Overrides ───────────────────── */
+  .gjs-one-bg { background-color: var(--bg-secondary) !important; }
+  .gjs-two-color { color: var(--text-primary) !important; }
+  .gjs-three-bg { background-color: var(--bg-tertiary) !important; }
+  .gjs-four-color, .gjs-four-color-h:hover { color: var(--accent) !important; }
+  .gjs-pn-panel { border: none !important; }
+  .gjs-pn-views-container, .gjs-pn-views { display: none !important; }
+  .gjs-cv-canvas { width: 100% !important; }
+  .gjs-sm-sector .gjs-sm-sector-title {
+    background: var(--bg-tertiary) !important; border: none !important;
+    color: var(--text-secondary) !important; font-size: 11px !important;
+    font-weight: 600 !important; padding: 8px 12px !important;
+  }
+  .gjs-sm-sector .gjs-sm-properties { padding: 8px 12px !important; }
+  .gjs-field { background: var(--bg-primary) !important; border: 1px solid var(--border) !important; border-radius: 4px !important; }
+  .gjs-field input, .gjs-field select { color: var(--text-primary) !important; }
+  .gjs-radio-item { border: 1px solid var(--border) !important; }
+  .gjs-radio-item:hover { border-color: var(--accent) !important; }
+
+  /* ── RTE (Rich Text Editor) Toolbar ───── */
+  .gjs-rte-toolbar {
+    background: rgba(22,22,35,0.96) !important; border-radius: 8px !important;
+    padding: 4px 6px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important; z-index: 20 !important;
+    display: flex !important; align-items: center !important; gap: 2px !important;
+    backdrop-filter: blur(12px) !important;
+  }
+  .gjs-rte-action {
+    background: transparent !important; border: none !important;
+    color: rgba(255,255,255,0.8) !important; font-size: 13px !important;
+    padding: 4px 6px !important; border-radius: 4px !important; cursor: pointer !important;
+    min-width: 26px !important; text-align: center !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  }
+  .gjs-rte-action:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+  .gjs-rte-active { background: rgba(108,92,231,0.3) !important; color: var(--accent) !important; }
+  .gjs-rte-action .rte-color-wrap {
+    display: inline-flex; align-items: center; gap: 4px; position: relative;
+  }
+  .gjs-rte-action .rte-color-wrap input[type="color"] {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); padding: 0;
+    cursor: pointer; background: none; border-radius: 3px;
+  }
+  .gjs-rte-action .rte-color-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .gjs-rte-action .rte-color-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+  .gjs-rte-action select.rte-fontsize {
+    font-size: 11px; padding: 2px 4px; background: rgba(255,255,255,0.1); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;
+    outline: none; -webkit-appearance: none; appearance: none;
+    padding-right: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='rgba(255,255,255,0.6)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 4px center;
+  }
+  .gjs-rte-action select.rte-fontsize option { background: #1e1e2d; color: #fff; }
+  .gjs-rte-action select.rte-fontsize:hover { border-color: rgba(255,255,255,0.4); }
+  .rte-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.15); margin: 0 3px; }
+  .gjs-radio-item input:checked + .gjs-radio-item-label { background: var(--accent) !important; color: #fff !important; }
+  .gjs-layer-name { font-size: 12px !important; }
+  .gjs-trt-trait { padding: 5px 0 !important; }
+  .gjs-trt-trait .gjs-label-wrp { width: 80px !important; font-size: 11px !important; }
+  .gjs-blocks-cs { display: none !important; }
+  /* Hide GrapesJS built-in component toolbar — we use our own #element-toolbar */
+  .gjs-toolbar { display: none !important; }
+
+  /* ── Modals ───────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 9999; justify-content: center; align-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { display: flex; }
+  .builder-modal {
+    background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 16px;
+    padding: 28px; max-height: 85vh; overflow-y: auto; color: var(--text-primary);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .modal-header h2 { font-size: 20px; font-weight: 700; }
+  .modal-close {
+    background: var(--bg-tertiary); border: none; color: var(--text-secondary); width: 32px; height: 32px;
+    border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .modal-subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; }
+  .template-modal { width: 92%; max-width: 960px; }
+  .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .template-card {
+    border: 2px solid var(--border); border-radius: 12px; overflow: hidden;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .template-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(108,92,231,0.15); }
+  .template-card .preview {
+    height: 120px; background: var(--bg-tertiary); display: flex; align-items: center;
+    justify-content: center; font-size: 36px; position: relative;
+  }
+  .template-card .badge {
+    position: absolute; top: 8px; right: 8px; background: var(--accent); color: #fff;
+    font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .template-card .info { padding: 10px 12px; }
+  .template-card .info h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .template-card .info p { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+  .code-modal { width: 90%; max-width: 800px; }
+  .code-modal textarea {
+    width: 100%; height: 300px; background: var(--bg-primary); color: #a8e6a8;
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; resize: vertical; line-height: 1.5;
+  }
+  .code-modal .btn-row { margin-top: 12px; display: flex; gap: 8px; }
+
+  /* ── Save toast ─────────────────────────── */
+  .save-toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    padding: 10px 24px; border-radius: 10px; font-size: 13px; z-index: 99999;
+    font-family: -apple-system, sans-serif; transition: opacity 0.5s;
+    pointer-events: none;
+  }
+  .save-toast.success { background: rgba(33,150,83,0.9); color: #fff; }
+  .save-toast.error { background: rgba(233,69,96,0.9); color: #fff; }
+
+  /* ── Effects Panel ──────────────────────── */
+  #effects-panel { display: none; border-bottom: 1px solid var(--border); }
+  #effects-panel.visible { display: block; }
+  .fx-section { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .fx-section:last-child { border-bottom: none; }
+  .fx-title {
+    font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .fx-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+  .fx-btn {
+    padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--bg-tertiary); color: var(--text-secondary); font-size: 10px;
+    font-weight: 500; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .fx-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .fx-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .fx-select {
+    width: 100%; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 5px; padding: 6px 8px; color: var(--text-primary); font-size: 11px;
+    outline: none; cursor: pointer;
+  }
+  .fx-select:focus { border-color: var(--accent); }
+  .fx-row { display: flex; gap: 8px; margin-top: 6px; }
+  .fx-row label { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+  .fx-row input[type="number"] {
+    width: 56px; background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 6px; color: var(--text-primary); font-size: 11px;
+    outline: none;
+  }
+  .fx-row input[type="number"]:focus { border-color: var(--accent); }
+
+  /* ── Floating Element Toolbar ──────────── */
+  #element-toolbar {
+    position: fixed; z-index: 99998; display: none;
+    background: rgba(22,22,35,0.96); border: 1px solid #3d3d5c;
+    border-radius: 8px; padding: 3px 4px; align-items: center; gap: 1px;
+    backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    font-family: -apple-system, sans-serif;
+  }
+  #element-toolbar .tb-label {
+    font-size: 10px; color: var(--accent); font-weight: 600; padding: 0 8px;
+    white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+    border-right: 1px solid #3d3d5c; margin-right: 2px; line-height: 28px;
+  }
+  #element-toolbar button {
+    background: transparent; border: none; color: #999; padding: 5px 7px;
+    border-radius: 5px; cursor: pointer; font-size: 12px; line-height: 1;
+    transition: all 0.12s; position: relative;
+  }
+  #element-toolbar button:hover { background: rgba(108,92,231,0.2); color: #fff; }
+  #element-toolbar button.danger:hover { background: rgba(233,69,96,0.2); color: #e94560; }
+  #element-toolbar .tb-sep { width: 1px; height: 18px; background: #3d3d5c; margin: 0 2px; }
+  #element-toolbar .tb-color {
+    position: relative; width: 28px; height: 28px; border-radius: 5px;
+    border: 2px solid #3d3d5c; cursor: pointer; overflow: hidden;
+    transition: border-color 0.12s;
+  }
+  #element-toolbar .tb-color:hover { border-color: var(--accent); }
+  #element-toolbar .tb-color input {
+    position: absolute; top: -4px; left: -4px; width: 36px; height: 36px;
+    border: none; padding: 0; cursor: pointer; opacity: 0;
+  }
+  #element-toolbar .tb-opacity {
+    display: flex; align-items: center; gap: 4px; padding: 0 4px;
+  }
+  #element-toolbar .tb-opacity input[type="range"] {
+    width: 48px; height: 4px; -webkit-appearance: none; appearance: none;
+    background: linear-gradient(to right, transparent, #fff); border-radius: 2px;
+    cursor: pointer; outline: none;
+  }
+  #element-toolbar .tb-opacity input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+    background: #fff; border: 1px solid #555; cursor: pointer;
+  }
+  #element-toolbar .tb-opacity span {
+    font-size: 9px; color: #888; min-width: 26px; text-align: center;
+  }
+  #element-toolbar .tb-arrow {
+    position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 6px solid transparent;
+    border-right: 6px solid transparent; border-top: 6px solid rgba(22,22,35,0.96);
+  }
+</style>
+
+  </head>
+  <body>
+
+<!-- Floating Element Toolbar -->
+<div id="element-toolbar">
+  <div class="tb-label" id="tb-label">section</div>
+  <button onclick="tbSelectParent()" title="Select Parent"><i class="fas fa-level-up-alt"></i></button>
+  <div class="tb-sep"></div>
+  <button onclick="tbMoveUp()" title="Move Up"><i class="fas fa-chevron-up"></i></button>
+  <button onclick="tbMoveDown()" title="Move Down"><i class="fas fa-chevron-down"></i></button>
+  <div class="tb-sep"></div>
+  <button onclick="tbDuplicate()" title="Duplicate"><i class="fas fa-clone"></i></button>
+  <button class="danger" onclick="tbDelete()" title="Delete"><i class="fas fa-trash-alt"></i></button>
+  <div class="tb-sep"></div>
+  <button onclick="tbUploadImage()" title="Upload Image"><i class="fas fa-camera"></i></button>
+  <button id="tb-front-btn" onclick="tbBringToFront()" title="Bring to Front"><i class="fas fa-layer-group"></i></button>
+  <div class="tb-sep"></div>
+  <div class="tb-color" id="tb-color-swatch" title="Background Color">
+    <input type="color" id="tb-color-input" value="#ffffff" onchange="tbSetBgColor(this.value)">
+  </div>
+  <div class="tb-opacity" title="Background Opacity">
+    <input type="range" id="tb-opacity-input" min="0" max="100" value="100" oninput="tbSetOpacity(this.value)">
+    <span id="tb-opacity-label">100%</span>
+  </div>
+  <div class="tb-arrow"></div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="logo">LAUNCH <span>BUILDER</span></div>
+    <a href="<%= portal_landing_page_path(campaign_id: @campaign.id) %>" class="back-link"><i class="fas fa-arrow-left"></i> Back to Landing Page</a>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="doUndo()" title="Undo"><i class="fas fa-undo"></i></button>
+    <button onclick="doRedo()" title="Redo"><i class="fas fa-redo"></i></button>
+    <div class="sep"></div>
+    <button class="device-btn active" onclick="setDevice('Desktop', this)" title="Desktop"><i class="fas fa-desktop"></i></button>
+    <button class="device-btn" onclick="setDevice('Tablet', this)" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
+    <button class="device-btn" onclick="setDevice('Mobile portrait', this)" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
+    <div class="sep"></div>
+    <button id="sticky-toggle" onclick="toggleStickyNav(this)" title="Toggle sticky nav"><i class="fas fa-thumbtack"></i></button>
+  </div>
+
+  <div class="actions">
+    <button class="btn-action btn-secondary" onclick="openTemplates()"><i class="fas fa-th-large"></i> Templates</button>
+    <button class="btn-action btn-secondary" onclick="togglePreview()"><i class="fas fa-eye"></i> Preview</button>
+    <button class="btn-action btn-secondary" onclick="openCode()"><i class="fas fa-code"></i> Export</button>
+    <button class="btn-action btn-secondary" onclick="openHtmlEditor()"><i class="fas fa-file-code"></i> Edit HTML</button>
+    <button class="btn-action btn-success" onclick="saveToServer()"><i class="fas fa-save"></i> Save</button>
+  </div>
+</div>
+
+<!-- Editor -->
+<div class="editor-wrap">
+  <div id="gjs"></div>
+
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="active" onclick="showPanel('blocks', this)">Blocks</button>
+      <button onclick="showPanel('styles', this)">Design</button>
+      <button onclick="showPanel('layers', this)">Layers</button>
+    </div>
+    <div class="sidebar-content">
+      <div id="panel-blocks" class="sidebar-panel active">
+        <div id="custom-blocks"></div>
+      </div>
+      <div id="panel-styles" class="sidebar-panel">
+        <div id="img-actions" class="img-actions" style="display:none;">
+          <div class="img-actions-title">Media</div>
+          <div class="img-actions-row">
+            <label class="img-action-btn">
+              <i class="fas fa-image"></i> Background
+              <input type="file" accept="image/*" onchange="applyUploadedBg(this)">
+            </label>
+            <label class="img-action-btn">
+              <i class="fas fa-photo-video"></i> Insert Img
+              <input type="file" accept="image/*" onchange="insertUploadedImg(this)">
+            </label>
+          </div>
+        </div>
+        <div id="align-actions" class="img-actions" style="display:none;">
+          <div class="img-actions-title">Quick Align</div>
+          <div class="img-actions-row">
+            <button class="img-action-btn" onclick="quickAlign('left')"><i class="fas fa-align-left"></i> Left</button>
+            <button class="img-action-btn" onclick="quickAlign('center')"><i class="fas fa-align-center"></i> Center</button>
+            <button class="img-action-btn" onclick="quickAlign('right')"><i class="fas fa-align-right"></i> Right</button>
+          </div>
+        </div>
+        <div id="link-actions" class="link-actions" style="display:none;">
+          <div class="link-actions-title"><i class="fas fa-link"></i> Link</div>
+          <div class="link-input-row">
+            <input type="text" id="link-url-input" placeholder="https://...">
+            <button class="link-apply-btn" onclick="applyLink()">Set</button>
+            <button class="link-remove-btn" onclick="removeLink()"><i class="fas fa-unlink"></i></button>
+          </div>
+        </div>
+        <div id="effects-panel">
+          <div class="fx-section">
+            <div class="fx-title">Hover Effects</div>
+            <div class="fx-grid">
+              <button class="fx-btn" data-hover="hover-lift" onclick="toggleHover('hover-lift',this)"><i class="fas fa-arrow-up" style="margin-right:3px;font-size:9px;"></i>Lift</button>
+              <button class="fx-btn" data-hover="hover-scale" onclick="toggleHover('hover-scale',this)"><i class="fas fa-expand" style="margin-right:3px;font-size:9px;"></i>Scale</button>
+              <button class="fx-btn" data-hover="hover-glow" onclick="toggleHover('hover-glow',this)"><i class="fas fa-sun" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+              <button class="fx-btn" data-hover="hover-brighten" onclick="toggleHover('hover-brighten',this)"><i class="fas fa-lightbulb" style="margin-right:3px;font-size:9px;"></i>Bright</button>
+              <button class="fx-btn" data-hover="hover-shadow" onclick="toggleHover('hover-shadow',this)"><i class="fas fa-clone" style="margin-right:3px;font-size:9px;"></i>Shadow</button>
+              <button class="fx-btn" data-hover="hover-darken" onclick="toggleHover('hover-darken',this)"><i class="fas fa-moon" style="margin-right:3px;font-size:9px;"></i>Darken</button>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Scroll Animation</div>
+            <select class="fx-select" id="aos-select" onchange="setAosAnimation(this.value)">
+              <option value="">None</option>
+              <optgroup label="Fade">
+                <option value="fade-up">Fade Up</option>
+                <option value="fade-down">Fade Down</option>
+                <option value="fade-left">Fade Left</option>
+                <option value="fade-right">Fade Right</option>
+              </optgroup>
+              <optgroup label="Zoom">
+                <option value="zoom-in">Zoom In</option>
+                <option value="zoom-out">Zoom Out</option>
+                <option value="zoom-in-up">Zoom In Up</option>
+              </optgroup>
+              <optgroup label="Flip &amp; Slide">
+                <option value="flip-up">Flip Up</option>
+                <option value="flip-left">Flip Left</option>
+                <option value="slide-up">Slide Up</option>
+                <option value="slide-right">Slide Right</option>
+              </optgroup>
+            </select>
+            <div class="fx-row" id="aos-options" style="display:none;">
+              <label>Duration <input type="number" id="aos-duration" value="800" min="100" max="3000" step="100" onchange="setAosDuration(this.value)">ms</label>
+              <label>Delay <input type="number" id="aos-delay" value="0" min="0" max="2000" step="100" onchange="setAosDelay(this.value)">ms</label>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Box Shadow</div>
+            <div class="fx-grid">
+              <button class="fx-btn" onclick="setShadow('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+              <button class="fx-btn" onclick="setShadow('subtle',this)">Subtle</button>
+              <button class="fx-btn" onclick="setShadow('medium',this)">Medium</button>
+              <button class="fx-btn" onclick="setShadow('heavy',this)">Heavy</button>
+              <button class="fx-btn" onclick="setShadow('glow',this)"><i class="fas fa-star" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+              <button class="fx-btn" onclick="setShadow('warm',this)">Warm</button>
+            </div>
+          </div>
+          <div class="fx-section">
+            <div class="fx-title">Overlay</div>
+            <div class="fx-grid">
+              <button class="fx-btn" onclick="setOverlay('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+              <button class="fx-btn" onclick="setOverlay('darken',this)">Darken</button>
+              <button class="fx-btn" onclick="setOverlay('lighten',this)">Lighten</button>
+              <button class="fx-btn" onclick="setOverlay('gradient-dark',this)">Grad Dark</button>
+              <button class="fx-btn" onclick="setOverlay('gradient-color',this)">Grad Color</button>
+            </div>
+          </div>
+        </div>
+        <div id="traits-container"></div>
+        <div id="styles-container"></div>
+      </div>
+      <div id="panel-layers" class="sidebar-panel">
+        <div id="layers-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template Modal -->
+<div class="modal-overlay" id="templateModal" onclick="if(event.target===this)closeTemplates()">
+  <div class="builder-modal template-modal">
+    <div class="modal-header">
+      <h2>Choose a Template</h2>
+      <button class="modal-close" onclick="closeTemplates()"><i class="fas fa-times"></i></button>
+    </div>
+    <p class="modal-subtitle">Pick a starting point. Everything is fully customizable.</p>
+    <div class="template-grid" id="templateGrid"></div>
+  </div>
+</div>
+
+<!-- Code Modal -->
+<div class="modal-overlay" id="codeModal" onclick="if(event.target===this)closeCode()">
+  <div class="builder-modal code-modal">
+    <div class="modal-header">
+      <h2>Export HTML</h2>
+      <button class="modal-close" onclick="closeCode()"><i class="fas fa-times"></i></button>
+    </div>
+    <textarea id="codeOutput" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn-action btn-primary" onclick="copyCode()"><i class="fas fa-copy"></i> Copy</button>
+      <button class="btn-action btn-secondary" onclick="closeCode()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- HTML Editor Modal -->
+<div class="modal-overlay" id="htmlEditorModal" onclick="if(event.target===this)closeHtmlEditor()">
+  <div class="builder-modal code-modal" style="max-width:1000px;width:95%;">
+    <div class="modal-header">
+      <h2>Edit HTML</h2>
+      <button class="modal-close" onclick="closeHtmlEditor()"><i class="fas fa-times"></i></button>
+    </div>
+    <p class="modal-subtitle">Edit the page HTML directly. Changes will replace the current canvas content.</p>
+    <textarea id="htmlEditorOutput" style="height:450px;color:#e8e8ef;"></textarea>
+    <div class="btn-row">
+      <button class="btn-action btn-primary" onclick="applyHtmlEdit()"><i class="fas fa-check"></i> Apply Changes</button>
+      <button class="btn-action btn-secondary" onclick="pasteHtmlSnippet()"><i class="fas fa-paste"></i> Insert Snippet at Cursor</button>
+      <button class="btn-action btn-secondary" onclick="closeHtmlEditor()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<textarea id="saved-builder-html" style="display:none;"></textarea>
+<textarea id="saved-builder-css" style="display:none;"></textarea>
+
+
+    <script src="https://unpkg.com/grapesjs@0.21.13/dist/grapes.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/index.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════
+var CAMPAIGN_ID = '<%= @campaign.id %>';
+var SAVE_URL = '<%= portal_landing_page_path(campaign_id: @campaign.id, format: :json) %>';
+var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+
+// ════════════════════════════════════════════════════════
+// LAUNCH CSS (injected into canvas iframe)
+// ════════════════════════════════════════════════════════
+var launchCSS = '\
+@import url(\'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap\');\
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:\'Open Sans\',sans-serif;color:#18191f}img{max-width:100%}a{text-decoration:none}\
+.bg-launch-blue1{background-color:#477cb2}.bg-launch-green{background-color:#219653}.bg-launch-dark{background-color:#29292d}.bg-launch-yellow{background-color:#f2c94c}.text-white{color:#fff}.text-launch-darkblue{color:#333}\
+.section-wrapper{background-size:cover;background-position:center center;background-repeat:no-repeat;width:100%}.section-intro{padding-top:120px;min-height:90vh}\
+.ff-montserrat{font-family:\'Montserrat\',sans-serif}.ff-opensans{font-family:\'Open Sans\',sans-serif}.page-headline{font-size:74px;font-weight:800;line-height:80px}.page-headline2{font-size:55px;font-weight:800;line-height:60px}.text-shadow{text-shadow:1px 1px 2px #000}\
+.btn{display:inline-block;padding:11px 32px;border-radius:4px;font-weight:600;cursor:pointer;border:none}.order-btn{background:#219653;color:#fff;font-size:16px}.order-btn:hover{opacity:0.9}.btn-order{background:#219653;color:#fff!important;padding:8px 20px;border-radius:4px;font-size:14px}\
+.project-header{background:rgba(255,255,255,0.95);padding:12px 0;position:relative;z-index:100}.project-header.sticky-nav{position:sticky;top:0;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.project-header .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;align-items:center;justify-content:space-between}.project-header .nav-links{display:flex;gap:24px;align-items:center}.project-header .nav-links a{color:#18191f;font-size:14px;font-weight:500}\
+.steps-section{padding:50px 0}.steps-row{display:flex;gap:16px;max-width:1140px;margin:0 auto;padding:24px 15px 0}.step-card{flex:1;border:1px solid rgba(255,255,255,0.3);padding:16px;height:185px;text-align:center;color:#fff}.step-number{font-size:72px;font-weight:800;color:rgba(244,245,247,0.2);line-height:1}.step-caption{font-size:24px;font-weight:800;margin-top:-35px}.step-desc{font-size:14px;line-height:21px;margin-top:8px}\
+.two-col{display:flex;flex-wrap:wrap;max-width:1140px;margin:0 auto;padding:0 15px;gap:30px;align-items:center}.two-col .col-left{flex:1;min-width:300px}.two-col .col-right{flex:1;min-width:300px}.order-step-number{font-size:48px;font-weight:800;line-height:60px;vertical-align:super;padding:0 8px;color:#fff;display:inline-block}.order-caption{font-size:64px;font-weight:800;line-height:80px}\
+.bg-form{background:rgba(255,255,255,0.9);box-shadow:0 0 4px rgba(0,0,0,0.15);padding:20px;border-radius:4px}.field-group{background:#fff;border:1px solid rgba(0,0,0,0.15);padding:12px;margin-bottom:10px}.field-group label{font-size:11px;line-height:20px;color:#626262;text-transform:uppercase;display:block;margin-bottom:2px;font-weight:600}.field-group input,.field-group select{width:100%;border:0;outline:none;height:28px;font-size:14px;font-family:\'Open Sans\',sans-serif}.btn-submit{background:#219653;color:#fff;border:none;padding:12px;width:100%;font-size:16px;font-weight:500;cursor:pointer;margin-top:10px;border-radius:4px}.btn-submit:hover{background:#1c884a}.name-row{display:flex;gap:10px}.name-row .field-group{flex:1}\
+.book-section{padding:50px 0}.book-section .container{max-width:1140px;margin:0 auto;padding:0 15px}.book-row{display:flex;flex-wrap:wrap;gap:30px}.book-cover{flex:0 0 33%;min-width:250px}.book-cover img{width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.15)}.book-detail{flex:1;min-width:300px}.book-headline1{font-size:50px;font-weight:300;line-height:55px;color:#121212;font-family:\'Montserrat\',sans-serif}.book-headline1 strong{font-weight:700}.book-headline2{color:#2c2c2c;font-weight:600;font-size:18px;line-height:28px;margin:12px 0}.book-desc{color:#4a4a4a;font-size:14px;line-height:25px}\
+.author-section{padding:50px 0;background:#f7f8fa}.author-section .container{max-width:1140px;margin:0 auto;padding:0 15px}.author-row{display:flex;flex-wrap:wrap;gap:30px}.author-image{flex:0 0 33%;min-width:250px;min-height:400px}.author-image img{width:100%}.author-detail{flex:1;min-width:300px}.author-headline1{font-size:50px;font-weight:300;line-height:55px;color:#121212;font-family:\'Montserrat\',sans-serif}.author-headline1 strong{font-weight:700}.author-desc{color:#4a4a4a;font-size:14px;line-height:25px;margin-top:12px}\
+.retailer-grid{display:flex;flex-wrap:wrap;gap:0;justify-content:center}.retailer-card{flex:0 0 33.33%;padding:20px;border:1px solid #eee;text-align:center;display:flex;align-items:center;justify-content:center;min-height:80px;background:#fff}.retailer-name{font-size:13px;font-weight:600;color:#333}@media(max-width:480px){.retailer-card{flex:0 0 50%}.page-headline{font-size:36px;line-height:42px}.page-headline2{font-size:32px;line-height:38px}.order-caption{font-size:36px;line-height:44px}.order-step-number{font-size:32px;line-height:40px}.two-col{gap:20px;padding:0 15px}.steps-row{flex-direction:column;gap:12px}.step-card{height:auto;min-height:120px}.book-row,.author-row{flex-direction:column}.book-cover,.author-image{flex:none;width:100%;min-width:0}.author-image{min-height:auto}}\
+.testimonials-section{padding:50px 0}.testimonial-card{text-align:center;padding:24px 40px;max-width:700px;margin:0 auto}.testimonial-card blockquote{font-size:18px;line-height:1.7;color:#333;font-style:italic}.testimonial-card cite{font-size:14px;color:#888}\
+.launch-footer{background:#29292d;color:#888;padding:20px 0;font-size:12px}.launch-footer .container{max-width:1140px;margin:0 auto;padding:0 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.launch-footer a{color:#2F80ED}\
+.container{max-width:1140px;margin:0 auto;padding:0 15px}\
+.hover-lift{transition:transform 0.3s ease,box-shadow 0.3s ease;cursor:pointer}.hover-lift:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,0.15)}\
+.hover-scale{transition:transform 0.3s ease;cursor:pointer}.hover-scale:hover{transform:scale(1.05)}\
+.hover-glow{transition:box-shadow 0.3s ease;cursor:pointer}.hover-glow:hover{box-shadow:0 0 25px rgba(108,92,231,0.5)}\
+.hover-brighten{transition:filter 0.3s ease;cursor:pointer}.hover-brighten:hover{filter:brightness(1.15)}\
+.hover-shadow{transition:box-shadow 0.3s ease;cursor:pointer}.hover-shadow:hover{box-shadow:0 15px 40px rgba(0,0,0,0.25)}\
+.hover-darken{transition:filter 0.3s ease;cursor:pointer}.hover-darken:hover{filter:brightness(0.85)}\
+.overlay-darken{position:relative}.overlay-darken::before{content:\"\";position:absolute;inset:0;background:rgba(0,0,0,0.4);pointer-events:none;z-index:1}.overlay-darken>*{position:relative;z-index:2}\
+.overlay-lighten{position:relative}.overlay-lighten::before{content:\"\";position:absolute;inset:0;background:rgba(255,255,255,0.3);pointer-events:none;z-index:1}.overlay-lighten>*{position:relative;z-index:2}\
+.overlay-gradient-dark{position:relative}.overlay-gradient-dark::before{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));pointer-events:none;z-index:1}.overlay-gradient-dark>*{position:relative;z-index:2}\
+.overlay-gradient-color{position:relative}.overlay-gradient-color::before{content:\"\";position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(233,69,96,0.3));pointer-events:none;z-index:1}.overlay-gradient-color>*{position:relative;z-index:2}\
+.upload-placeholder{border:2px dashed rgba(0,0,0,0.15);cursor:pointer;transition:border-color 0.2s,background-color 0.2s}.upload-placeholder:hover{border-color:rgba(108,92,231,0.5);background-color:rgba(108,92,231,0.03)}\
+';
+
+// Editor-only CSS for resize handles (NOT included in export/save)
+var resizeHandleCSS = '\
+.gjs-resize-handle{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:48px;height:8px;background:#6c5ce7;border-radius:0 0 4px 4px;cursor:ns-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,width 0.15s}.gjs-resize-handle:hover{opacity:1;width:64px}.gjs-resize-handle::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:2px;background:rgba(255,255,255,0.6);border-radius:1px}\
+.gjs-resize-handle-side{position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:8px;height:48px;background:#6c5ce7;border-radius:0 4px 4px 0;cursor:ew-resize;z-index:10000;opacity:0.9;transition:opacity 0.15s,height 0.15s}.gjs-resize-handle-side:hover{opacity:1;height:64px}.gjs-resize-handle-side::after{content:\"\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:20px;background:rgba(255,255,255,0.6);border-radius:1px}\
+';
+
+// ════════════════════════════════════════════════════════
+// BLOCK DEFINITIONS
+// ════════════════════════════════════════════════════════
+var blockDefs = [
+  { cat: 'Page Sections', blocks: [
+    { id: 'nav', icon: 'fa-bars', label: 'Nav Bar', content: '<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#333;">LOGO</div><div class="nav-links"><a href="#book">The Book</a><a href="#author">The Author</a><a href="#" class="btn-order">Order Now</a></div></div></nav>' },
+    { id: 'hero', icon: 'fa-mountain-sun', label: 'Hero Banner', content: '<section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(0,42,86,0.85),rgba(26,26,46,0.9));background-size:cover;background-position:center center;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;"><div class="container" style="padding:60px 15px;"><h1 class="page-headline text-shadow" style="color:#fff;">Your Headline Here</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);">Supporting text goes here</p><a href="#" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Call to Action</a></div></section>' },
+    { id: 'steps4', icon: 'fa-list-ol', label: '4-Step Flow', content: '<section class="section-wrapper steps-section" style="background-color:#477cb2;"><div class="container" style="text-align:center;padding-top:40px;"><h2 style="font-size:48px;font-weight:800;color:#fff;">How It Works</h2></div><div class="steps-row"><div class="step-card"><div class="step-number">1</div><div class="step-caption">Order</div><div class="step-desc">Step 1 description</div></div><div class="step-card"><div class="step-number">2</div><div class="step-caption">Submit</div><div class="step-desc">Step 2 description</div></div><div class="step-card"><div class="step-number">3</div><div class="step-caption">Confirm</div><div class="step-desc">Step 3 description</div></div><div class="step-card"><div class="step-number">4</div><div class="step-caption">Enjoy</div><div class="step-desc">Step 4 description</div></div></div></section>' },
+    { id: 'steps3', icon: 'fa-list-ol', label: '3-Step Flow', content: '<section class="section-wrapper steps-section" style="background-color:#477cb2;"><div class="container" style="text-align:center;padding-top:40px;"><h2 style="font-size:48px;font-weight:800;color:#fff;">How It Works</h2></div><div class="steps-row"><div class="step-card"><div class="step-number">1</div><div class="step-caption">Order</div><div class="step-desc">Step 1 description</div></div><div class="step-card"><div class="step-number">2</div><div class="step-caption">Confirm</div><div class="step-desc">Step 2 description</div></div><div class="step-card"><div class="step-number">3</div><div class="step-caption">Email</div><div class="step-desc">Step 3 description</div></div></div></section>' },
+    { id: 'cta', icon: 'fa-bullhorn', label: 'CTA Banner', content: '<section style="padding:60px 20px;background:#219653;color:#fff;text-align:center;"><div style="max-width:700px;margin:0 auto;"><h2 style="font-size:36px;font-weight:700;margin-bottom:12px;">Ready to Get Your Copy?</h2><p style="font-size:18px;margin-bottom:24px;opacity:0.9;">Limited time offer — order now.</p><a href="#" style="display:inline-block;background:#fff;color:#219653;padding:14px 32px;border-radius:6px;font-weight:700;font-size:16px;">Order Now</a></div></section>' },
+    { id: 'footer', icon: 'fa-window-minimize', label: 'Footer', content: '<footer class="launch-footer"><div class="container"><span>Exclusively from Publisher Name</span><span><a href="#">Privacy Policy</a></span><span>&copy; 2026 Publisher Name. All Rights Reserved.</span></div></footer>' },
+  ]},
+  { cat: 'Content', blocks: [
+    { id: 'book', icon: 'fa-book-open', label: 'Book Section', content: '<section class="book-section"><div class="container"><div class="book-row"><div class="book-cover"><div style="width:100%;aspect-ratio:2/3;background:#e8e8e8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">Book Cover</div></div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">Book Subtitle or Tagline</h4><div class="book-desc"><p>Book description goes here.</p></div></div></div></div></section>' },
+    { id: 'author', icon: 'fa-user-pen', label: 'Author Section', content: '<section class="author-section"><div class="container"><div class="author-row"><div class="author-image"><div style="width:100%;min-height:350px;background:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Author Photo</div></div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> The Author</h3><div class="author-desc"><p>Author bio goes here.</p></div><a href="#" style="display:inline-block;margin-top:16px;color:#4f4f4f;font-size:13px;border:1px solid #4f4f4f;padding:8px 28px;text-transform:uppercase;">View More</a></div></div></div></section>' },
+    { id: 'testimonials', icon: 'fa-quote-left', label: 'Testimonials', content: '<section class="testimonials-section" style="background:#fff;"><div class="container" style="text-align:center;"><p style="text-transform:uppercase;font-weight:600;letter-spacing:2px;font-size:12px;color:#888;margin-bottom:8px;">Reader Reviews</p><h2 style="font-size:2rem;font-weight:700;margin-bottom:30px;">What People Are Saying</h2><div class="testimonial-card"><blockquote>&ldquo;An incredible book that changed my perspective entirely.&rdquo;</blockquote><cite>&mdash; Reader Name</cite></div></div></section>' },
+    { id: 'retailers', icon: 'fa-store', label: 'Retailer Grid', content: '<section style="padding:50px 0;background:#f7f8fa;"><div class="container" style="text-align:center;"><h2 style="font-size:36px;font-weight:700;margin-bottom:30px;">Order Your Copy</h2><div class="retailer-grid" style="max-width:700px;margin:0 auto;justify-content:center;"><div class="retailer-card"><span class="retailer-name">Amazon</span></div><div class="retailer-card"><span class="retailer-name">Barnes & Noble</span></div><div class="retailer-card"><span class="retailer-name">Bookshop.org</span></div><div class="retailer-card"><span class="retailer-name">Target</span></div><div class="retailer-card"><span class="retailer-name">Walmart</span></div><div class="retailer-card"><span class="retailer-name">Books-A-Million</span></div></div></div></section>' },
+  ]},
+  { cat: 'Forms', blocks: [
+    { id: 'orderform', icon: 'fa-file-invoice', label: 'Order + Retailers', content: '<section class="section-wrapper" style="padding:50px 0;background:#fff;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">1</span><span class="order-caption">Order Now</span></div><p style="font-size:18px;line-height:28px;">Order your copy from any of these retailers.</p></div><div class="col-right"><div class="retailer-grid"><div class="retailer-card"><span class="retailer-name">Amazon</span></div><div class="retailer-card"><span class="retailer-name">Barnes & Noble</span></div><div class="retailer-card"><span class="retailer-name">Bookshop.org</span></div><div class="retailer-card"><span class="retailer-name">Target</span></div><div class="retailer-card"><span class="retailer-name">Walmart</span></div><div class="retailer-card"><span class="retailer-name">Books-A-Million</span></div></div></div></div></section>' },
+    { id: 'confirmform', icon: 'fa-clipboard-check', label: 'Confirm + Form', content: '<section class="section-wrapper" style="padding:50px 0;background:#f7f8fa;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">2</span><span class="order-caption">Confirm</span></div><p style="font-size:18px;line-height:28px;">Submit your receipt and contact information below.</p></div><div class="col-right"><div class="bg-form"><div class="field-group"><label>Retailer</label><select><option>Select retailer...</option></select></div><div class="field-group"><label>Upload Confirmation</label><input type="file"></div><div class="field-group"><label>Email</label><input type="email" placeholder="you@email.com"></div><div class="name-row"><div class="field-group"><label>First Name</label><input type="text"></div><div class="field-group"><label>Last Name</label><input type="text"></div></div><button class="btn-submit">Submit Your Confirmation</button></div></div></div></section>' },
+    { id: 'addressform', icon: 'fa-location-dot', label: 'Address Form', content: '<section class="section-wrapper" style="padding:50px 0;background:#f7f8fa;"><div class="two-col"><div class="col-left"><h2 style="font-size:36px;font-weight:700;margin-bottom:12px;">Get Your Free Copy</h2><p style="font-size:18px;line-height:28px;">Submit your shipping address below.</p></div><div class="col-right"><div class="bg-form"><div class="field-group"><label>Email</label><input type="email" placeholder="you@email.com"></div><div class="name-row"><div class="field-group"><label>First Name</label><input type="text"></div><div class="field-group"><label>Last Name</label><input type="text"></div></div><div class="field-group"><label>Address 1</label><input type="text"></div><div class="field-group"><label>Address 2</label><input type="text"></div><div class="field-group"><label>City</label><input type="text"></div><div class="name-row"><div class="field-group"><label>State</label><input type="text"></div><div class="field-group"><label>Postal Code</label><input type="text"></div></div><div class="field-group"><label>Country</label><input type="text" value="United States"></div><button class="btn-submit">Submit</button></div></div></div></section>' },
+  ]},
+  { cat: 'Basic', blocks: [
+    { id: 'text', icon: 'fa-font', label: 'Text', content: '<div style="padding:10px;"><p style="font-size:16px;line-height:1.6;">Start typing your text here. Double-click to edit.</p></div>' },
+    { id: 'heading', icon: 'fa-heading', label: 'Heading', content: '<h2 style="font-size:36px;font-weight:700;padding:10px;">Heading Text</h2>' },
+    { id: 'image', icon: 'fa-image', label: 'Image', content: '<div style="width:100%;max-width:600px;"><img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'600\' height=\'400\' viewBox=\'0 0 600 400\'%3E%3Crect fill=\'%23e8e8e8\' width=\'600\' height=\'400\'/%3E%3Cg fill=\'%23aaa\' font-family=\'sans-serif\' font-size=\'18\' text-anchor=\'middle\'%3E%3Ctext x=\'300\' y=\'185\'%3E%F0%9F%96%BC%3C/text%3E%3Ctext x=\'300\' y=\'215\' font-size=\'14\'%3EClick to select, then upload image%3C/text%3E%3C/g%3E%3C/svg%3E" style="width:100%;height:auto;display:block;" alt="Placeholder" /></div>' },
+    { id: 'video', icon: 'fa-play', label: 'Video Embed', content: '<div style="max-width:800px;width:100%;margin:0 auto;padding:20px;"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;border-radius:8px;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe></div></div>' },
+    { id: 'button', icon: 'fa-square', label: 'Button', content: '<a href="#" style="display:inline-block;background:#219653;color:#fff;padding:12px 28px;border-radius:6px;font-weight:600;font-size:16px;">Button Text</a>' },
+    { id: 'divider', icon: 'fa-minus', label: 'Divider', content: '<hr style="border:none;border-top:1px solid #ddd;margin:24px 0;">' },
+    { id: 'spacer', icon: 'fa-arrows-up-down', label: 'Spacer', content: '<div style="height:60px;"></div>' },
+    { id: 'columns2', icon: 'fa-columns', label: '2 Columns', content: '<div style="display:flex;gap:24px;padding:20px;flex-wrap:wrap;"><div style="flex:1;min-width:200px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 1</p></div><div style="flex:1;min-width:200px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 2</p></div></div>' },
+    { id: 'columns3', icon: 'fa-columns', label: '3 Columns', content: '<div style="display:flex;gap:20px;padding:20px;flex-wrap:wrap;"><div style="flex:1;min-width:150px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 1</p></div><div style="flex:1;min-width:150px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 2</p></div><div style="flex:1;min-width:150px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Column 3</p></div></div>' },
+    { id: 'columns4', icon: 'fa-columns', label: '4 Columns', content: '<div style="display:flex;gap:16px;padding:20px;flex-wrap:wrap;"><div style="flex:1;min-width:120px;padding:16px;background:#f8f8f8;border-radius:4px;text-align:center;"><p>Col 1</p></div><div style="flex:1;min-width:120px;padding:16px;background:#f8f8f8;border-radius:4px;text-align:center;"><p>Col 2</p></div><div style="flex:1;min-width:120px;padding:16px;background:#f8f8f8;border-radius:4px;text-align:center;"><p>Col 3</p></div><div style="flex:1;min-width:120px;padding:16px;background:#f8f8f8;border-radius:4px;text-align:center;"><p>Col 4</p></div></div>' },
+    { id: 'sidebar', icon: 'fa-table-columns', label: 'Sidebar Layout', content: '<div style="display:flex;gap:24px;padding:20px;flex-wrap:wrap;"><div style="flex:2;min-width:300px;padding:16px;background:#f8f8f8;border-radius:4px;"><p>Main content area</p></div><div style="flex:1;min-width:200px;padding:16px;background:#f0f0f0;border-radius:4px;"><p>Sidebar</p></div></div>' },
+    { id: 'customhtml', icon: 'fa-file-code', label: 'Custom HTML', content: 'CUSTOM_HTML_PROMPT' },
+  ]},
+];
+
+// ════════════════════════════════════════════════════════
+// TEMPLATES
+// ════════════════════════════════════════════════════════
+var templates = [
+  { name: 'Personalized Video', icon: '&#x1f3ac;', badge: 'LAUNCH', desc: 'Hero + 4-step flow + order form + book + author',
+    html: '<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#333;">LOGO</div><div class="nav-links"><a href="#order-form">Get Personalized Video</a><a href="#book">The Book</a><a href="#author">The Author</a><a href="#retailer-links" class="btn-order">Order Now</a></div></div></nav><section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(0,42,86,0.85),rgba(26,26,46,0.9));background-size:cover;background-position:center center;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;"><div class="container" style="padding-top:60px;padding-bottom:60px;"><h1 class="page-headline text-shadow" style="color:#fff;">Get Your Personalized<br>Video Message</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);text-shadow:1px 1px 2px #000;">Order the book and receive a personal video from the author</p><a href="#order-form" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Get Your Video</a></div></section><section class="section-wrapper steps-section" style="background-color:#477cb2;"><div class="container" style="text-align:center;padding-top:40px;"><h2 style="font-size:48px;font-weight:800;color:#fff;line-height:1.2;">How To Get Your</h2><h2 style="font-size:48px;font-weight:800;color:#fff;line-height:1.2;">Personalized Video Message</h2></div><div class="steps-row"><div class="step-card"><div class="step-number">1</div><div class="step-caption">Order</div><div class="step-desc">Order the book from your favorite retailer</div></div><div class="step-card"><div class="step-number">2</div><div class="step-caption">Submit</div><div class="step-desc">Upload your receipt and enter your details</div></div><div class="step-card"><div class="step-number">3</div><div class="step-caption">Confirm</div><div class="step-desc">We\'ll verify your purchase and process your request</div></div><div class="step-card"><div class="step-number">4</div><div class="step-caption">Enjoy</div><div class="step-desc">Receive your personalized video via email</div></div></div></section><section id="order-now" class="section-wrapper" style="padding:50px 0;background:#fff;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">1</span><span class="order-caption">Order Now</span></div><p style="font-size:18px;line-height:28px;">Order your copy from any of these retailers, then come back to submit your order confirmation.</p></div><div class="col-right" id="retailer-links"><div class="retailer-grid"><div class="retailer-card"><span class="retailer-name">Amazon</span></div><div class="retailer-card"><span class="retailer-name">Barnes & Noble</span></div><div class="retailer-card"><span class="retailer-name">Bookshop.org</span></div><div class="retailer-card"><span class="retailer-name">Target</span></div><div class="retailer-card"><span class="retailer-name">Walmart</span></div><div class="retailer-card"><span class="retailer-name">Books-A-Million</span></div></div></div></div></section><section id="order-form" class="section-wrapper" style="padding:50px 0;background:#f7f8fa;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">2</span><span class="order-caption">Confirm</span></div><p style="font-size:18px;line-height:28px;">Submit your receipt, contact information, and details for the personalized video.</p></div><div class="col-right"><div class="bg-form"><div class="field-group"><label>Retailer</label><select><option>Select retailer...</option></select></div><div class="field-group"><label>Upload Order Confirmation</label><input type="file"></div><div class="field-group"><label>Email</label><input type="email" placeholder="you@email.com"></div><div class="name-row"><div class="field-group"><label>First Name</label><input type="text"></div><div class="field-group"><label>Last Name</label><input type="text"></div></div><div class="field-group"><label>Name of Person Video Is For</label><input type="text"></div><div class="field-group"><label>Name Pronunciation</label><input type="text"></div><button class="btn-submit">Submit Your Confirmation</button></div></div></div></section><section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover"><div style="width:100%;aspect-ratio:2/3;background:#e8e8e8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">Book Cover</div></div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">A Captivating Story of Adventure and Discovery</h4><div class="book-desc"><p>Write a captivating description of the book here.</p></div></div></div></div></section><section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image"><div style="width:100%;min-height:350px;background:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Author Photo</div></div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> The Author</h3><div class="author-desc"><p>Author bio goes here.</p></div><a href="#" style="display:inline-block;margin-top:16px;color:#4f4f4f;font-size:13px;border:1px solid #4f4f4f;padding:8px 28px;text-transform:uppercase;">View More</a></div></div></div></section><section class="testimonials-section" style="background:#fff;"><div class="container" style="text-align:center;"><p style="text-transform:uppercase;font-weight:600;letter-spacing:2px;font-size:12px;color:#888;margin-bottom:8px;">Reader Reviews</p><h2 style="font-size:2rem;font-weight:700;margin-bottom:30px;">What People Are Saying</h2><div class="testimonial-card"><blockquote>&ldquo;This book changed my perspective entirely. A must-read.&rdquo;</blockquote><cite>&mdash; Reader Name</cite></div></div></section><footer class="launch-footer"><div class="container"><span>Exclusively from Publisher Name</span><span><a href="#">Privacy Policy</a></span><span>&copy; 2026 Publisher Name. All Rights Reserved.</span></div></footer>' },
+  { name: 'Preorder Incentive', icon: '&#x1f381;', badge: 'LAUNCH', desc: 'Hero + 3-step flow + receipt form + bonus content',
+    html: '<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#333;">LOGO</div><div class="nav-links"><a href="#order-form">Get Bonus Content</a><a href="#book">The Book</a><a href="#author">The Author</a><a href="#retailer-links" class="btn-order">Order Now</a></div></div></nav><section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(33,150,83,0.85),rgba(26,26,46,0.9));background-size:cover;background-position:center center;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;"><div class="container" style="padding-top:60px;padding-bottom:60px;"><h1 class="page-headline text-shadow" style="color:#fff;">Pre-Order Now &amp;<br>Get Exclusive Bonus Content</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);text-shadow:1px 1px 2px #000;">Order before the release date and unlock special rewards</p><a href="#order-form" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Get Your Bonus Content</a></div></section><section class="section-wrapper steps-section" style="background-color:#477cb2;"><div class="container" style="text-align:center;padding-top:40px;"><h2 style="font-size:48px;font-weight:800;color:#fff;line-height:1.2;">How To Get Your</h2><h2 style="font-size:48px;font-weight:800;color:#fff;line-height:1.2;">Exclusive Bonus Content</h2></div><div class="steps-row"><div class="step-card"><div class="step-number">1</div><div class="step-caption">Order</div><div class="step-desc">Pre-order from any retailer</div></div><div class="step-card"><div class="step-number">2</div><div class="step-caption">Confirm</div><div class="step-desc">Upload your receipt</div></div><div class="step-card"><div class="step-number">3</div><div class="step-caption">Email</div><div class="step-desc">Receive your bonus content</div></div></div></section><section id="order-now" class="section-wrapper" style="padding:50px 0;background:#fff;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">1</span><span class="order-caption">Order Now</span></div><p style="font-size:18px;line-height:28px;">Pre-order your copy from any of these retailers.</p></div><div class="col-right" id="retailer-links"><div class="retailer-grid"><div class="retailer-card"><span class="retailer-name">Amazon</span></div><div class="retailer-card"><span class="retailer-name">Barnes & Noble</span></div><div class="retailer-card"><span class="retailer-name">Bookshop.org</span></div><div class="retailer-card"><span class="retailer-name">Target</span></div><div class="retailer-card"><span class="retailer-name">Walmart</span></div><div class="retailer-card"><span class="retailer-name">Books-A-Million</span></div></div></div></div></section><section id="order-form" class="section-wrapper" style="padding:50px 0;background:#f7f8fa;"><div class="two-col"><div class="col-left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span class="order-step-number bg-launch-blue1">2</span><span class="order-caption">Confirm</span></div><p style="font-size:18px;line-height:28px;">Submit your receipt and contact information below.</p></div><div class="col-right"><div class="bg-form"><div class="field-group"><label>Retailer</label><select><option>Select retailer...</option></select></div><div class="field-group"><label>Upload Order Confirmation</label><input type="file"></div><div class="field-group"><label>Email</label><input type="email" placeholder="you@email.com"></div><div class="name-row"><div class="field-group"><label>First Name</label><input type="text"></div><div class="field-group"><label>Last Name</label><input type="text"></div></div><button class="btn-submit">Submit Your Confirmation</button></div></div></div></section><section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover"><div style="width:100%;aspect-ratio:2/3;background:#e8e8e8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">Book Cover</div></div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">The Next Must-Read Bestseller</h4><div class="book-desc"><p>A captivating description of the book.</p></div></div></div></div></section><section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image"><div style="width:100%;min-height:350px;background:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Author Photo</div></div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> The Author</h3><div class="author-desc"><p>Author bio with background and accolades.</p></div></div></div></div></section><footer class="launch-footer"><div class="container"><span>Exclusively from Publisher Name</span><span><a href="#">Privacy Policy</a></span><span>&copy; 2026 Publisher Name. All Rights Reserved.</span></div></footer>' },
+  { name: 'Address Capture', icon: '&#x1f4ec;', badge: 'LAUNCH', desc: 'Hero with inline address form for giveaways',
+    html: '<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#333;">LOGO</div><div class="nav-links"><a href="#address-form">Get Your Free Copy</a><a href="#book">The Book</a><a href="#author">The Author</a></div></div></nav><section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(169,23,44,0.85),rgba(26,26,46,0.9));background-size:cover;background-position:center center;display:flex;align-items:center;color:#fff;"><div class="two-col" style="padding-top:80px;padding-bottom:60px;width:100%;max-width:1140px;margin:0 auto;"><div class="col-left"><h1 class="page-headline2 text-shadow" style="color:#fff;">Get Your Free Copy</h1><p style="font-size:18px;line-height:28px;margin-top:16px;color:rgba(255,255,255,0.85);">Submit your details below to receive a free copy shipped to your door.</p><a href="#address-form" class="btn order-btn" style="margin-top:24px;">Submit Your Details</a></div><div class="col-right" id="address-form"><div class="bg-form"><div class="field-group"><label>Email</label><input type="email" placeholder="you@email.com"></div><div class="name-row"><div class="field-group"><label>First Name</label><input type="text"></div><div class="field-group"><label>Last Name</label><input type="text"></div></div><div class="field-group"><label>Address 1</label><input type="text"></div><div class="field-group"><label>Address 2</label><input type="text"></div><div class="field-group"><label>City</label><input type="text"></div><div class="name-row"><div class="field-group"><label>State</label><input type="text"></div><div class="field-group"><label>Postal Code</label><input type="text"></div></div><div class="field-group"><label>Country</label><input type="text" value="United States"></div><button class="btn-submit">Submit Your Confirmation</button></div></div></div></section><section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover"><div style="width:100%;aspect-ratio:2/3;background:#e8e8e8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">Book Cover</div></div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">A Story Worth Sharing</h4><div class="book-desc"><p>Book description here.</p></div></div></div></div></section><section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image"><div style="width:100%;min-height:350px;background:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Author Photo</div></div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> The Author</h3><div class="author-desc"><p>Author bio here.</p></div></div></div></div></section><footer class="launch-footer"><div class="container"><span>Exclusively from Publisher Name</span><span><a href="#">Privacy Policy</a></span><span>&copy; 2026 Publisher Name. All Rights Reserved.</span></div></footer>' },
+  { name: 'Landing Page', icon: '&#x1f4da;', badge: 'LAUNCH', desc: 'Hero + book + retailer links + author',
+    html: '<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#333;">LOGO</div><div class="nav-links"><a href="#book">The Book</a><a href="#author">The Author</a><a href="#retailer-links" class="btn-order">Order Now</a></div></div></nav><section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(47,128,237,0.85),rgba(26,26,46,0.9));background-size:cover;background-position:center center;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;"><div class="container" style="padding-top:60px;padding-bottom:60px;"><h1 class="page-headline text-shadow" style="color:#fff;">The New Bestseller<br>Available Now</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);text-shadow:1px 1px 2px #000;">From award-winning author — a story you won\'t put down</p><a href="#retailer-links" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Order Your Copy</a></div></section><section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover"><div style="width:100%;aspect-ratio:2/3;background:#e8e8e8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">Book Cover</div></div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">An Unforgettable Literary Journey</h4><div class="book-desc"><p>A captivating description of the book.</p></div></div></div></div></section><section id="retailer-links" style="padding:50px 0;background:#f7f8fa;"><div class="container" style="text-align:center;"><h2 style="font-size:36px;font-weight:700;margin-bottom:30px;">Order Your Copy</h2><div class="retailer-grid" style="max-width:700px;margin:0 auto;justify-content:center;"><div class="retailer-card"><span class="retailer-name">Premiere Collectibles</span></div><div class="retailer-card"><span class="retailer-name">Amazon</span></div><div class="retailer-card"><span class="retailer-name">Barnes & Noble</span></div><div class="retailer-card"><span class="retailer-name">Bookshop.org</span></div><div class="retailer-card"><span class="retailer-name">Target</span></div><div class="retailer-card"><span class="retailer-name">Walmart</span></div><div class="retailer-card"><span class="retailer-name">IndieBound</span></div><div class="retailer-card"><span class="retailer-name">Powell\'s</span></div><div class="retailer-card"><span class="retailer-name">Books-A-Million</span></div></div></div></section><section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image"><div style="width:100%;min-height:350px;background:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">Author Photo</div></div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> The Author</h3><div class="author-desc"><p>Author bio with background and inspiration.</p></div><a href="#" style="display:inline-block;margin-top:16px;color:#4f4f4f;font-size:13px;border:1px solid #4f4f4f;padding:8px 28px;text-transform:uppercase;">View More</a></div></div></div></section><section class="testimonials-section" style="background:#fff;"><div class="container" style="text-align:center;"><p style="text-transform:uppercase;font-weight:600;letter-spacing:2px;font-size:12px;color:#888;margin-bottom:8px;">Reader Reviews</p><h2 style="font-size:2rem;font-weight:700;margin-bottom:30px;">What People Are Saying</h2><div class="testimonial-card"><blockquote>&ldquo;An extraordinary book you won\'t put down.&rdquo;</blockquote><cite>&mdash; Reader Name</cite></div></div></section><footer class="launch-footer"><div class="container"><span>Exclusively from Publisher Name</span><span><a href="#">Privacy Policy</a></span><span>&copy; 2026 Publisher Name. All Rights Reserved.</span></div></footer>' },
+  { name: 'Vinyl / Music', icon: '&#x1f3b5;', desc: 'Album art + tracklist + purchase CTA',
+    html: '<nav class="project-header" style="background:#111;border-bottom:1px solid #222;"><div class="container"><div style="font-size:20px;font-weight:700;color:#fff;">LOGO</div><div class="nav-links"><a href="#tracks" style="color:#fff;">Tracklist</a><a href="#purchase" class="btn-order">Buy Now</a></div></div></nav><section class="section-wrapper" style="min-height:90vh;background:#0d0d0d;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 20px 60px;"><div class="container"><div style="width:350px;height:350px;background:#1a1a1a;border-radius:8px;margin:0 auto 30px;display:flex;align-items:center;justify-content:center;color:#444;font-size:14px;border:1px solid #333;">Album Artwork</div><h1 style="font-size:42px;font-weight:800;margin-bottom:8px;">Album Title</h1><p style="color:#888;font-size:18px;margin-bottom:30px;">Artist Name &bull; 2026</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"><a href="#" style="background:#e94560;color:#fff;padding:12px 28px;border-radius:30px;font-weight:600;">Buy Vinyl</a><a href="#" style="background:transparent;color:#fff;padding:12px 28px;border-radius:30px;font-weight:500;border:1px solid #444;">Stream Now</a></div></div></section><section id="tracks" style="padding:60px 20px;background:#111;color:#fff;"><div style="max-width:700px;margin:0 auto;"><h2 style="font-size:28px;font-weight:700;margin-bottom:24px;text-align:center;">Tracklist</h2><div style="border-top:1px solid #222;"><div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #222;"><span>1. Track One</span><span style="color:#888;">3:42</span></div><div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #222;"><span>2. Track Two</span><span style="color:#888;">4:15</span></div><div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #222;"><span>3. Track Three</span><span style="color:#888;">3:58</span></div><div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #222;"><span>4. Track Four</span><span style="color:#888;">5:01</span></div><div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #222;"><span>5. Track Five</span><span style="color:#888;">3:33</span></div></div></div></section><section id="purchase" style="padding:60px 20px;background:#e94560;color:#fff;text-align:center;"><div style="max-width:600px;margin:0 auto;"><h2 style="font-size:36px;font-weight:700;margin-bottom:12px;">Get the Vinyl</h2><p style="font-size:18px;margin-bottom:24px;opacity:0.9;">Limited edition pressing — order yours today.</p><a href="#" style="display:inline-block;background:#fff;color:#e94560;padding:14px 32px;border-radius:30px;font-weight:700;font-size:16px;">Order Now</a></div></section><footer class="launch-footer"><div class="container"><span>&copy; 2026 Label Name</span><span><a href="#">Privacy Policy</a></span><span>All Rights Reserved.</span></div></footer>' },
+  { name: 'Blank Canvas', icon: '&#x270f;&#xfe0f;', desc: 'Start from scratch',
+    html: '<section style="min-height:100vh;padding:80px 40px;font-family:\'Open Sans\',sans-serif;text-align:center;color:#888;"><h2 style="color:#333;margin-bottom:12px;">Start Building</h2><p>Drag blocks from the sidebar to build your page.</p></section>' },
+];
+
+// ════════════════════════════════════════════════════════
+// INIT GRAPESJS
+// ════════════════════════════════════════════════════════
+var editor = grapesjs.init({
+  container: '#gjs',
+  fromElement: false,
+  height: '100%',
+  width: 'auto',
+  avoidInlineStyle: false,   // Write styles inline per-element, not CSS rules for shared classes
+  storageManager: false,
+  assetManager: {
+    uploadFile: function(e) {
+      var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+      Array.from(files).forEach(function(file) {
+        if (!file.type.startsWith('image/')) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          editor.AssetManager.add([{ src: ev.target.result, name: file.name, type: 'image' }]);
+          var sel = editor.getSelected();
+          if (sel && sel.is('image')) { sel.set('src', ev.target.result); sel.addAttributes({ src: ev.target.result }); }
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+  },
+  deviceManager: {
+    devices: [
+      { name: 'Desktop', width: '' },
+      { name: 'Tablet', width: '768px', widthMedia: '992px' },
+      { name: 'Mobile portrait', width: '375px', widthMedia: '480px' },
+    ],
+  },
+  panels: { defaults: [] },
+  plugins: [window['grapesjs-blocks-basic']],
+  pluginsOpts: { [window['grapesjs-blocks-basic']]: { flexGrid: true } },
+  blockManager: { appendTo: '#hidden-blocks' },
+  styleManager: {
+    appendTo: '#styles-container',
+    sectors: [
+      { name: 'Typography', open: true, properties: [
+        { type: 'select', property: 'font-family', options: [
+          { id: "'Open Sans', sans-serif", label: 'Open Sans' }, { id: "'Montserrat', sans-serif", label: 'Montserrat' },
+          { id: "'Inter', sans-serif", label: 'Inter' }, { id: "Georgia, serif", label: 'Georgia' },
+          { id: "Arial, sans-serif", label: 'Arial' }, { id: "'Helvetica Neue', sans-serif", label: 'Helvetica Neue' },
+        ]},
+        { property: 'font-size', type: 'number', units: ['px','em','rem','%'], min: 0 },
+        { type: 'select', property: 'font-weight', options: [
+          { id:'300',label:'Light' },{ id:'400',label:'Regular' },{ id:'500',label:'Medium' },
+          { id:'600',label:'Semi-Bold' },{ id:'700',label:'Bold' },{ id:'800',label:'Extra-Bold' },
+        ]},
+        { property: 'color', type: 'color' },
+        { property: 'line-height', type: 'number', units: ['px','em',''], min: 0 },
+        { property: 'letter-spacing', type: 'number', units: ['px','em'] },
+        { type: 'radio', property: 'text-align', options: [
+          { id:'left',label:'L' },{ id:'center',label:'C' },{ id:'right',label:'R' },{ id:'justify',label:'J' },
+        ]},
+        { type: 'select', property: 'text-transform', options: [
+          { id:'none',label:'None' },{ id:'uppercase',label:'UPPER' },{ id:'lowercase',label:'lower' },{ id:'capitalize',label:'Title' },
+        ]},
+      ]},
+      { name: 'Background', open: true, properties: [
+        { property: 'background-color', type: 'color' },
+        { property: 'background-image', type: 'text', label: 'BG Image / Gradient' },
+        { type: 'select', property: 'background-size', options: [
+          { id:'cover',label:'Cover' },{ id:'contain',label:'Contain' },{ id:'auto',label:'Auto' },
+        ]},
+        { type: 'select', property: 'background-position', options: [
+          { id:'center center',label:'Center' },{ id:'top center',label:'Top' },{ id:'bottom center',label:'Bottom' },
+        ]},
+        { property: 'opacity', type: 'number', min: 0, max: 1, step: 0.05 },
+      ]},
+      { name: 'Size & Spacing', open: true, properties: [
+        { property: 'width', type: 'number', units: ['px','%','vw','auto'] },
+        { property: 'max-width', type: 'number', units: ['px','%','none'] },
+        { property: 'height', type: 'number', units: ['px','%','vh','auto'] },
+        { property: 'min-height', type: 'number', units: ['px','vh'] },
+        { property: 'padding', type: 'composite', properties: [
+          { property:'padding-top', type:'number', units:['px','%'], min:0 },
+          { property:'padding-right', type:'number', units:['px','%'], min:0 },
+          { property:'padding-bottom', type:'number', units:['px','%'], min:0 },
+          { property:'padding-left', type:'number', units:['px','%'], min:0 },
+        ]},
+        { property: 'margin', type: 'composite', properties: [
+          { property:'margin-top', type:'number', units:['px','%','auto'] },
+          { property:'margin-right', type:'number', units:['px','%','auto'] },
+          { property:'margin-bottom', type:'number', units:['px','%','auto'] },
+          { property:'margin-left', type:'number', units:['px','%','auto'] },
+        ]},
+      ]},
+      { name: 'Borders', open: false, properties: [
+        { property: 'border-radius', type: 'number', units: ['px','%'], min: 0 },
+        { property: 'border', type: 'composite', properties: [
+          { property:'border-width', type:'number', units:['px'], min:0 },
+          { property:'border-style', type:'select', options: [{ id:'none',label:'None' },{ id:'solid',label:'Solid' },{ id:'dashed',label:'Dashed' }] },
+          { property:'border-color', type:'color' },
+        ]},
+        { property: 'box-shadow', type: 'text' },
+      ]},
+      { name: 'Layout', open: false, properties: [
+        { type:'select', property:'display', options: [
+          { id:'block',label:'Block' },{ id:'flex',label:'Flex' },{ id:'inline-block',label:'Inline Block' },{ id:'none',label:'Hidden' },
+        ]},
+        { type:'select', property:'flex-direction', options: [{ id:'row',label:'Row' },{ id:'column',label:'Column' }] },
+        { type:'select', property:'justify-content', options: [
+          { id:'flex-start',label:'Start' },{ id:'center',label:'Center' },{ id:'flex-end',label:'End' },{ id:'space-between',label:'Between' },
+        ]},
+        { type:'select', property:'align-items', options: [
+          { id:'stretch',label:'Stretch' },{ id:'flex-start',label:'Start' },{ id:'center',label:'Center' },{ id:'flex-end',label:'End' },
+        ]},
+        { property: 'gap', type: 'number', units: ['px','em'], min: 0 },
+      ]},
+    ],
+  },
+  layerManager: { appendTo: '#layers-container' },
+  traitManager: { appendTo: '#traits-container' },
+  canvas: {
+    styles: ['https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&display=swap'],
+  },
+});
+
+// Hidden container for default blocks
+var hiddenDiv = document.createElement('div');
+hiddenDiv.id = 'hidden-blocks';
+hiddenDiv.style.display = 'none';
+document.body.appendChild(hiddenDiv);
+
+// ════════════════════════════════════════════════════════
+// CUSTOM BLOCK SIDEBAR
+// ════════════════════════════════════════════════════════
+function buildBlocksSidebar() {
+  var container = document.getElementById('custom-blocks');
+  container.innerHTML = '';
+  blockDefs.forEach(function(cat) {
+    var section = document.createElement('div');
+    section.className = 'block-category';
+    section.innerHTML = '<div class="block-category-title" onclick="this.parentElement.classList.toggle(\'collapsed\')">' + cat.cat + ' <i class="fas fa-chevron-down chevron"></i></div>';
+    var grid = document.createElement('div');
+    grid.className = 'block-grid' + (cat.cat === 'Page Sections' || cat.cat === 'Forms' ? ' single-col' : '');
+    cat.blocks.forEach(function(b) {
+      var item = document.createElement('div');
+      item.className = 'block-item';
+      item.innerHTML = '<i class="fas ' + b.icon + '"></i><span>' + b.label + '</span>';
+      item.addEventListener('click', function() {
+        if (b.content === 'CUSTOM_HTML_PROMPT') { handleCustomHtmlBlock(); return; }
+        if (typeof b.content === 'string') { editor.addComponents(b.content); }
+        else { editor.addComponents([b.content]); }
+      });
+      grid.appendChild(item);
+    });
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// LINK MANAGEMENT
+// ════════════════════════════════════════════════════════
+function applyLink() {
+  var url = document.getElementById('link-url-input').value.trim();
+  if (!url) return;
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var parent = sel.parent();
+  if (parent && parent.get('tagName') === 'a') {
+    parent.addAttributes({ href: url, target: '_blank' });
+  } else {
+    var wrapper = editor.DomComponents.addComponent({
+      tagName: 'a', attributes: { href: url, target: '_blank' },
+      style: { display: 'inline-block' },
+      components: [sel.clone()],
+    });
+    sel.replaceWith(wrapper);
+    editor.select(wrapper);
+  }
+}
+
+function removeLink() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var comp = sel.get('tagName') === 'a' ? sel : sel.parent();
+  if (comp && comp.get('tagName') === 'a') {
+    var children = comp.components().models.map(function(c) { return c.clone(); });
+    children.forEach(function(c) { comp.parent().append(c); });
+    comp.remove();
+    if (children.length) editor.select(children[0]);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// EDITOR EVENTS
+// ════════════════════════════════════════════════════════
+function injectCSS() {
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  var el = doc.getElementById('launch-css');
+  if (el) el.remove();
+  var style = doc.createElement('style');
+  style.id = 'launch-css';
+  style.innerHTML = launchCSS;
+  doc.head.appendChild(style);
+  // Inject editor-only resize handle CSS (separate so it's never exported)
+  if (!doc.getElementById('resize-handle-css')) {
+    var rStyle = doc.createElement('style');
+    rStyle.id = 'resize-handle-css';
+    rStyle.innerHTML = resizeHandleCSS;
+    doc.head.appendChild(rStyle);
+  }
+  // Inject AOS CSS into canvas for scroll animation previews
+  if (!doc.getElementById('aos-css')) {
+    var aosLink = doc.createElement('link');
+    aosLink.id = 'aos-css';
+    aosLink.rel = 'stylesheet';
+    aosLink.href = 'https://unpkg.com/aos@2.3.4/dist/aos.css';
+    doc.head.appendChild(aosLink);
+  }
+  // Inject AOS JS into canvas and initialize
+  if (!doc.getElementById('aos-js')) {
+    var aosScript = doc.createElement('script');
+    aosScript.id = 'aos-js';
+    aosScript.src = 'https://unpkg.com/aos@2.3.4/dist/aos.js';
+    aosScript.onload = function() {
+      if (doc.defaultView && doc.defaultView.AOS) {
+        doc.defaultView.AOS.init({ once: true, duration: 800 });
+      }
+    };
+    doc.body.appendChild(aosScript);
+  }
+}
+
+function refreshAOS() {
+  var doc = editor.Canvas.getDocument();
+  if (doc && doc.defaultView && doc.defaultView.AOS) {
+    doc.defaultView.AOS.refreshHard();
+  }
+}
+
+editor.on('load', function() {
+  injectCSS();
+  buildBlocksSidebar();
+
+  // Load saved project from server or localStorage
+  var loaded = false;
+
+  if (typeof CAMPAIGN_ID !== 'undefined' && CAMPAIGN_ID) {
+    // Load from DB via API
+    fetch(SAVE_URL, { headers: { 'Accept': 'application/json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.html_content && data.html_content.trim().length > 0) {
+          editor.setComponents(data.html_content);
+          if (data.css_content) editor.setStyle(data.css_content);
+          document.getElementById('saved-builder-html').value = data.html_content;
+          document.getElementById('saved-builder-css').value = data.css_content || '';
+        }
+      }).catch(function() {});
+  }
+
+  var savedHtml = document.getElementById('saved-builder-html').value || localStorage.getItem('launch-builder-html') || '';
+  var savedCss = document.getElementById('saved-builder-css').value || localStorage.getItem('launch-builder-css') || '';
+
+  if (!CAMPAIGN_ID && savedHtml && savedHtml.trim().length > 0) {
+    editor.setComponents(savedHtml);
+    if (savedCss) editor.setStyle(savedCss);
+    loaded = true;
+    setTimeout(function() { injectCSS(); markUploadPlaceholders(); }, 150);
+  }
+
+  if (!loaded && editor.DomComponents.getComponents().length === 0) {
+    openTemplates();
+  }
+});
+
+var markTimeout;
+editor.on('component:add', function() {
+  injectCSS();
+  clearTimeout(markTimeout);
+  markTimeout = setTimeout(markUploadPlaceholders, 300);
+});
+
+// ════════════════════════════════════════════════════════
+// RESIZE HANDLES
+// ════════════════════════════════════════════════════════
+var resizeState = { active: false, type: null, startY: 0, startX: 0, startH: 0, startW: 0, el: null, comp: null };
+
+function addResizeHandles(component) {
+  removeResizeHandles();
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  var el = component.getEl();
+  if (!el) return;
+
+  // Make sure element has relative/absolute/sticky positioning for handle placement
+  var iframeWin = doc.defaultView || window;
+  var pos = iframeWin.getComputedStyle(el).position;
+  if (pos === 'static') {
+    el.style.position = 'relative';
+    el.setAttribute('data-gjs-was-static', '1');
+  }
+
+  // Bottom handle (height resize)
+  var bottomHandle = doc.createElement('div');
+  bottomHandle.className = 'gjs-resize-handle';
+  bottomHandle.setAttribute('data-resize', 'bottom');
+  el.appendChild(bottomHandle);
+
+  // Right handle (width resize)
+  var rightHandle = doc.createElement('div');
+  rightHandle.className = 'gjs-resize-handle-side';
+  rightHandle.setAttribute('data-resize', 'right');
+  el.appendChild(rightHandle);
+
+  // Bottom handle drag
+  bottomHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeState = { active: true, type: 'height', startY: e.clientY, startH: el.offsetHeight, el: el, comp: component, startX: 0, startW: 0 };
+  });
+
+  // Right handle drag
+  rightHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    resizeState = { active: true, type: 'width', startX: e.clientX, startW: el.offsetWidth, el: el, comp: component, startY: 0, startH: 0 };
+  });
+}
+
+function removeResizeHandles() {
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  // Restore position on elements that were originally static
+  doc.querySelectorAll('[data-gjs-was-static]').forEach(function(el) {
+    el.style.position = '';
+    el.removeAttribute('data-gjs-was-static');
+  });
+  doc.querySelectorAll('.gjs-resize-handle, .gjs-resize-handle-side').forEach(function(h) { h.remove(); });
+}
+
+// Listen for mousemove/mouseup on the canvas iframe
+editor.on('load', function() {
+  var canvasDoc = editor.Canvas.getDocument();
+  if (!canvasDoc) return;
+
+  canvasDoc.addEventListener('mousemove', function(e) {
+    if (!resizeState.active) return;
+    if (resizeState.type === 'height') {
+      var newH = Math.max(20, resizeState.startH + (e.clientY - resizeState.startY));
+      resizeState.el.style.height = newH + 'px';
+      resizeState.el.style.minHeight = newH + 'px';
+      resizeState.el.style.maxHeight = 'none';
+      // Neutralize flex column sizing if parent is a column flex
+      resizeState.el.style.flexShrink = '0';
+      resizeState.el.style.flexBasis = 'auto';
+    } else if (resizeState.type === 'width') {
+      var newW = Math.max(40, resizeState.startW + (e.clientX - resizeState.startX));
+      resizeState.el.style.width = newW + 'px';
+      resizeState.el.style.minWidth = newW + 'px';
+      resizeState.el.style.maxWidth = 'none';
+      // Neutralize flex so explicit width is respected
+      resizeState.el.style.flex = 'none';
+    }
+  });
+
+  canvasDoc.addEventListener('mouseup', function() {
+    if (!resizeState.active) return;
+    // Sync only the essential properties to the GrapesJS component model
+    // Clean up temporary DOM overrides that shouldn't persist
+    if (resizeState.comp) {
+      if (resizeState.type === 'height') {
+        var h = resizeState.el.style.height;
+        // Clean up DOM-only overrides
+        resizeState.el.style.maxHeight = '';
+        resizeState.el.style.flexShrink = '';
+        resizeState.el.style.flexBasis = '';
+        // Sync to model — only height and min-height
+        resizeState.comp.addStyle({
+          'height': h,
+          'min-height': h
+        });
+      } else if (resizeState.type === 'width') {
+        var w = resizeState.el.style.width;
+        // Clean up DOM-only overrides
+        resizeState.el.style.maxWidth = '';
+        resizeState.el.style.minWidth = '';
+        // Sync to model — width + flex:none so flex layout doesn't override
+        resizeState.comp.addStyle({
+          'width': w,
+          'flex': 'none'
+        });
+      }
+    }
+    resizeState.active = false;
+    resizeState.el = null;
+    resizeState.comp = null;
+  });
+});
+
+// Template CSS classes — must never be used as CSS rule targets by GrapesJS
+var templateClasses = new Set([
+  'section-wrapper','section-intro','project-header','steps-section','step-card','steps-row',
+  'two-col','col-left','col-right','book-section','book-row','book-cover','book-detail',
+  'author-section','author-row','author-image','author-detail','testimonials-section',
+  'testimonial-card','launch-footer','container','retailer-grid','retailer-card','retailer-name',
+  'bg-form','field-group','name-row','nav-links','btn-submit','btn-order','order-btn',
+  'bg-launch-blue1','bg-launch-green','bg-launch-dark','bg-launch-yellow',
+  'text-white','text-launch-darkblue','page-headline','page-headline2','text-shadow',
+  'ff-montserrat','ff-opensans','step-number','step-caption','step-desc',
+  'order-step-number','order-caption','book-headline1','book-headline2','book-desc',
+  'author-headline1','author-desc','sticky-nav','btn','btn-submit',
+  'hover-lift','hover-scale','hover-glow','hover-brighten','hover-shadow','hover-darken',
+  'overlay-darken','overlay-lighten','overlay-gradient-dark','overlay-gradient-color',
+  'upload-placeholder'
+]);
+
+editor.on('component:selected', function(component) {
+  // Protect template classes — deactivate them so GrapesJS creates unique per-element selectors
+  component.getSelectors().each(function(sel) {
+    if (templateClasses.has(sel.get('name'))) {
+      sel.set('private', true);
+    }
+  });
+
+  showPanel('styles', document.querySelector('.sidebar-tabs button:nth-child(2)'));
+  document.getElementById('img-actions').style.display = '';
+  document.getElementById('align-actions').style.display = '';
+  var tag = component.get('tagName');
+  var isImg = component.is('image') || tag === 'img';
+  var isLink = tag === 'a';
+  document.getElementById('link-actions').style.display = (isImg || isLink) ? '' : 'none';
+  var linkInput = document.getElementById('link-url-input');
+  if (isLink) {
+    linkInput.value = component.getAttributes().href || '';
+  } else if (component.parent() && component.parent().get('tagName') === 'a') {
+    linkInput.value = component.parent().getAttributes().href || '';
+  } else {
+    linkInput.value = '';
+  }
+
+  // Add resize handles + floating toolbar (skip if RTE text editing is active)
+  setTimeout(function() {
+    if (!rteActive) {
+      addResizeHandles(component);
+      showElementToolbar(component);
+    }
+    showEffectsPanel(component);
+  }, 50);
+});
+
+editor.on('component:deselected', function() {
+  showPanel('blocks', document.querySelector('.sidebar-tabs button:first-child'));
+  document.getElementById('img-actions').style.display = 'none';
+  document.getElementById('link-actions').style.display = 'none';
+  document.getElementById('align-actions').style.display = 'none';
+  removeResizeHandles();
+  hideElementToolbar();
+  hideEffectsPanel();
+});
+
+// Hide element toolbar when RTE (inline text editor) is active to prevent overlap
+var rteActive = false;
+editor.on('rte:enable', function() {
+  rteActive = true;
+  hideElementToolbar();
+  removeResizeHandles();
+});
+editor.on('rte:disable', function() {
+  rteActive = false;
+  var sel = editor.getSelected();
+  if (sel) {
+    showElementToolbar(sel);
+    addResizeHandles(sel);
+  }
+});
+
+editor.DomComponents.addType('link', {
+  isComponent: function(el) { return el.tagName === 'A'; },
+  model: {
+    defaults: {
+      traits: [
+        { type: 'text', name: 'href', label: 'URL' },
+        { type: 'select', name: 'target', label: 'Open in', options: [{ id:'', name:'Same tab' },{ id:'_blank', name:'New tab' }] },
+      ],
+    },
+  },
+});
+
+// ════════════════════════════════════════════════════════
+// UI FUNCTIONS
+// ════════════════════════════════════════════════════════
+function doUndo() { editor.UndoManager.undo(); }
+function doRedo() { editor.UndoManager.redo(); }
+
+function toggleStickyNav(btn) {
+  var doc = editor.Canvas.getDocument();
+  if (!doc) return;
+  var navs = doc.querySelectorAll('.project-header');
+  if (!navs.length) { alert('No nav bar on the page to toggle.'); return; }
+  var isSticky = navs[0].classList.contains('sticky-nav');
+  navs.forEach(function(nav) { nav.classList.toggle('sticky-nav'); });
+  btn.classList.toggle('active');
+  var components = editor.DomComponents.getComponents();
+  function findNavs(comps) {
+    comps.forEach(function(c) {
+      if ((c.getClasses() || []).includes('project-header')) {
+        if (isSticky) c.removeClass('sticky-nav');
+        else c.addClass('sticky-nav');
+      }
+      if (c.components().length) findNavs(c.components().models);
+    });
+  }
+  findNavs(components.models);
+}
+
+function setDevice(device, btn) {
+  editor.setDevice(device);
+  document.querySelectorAll('.device-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+}
+
+function togglePreview() {
+  editor.runCommand('preview');
+  var hint = document.createElement('div');
+  hint.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:10px;font-size:13px;z-index:99999;pointer-events:none;transition:opacity 0.5s;font-family:-apple-system,sans-serif;';
+  hint.textContent = 'Press Escape to exit preview';
+  document.body.appendChild(hint);
+  setTimeout(function() { hint.style.opacity = '0'; }, 2000);
+  setTimeout(function() { hint.remove(); }, 2500);
+}
+
+function showPanel(name, btn) {
+  document.querySelectorAll('.sidebar-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-tabs button').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  else { var tabs = document.querySelectorAll('.sidebar-tabs button');
+    var map = { blocks: 0, styles: 1, layers: 2 };
+    if (tabs[map[name]]) tabs[map[name]].classList.add('active');
+  }
+}
+
+function quickAlign(position) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var tag = sel.get('tagName');
+  var isInline = sel.is('image') || tag === 'img' || tag === 'a';
+  if (position === 'center') {
+    if (isInline) { sel.addStyle({ display: 'block', 'margin-left': 'auto', 'margin-right': 'auto' }); }
+    else { sel.addStyle({ 'text-align': 'center' }); }
+  } else if (position === 'left') {
+    if (isInline) { sel.addStyle({ display: 'block', 'margin-left': '0', 'margin-right': 'auto' }); }
+    else { sel.addStyle({ 'text-align': 'left' }); }
+  } else if (position === 'right') {
+    if (isInline) { sel.addStyle({ display: 'block', 'margin-left': 'auto', 'margin-right': '0' }); }
+    else { sel.addStyle({ 'text-align': 'right' }); }
+  }
+}
+
+function applyUploadedBg(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var sel = editor.getSelected();
+    if (sel) sel.addStyle({ 'background-image': 'url(' + ev.target.result + ')', 'background-size': 'cover', 'background-position': 'center center', 'background-repeat': 'no-repeat' });
+    else alert('Select an element first.');
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function insertUploadedImg(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var sel = editor.getSelected();
+    if (sel) sel.append('<img src="' + ev.target.result + '" style="max-width:100%;height:auto;" />');
+    else editor.addComponents('<img src="' + ev.target.result + '" style="max-width:100%;height:auto;" />');
+    editor.AssetManager.add([{ src: ev.target.result, name: file.name, type: 'image' }]);
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function openTemplates() {
+  var grid = document.getElementById('templateGrid');
+  grid.innerHTML = '';
+  templates.forEach(function(t, i) {
+    var card = document.createElement('div');
+    card.className = 'template-card';
+    card.innerHTML = '<div class="preview">' + t.icon + (t.badge ? '<span class="badge">' + t.badge + '</span>' : '') + '</div><div class="info"><h3>' + t.name + '</h3><p>' + t.desc + '</p></div>';
+    card.onclick = function() { loadTemplate(i); };
+    grid.appendChild(card);
+  });
+  document.getElementById('templateModal').classList.add('active');
+}
+function closeTemplates() { document.getElementById('templateModal').classList.remove('active'); }
+
+function loadTemplate(i) {
+  if (editor.DomComponents.getComponents().length > 0 && !confirm('Replace current page with this template?')) return;
+  editor.DomComponents.clear(); editor.CssComposer.clear();
+  editor.setComponents(templates[i].html);
+  injectCSS(); setTimeout(function() { injectCSS(); markUploadPlaceholders(); }, 150);
+  closeTemplates();
+}
+
+// Strip editor-only artifacts from components before export/save
+function cleanForExport() {
+  removeResizeHandles();
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+  // Remove upload-placeholder class (dashed borders are editor-only)
+  wrapper.find('.upload-placeholder').forEach(function(comp) {
+    comp.removeClass('upload-placeholder');
+  });
+  // Remove data-gjs-was-static attribute if somehow still present
+  var doc = editor.Canvas.getDocument();
+  if (doc) {
+    doc.querySelectorAll('[data-gjs-was-static]').forEach(function(el) {
+      el.removeAttribute('data-gjs-was-static');
+    });
+  }
+}
+
+// Re-add editor-only artifacts after export/save
+function restoreAfterExport() {
+  markUploadPlaceholders();
+  var sel = editor.getSelected();
+  if (sel) addResizeHandles(sel);
+}
+
+function openCode() {
+  cleanForExport();
+  // Check if any elements use AOS
+  var html = editor.getHtml();
+  var hasAOS = html.indexOf('data-aos') !== -1;
+  var aosHead = hasAOS ? '\n  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">' : '';
+  var aosFoot = hasAOS ? '\n  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"><\/script>\n  <script>AOS.init({once:true,duration:800});<\/script>' : '';
+  var full = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Launch Page</title>' + aosHead + '\n  <style>\n' + launchCSS + '\n' + editor.getCss() + '\n  </style>\n</head>\n<body>\n' + html + aosFoot + '\n</body>\n</html>';
+  restoreAfterExport();
+  document.getElementById('codeOutput').value = full;
+  document.getElementById('codeModal').classList.add('active');
+}
+function closeCode() { document.getElementById('codeModal').classList.remove('active'); }
+function copyCode() {
+  var ta = document.getElementById('codeOutput'); ta.select();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value)
+      .then(function() { showToast('Copied!', 'success'); })
+      .catch(function() { document.execCommand('copy'); showToast('Copied!', 'success'); });
+  } else {
+    document.execCommand('copy');
+    showToast('Copied!', 'success');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// HTML EDITOR
+// ════════════════════════════════════════════════════════
+function openHtmlEditor() {
+  cleanForExport();
+  var ta = document.getElementById('htmlEditorOutput');
+  ta.value = editor.getHtml();
+  restoreAfterExport();
+  ta.readOnly = false;
+  document.getElementById('htmlEditorModal').classList.add('active');
+  setTimeout(function() { ta.focus(); }, 100);
+}
+function closeHtmlEditor() { document.getElementById('htmlEditorModal').classList.remove('active'); }
+
+function applyHtmlEdit() {
+  var html = document.getElementById('htmlEditorOutput').value;
+  if (!html.trim()) { showToast('HTML is empty', 'error'); return; }
+  if (!confirm('This will replace the entire page with your edited HTML. Continue?')) return;
+  editor.DomComponents.clear();
+  editor.CssComposer.clear();
+  editor.setComponents(html);
+  injectCSS();
+  setTimeout(injectCSS, 150);
+  closeHtmlEditor();
+  showToast('HTML applied!', 'success');
+}
+
+function pasteHtmlSnippet() {
+  var ta = document.getElementById('htmlEditorOutput');
+  var snippet = prompt('Paste your HTML snippet:');
+  if (!snippet) return;
+  // Insert at cursor position in the textarea
+  var start = ta.selectionStart;
+  var end = ta.selectionEnd;
+  var text = ta.value;
+  ta.value = text.substring(0, start) + snippet + text.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + snippet.length;
+  ta.focus();
+}
+
+// Custom HTML block — prompts for HTML when dropped
+function handleCustomHtmlBlock() {
+  var html = prompt('Paste your HTML:');
+  if (html && html.trim()) {
+    editor.addComponents(html);
+    injectCSS();
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SAVE TO SERVER
+// ════════════════════════════════════════════════════════
+function showToast(msg, type) {
+  var toast = document.createElement('div');
+  toast.className = 'save-toast ' + (type || 'success');
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; }, 2000);
+  setTimeout(function() { toast.remove(); }, 2500);
+}
+
+function saveToServer() {
+  cleanForExport();
+  var btn = document.querySelector('.actions .btn-success');
+  var origHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  btn.disabled = true;
+
+  var html = editor.getHtml();
+  var css = editor.getCss();
+  restoreAfterExport();
+
+  var formData = new FormData();
+  formData.append('builder_html', html);
+  formData.append('builder_css', css);
+
+  if (typeof CAMPAIGN_ID !== 'undefined' && CAMPAIGN_ID) {
+    fetch(SAVE_URL, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
+      body: JSON.stringify({ landing_page: { html_content: html, css_content: css } })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+      if (data.success) {
+        document.getElementById('saved-builder-html').value = html;
+        document.getElementById('saved-builder-css').value = css;
+        showToast('Saved!', 'success');
+      } else {
+        showToast('Save failed — ' + (data.errors || []).join(', '), 'error');
+      }
+    }).catch(function(e) {
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+      showToast('Save failed — ' + e.message, 'error');
+    });
+  } else {
+    // Fallback: localStorage for standalone testing
+    try {
+      localStorage.setItem('launch-builder-html', html);
+      localStorage.setItem('launch-builder-css', css);
+      document.getElementById('saved-builder-html').value = html;
+      document.getElementById('saved-builder-css').value = css;
+      setTimeout(function() {
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+        showToast('Saved! (localStorage)', 'success');
+      }, 300);
+    } catch(e) {
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+      showToast('Save failed — ' + e.message, 'error');
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// EFFECTS PANEL
+// ════════════════════════════════════════════════════════
+var hoverClasses = ['hover-lift','hover-scale','hover-glow','hover-brighten','hover-shadow','hover-darken'];
+var overlayClasses = ['overlay-darken','overlay-lighten','overlay-gradient-dark','overlay-gradient-color'];
+var shadowPresets = {
+  'none': 'none',
+  'subtle': '0 2px 8px rgba(0,0,0,0.08)',
+  'medium': '0 4px 16px rgba(0,0,0,0.12)',
+  'heavy': '0 10px 40px rgba(0,0,0,0.2)',
+  'glow': '0 0 30px rgba(108,92,231,0.35)',
+  'warm': '0 0 30px rgba(255,160,50,0.3)',
+};
+
+function showEffectsPanel(component) {
+  var panel = document.getElementById('effects-panel');
+  panel.classList.add('visible');
+
+  // Update hover button states
+  var classes = component.getClasses() || [];
+  document.querySelectorAll('.fx-btn[data-hover]').forEach(function(btn) {
+    btn.classList.toggle('active', classes.indexOf(btn.getAttribute('data-hover')) !== -1);
+  });
+
+  // Update AOS dropdown
+  var attrs = component.getAttributes();
+  var aosVal = attrs['data-aos'] || '';
+  document.getElementById('aos-select').value = aosVal;
+  document.getElementById('aos-options').style.display = aosVal ? 'flex' : 'none';
+  if (aosVal) {
+    document.getElementById('aos-duration').value = attrs['data-aos-duration'] || '800';
+    document.getElementById('aos-delay').value = attrs['data-aos-delay'] || '0';
+  }
+
+  // Update shadow buttons
+  var currentShadow = (component.getStyle()['box-shadow'] || 'none').trim();
+  document.querySelectorAll('.fx-section:nth-child(3) .fx-btn').forEach(function(btn) { btn.classList.remove('active'); });
+  Object.keys(shadowPresets).forEach(function(key) {
+    if (shadowPresets[key] === currentShadow) {
+      var btns = document.querySelectorAll('.fx-section:nth-child(3) .fx-btn');
+      var map = { 'none': 0, 'subtle': 1, 'medium': 2, 'heavy': 3, 'glow': 4, 'warm': 5 };
+      if (btns[map[key]]) btns[map[key]].classList.add('active');
+    }
+  });
+
+  // Update overlay buttons
+  document.querySelectorAll('.fx-section:nth-child(4) .fx-btn').forEach(function(btn) { btn.classList.remove('active'); });
+  var hasOverlay = false;
+  overlayClasses.forEach(function(cls) {
+    if (classes.indexOf(cls) !== -1) {
+      hasOverlay = true;
+      var map = { 'overlay-darken': 1, 'overlay-lighten': 2, 'overlay-gradient-dark': 3, 'overlay-gradient-color': 4 };
+      var btns = document.querySelectorAll('.fx-section:nth-child(4) .fx-btn');
+      if (btns[map[cls]]) btns[map[cls]].classList.add('active');
+    }
+  });
+  if (!hasOverlay) {
+    document.querySelectorAll('.fx-section:nth-child(4) .fx-btn')[0].classList.add('active');
+  }
+}
+
+function hideEffectsPanel() {
+  document.getElementById('effects-panel').classList.remove('visible');
+}
+
+function toggleHover(className, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var has = (sel.getClasses() || []).indexOf(className) !== -1;
+  if (has) {
+    sel.removeClass(className);
+    btn.classList.remove('active');
+  } else {
+    // Remove other hover classes first (one at a time)
+    hoverClasses.forEach(function(c) { sel.removeClass(c); });
+    document.querySelectorAll('.fx-btn[data-hover]').forEach(function(b) { b.classList.remove('active'); });
+    sel.addClass(className);
+    btn.classList.add('active');
+  }
+}
+
+function setAosAnimation(value) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  if (value) {
+    sel.addAttributes({ 'data-aos': value });
+    document.getElementById('aos-options').style.display = 'flex';
+    // Set default duration/delay if not set
+    var attrs = sel.getAttributes();
+    if (!attrs['data-aos-duration']) sel.addAttributes({ 'data-aos-duration': '800' });
+  } else {
+    sel.removeAttributes('data-aos');
+    sel.removeAttributes('data-aos-duration');
+    sel.removeAttributes('data-aos-delay');
+    sel.removeAttributes('data-aos-offset');
+    document.getElementById('aos-options').style.display = 'none';
+  }
+  setTimeout(refreshAOS, 200);
+}
+
+function setAosDuration(val) {
+  var sel = editor.getSelected();
+  if (sel) sel.addAttributes({ 'data-aos-duration': val });
+  setTimeout(refreshAOS, 100);
+}
+
+function setAosDelay(val) {
+  var sel = editor.getSelected();
+  if (sel) {
+    if (parseInt(val) > 0) sel.addAttributes({ 'data-aos-delay': val });
+    else sel.removeAttributes('data-aos-delay');
+  }
+  setTimeout(refreshAOS, 100);
+}
+
+function setShadow(preset, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  sel.addStyle({ 'box-shadow': shadowPresets[preset] || 'none' });
+  // Update button states
+  var parent = btn.parentElement;
+  parent.querySelectorAll('.fx-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function setOverlay(type, btn) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  // Remove all overlay classes
+  overlayClasses.forEach(function(cls) { sel.removeClass(cls); });
+  // Add new one
+  if (type !== 'none') {
+    sel.addClass('overlay-' + type);
+  }
+  // Update button states
+  var parent = btn.parentElement;
+  parent.querySelectorAll('.fx-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════
+// FLOATING ELEMENT TOOLBAR
+// ════════════════════════════════════════════════════════
+function showElementToolbar(component) {
+  var toolbar = document.getElementById('element-toolbar');
+  var el = component.getEl();
+  if (!el) { toolbar.style.display = 'none'; return; }
+
+  // Set label — show a friendly name based on classes/tag
+  var tag = component.get('tagName') || 'div';
+  var classes = component.getClasses() || [];
+  var label = tag;
+  var friendlyMap = {
+    'project-header': 'Nav Bar', 'section-wrapper': 'Section', 'section-intro': 'Hero',
+    'steps-section': 'Steps', 'step-card': 'Step Card', 'book-section': 'Book',
+    'author-section': 'Author', 'testimonials-section': 'Testimonials',
+    'launch-footer': 'Footer', 'two-col': '2 Columns', 'col-left': 'Left Col',
+    'col-right': 'Right Col', 'container': 'Container', 'bg-form': 'Form',
+    'field-group': 'Field', 'retailer-grid': 'Retailers', 'retailer-card': 'Retailer',
+    'book-cover': 'Book Cover', 'book-detail': 'Book Info', 'author-image': 'Author Photo',
+    'author-detail': 'Author Info', 'testimonial-card': 'Quote', 'nav-links': 'Nav Links',
+    'btn-order': 'Order Btn', 'btn-submit': 'Submit Btn', 'order-btn': 'Order Btn',
+  };
+  for (var i = 0; i < classes.length; i++) {
+    if (friendlyMap[classes[i]]) { label = friendlyMap[classes[i]]; break; }
+  }
+  if (label === tag) {
+    var tagMap = { 'h1': 'Heading 1', 'h2': 'Heading 2', 'h3': 'Heading 3', 'h4': 'Heading 4',
+      'p': 'Paragraph', 'a': 'Link', 'img': 'Image', 'section': 'Section', 'nav': 'Nav',
+      'footer': 'Footer', 'button': 'Button', 'div': 'Block', 'span': 'Text',
+      'blockquote': 'Quote', 'cite': 'Citation', 'hr': 'Divider', 'select': 'Dropdown',
+      'input': 'Input', 'label': 'Label', 'form': 'Form', 'video': 'Video',
+    };
+    label = tagMap[tag] || tag;
+  }
+  document.getElementById('tb-label').textContent = label;
+
+  // Set color swatch to current background
+  var doc = editor.Canvas.getDocument();
+  var iframeWin = doc ? (doc.defaultView || window) : window;
+  var computed = iframeWin.getComputedStyle(el);
+  var bgColor = computed.backgroundColor;
+  var swatch = document.getElementById('tb-color-swatch');
+  var colorInput = document.getElementById('tb-color-input');
+  var opacityInput = document.getElementById('tb-opacity-input');
+  var opacityLabel = document.getElementById('tb-opacity-label');
+  if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+    swatch.style.background = bgColor;
+    var m = bgColor.match(/[\d.]+/g);
+    if (m && m.length >= 3) {
+      var hex = '#' + ((1 << 24) + (parseInt(m[0]) << 16) + (parseInt(m[1]) << 8) + parseInt(m[2])).toString(16).slice(1);
+      colorInput.value = hex;
+      // Read alpha if rgba
+      var alpha = m.length >= 4 ? parseFloat(m[3]) : 1;
+      opacityInput.value = Math.round(alpha * 100);
+      opacityLabel.textContent = Math.round(alpha * 100) + '%';
+    }
+  } else {
+    swatch.style.background = 'repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50%/8px 8px';
+    opacityInput.value = 100;
+    opacityLabel.textContent = '100%';
+  }
+
+  // Update bring-to-front button state
+  var zIndex = component.getStyle()['z-index'] || '';
+  var frontBtn = document.getElementById('tb-front-btn');
+  if (frontBtn) frontBtn.classList.toggle('active', zIndex && parseInt(zIndex) > 0);
+
+  // Position toolbar above the element
+  toolbar.style.display = 'flex';
+  positionToolbar(el, toolbar);
+}
+
+function positionToolbar(el, toolbar) {
+  var frame = editor.Canvas.getFrameEl();
+  if (!frame) return;
+  var frameRect = frame.getBoundingClientRect();
+  var elRect = el.getBoundingClientRect();
+
+  var top = frameRect.top + elRect.top - toolbar.offsetHeight - 10;
+  var left = frameRect.left + elRect.left + (elRect.width / 2) - (toolbar.offsetWidth / 2);
+
+  // If no room above, show below
+  if (top < 52) top = frameRect.top + elRect.bottom + 10;
+
+  // Keep within viewport
+  if (left < 4) left = 4;
+  if (left + toolbar.offsetWidth > window.innerWidth - 4) left = window.innerWidth - toolbar.offsetWidth - 4;
+
+  toolbar.style.top = top + 'px';
+  toolbar.style.left = left + 'px';
+}
+
+function hideElementToolbar() {
+  document.getElementById('element-toolbar').style.display = 'none';
+}
+
+// Toolbar actions
+function tbSelectParent() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var parent = sel.parent();
+  if (parent && parent.get('tagName')) {
+    editor.select(parent);
+  }
+}
+
+function tbMoveUp() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var parent = sel.parent();
+  if (!parent) return;
+  var index = parent.components().indexOf(sel);
+  if (index > 0) {
+    parent.components().remove(sel);
+    parent.components().add(sel, { at: index - 1 });
+    editor.select(sel);
+  }
+}
+
+function tbMoveDown() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var parent = sel.parent();
+  if (!parent) return;
+  var siblings = parent.components();
+  var index = siblings.indexOf(sel);
+  if (index < siblings.length - 1) {
+    siblings.remove(sel);
+    siblings.add(sel, { at: index + 1 });
+    editor.select(sel);
+  }
+}
+
+function tbDuplicate() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var clone = sel.clone();
+  sel.parent().components().add(clone, { at: sel.index() + 1 });
+  editor.select(clone);
+}
+
+function tbDelete() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  sel.remove();
+}
+
+function tbSetBgColor(color) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var opacity = parseInt(document.getElementById('tb-opacity-input').value) / 100;
+  var rgba = hexToRgba(color, opacity);
+  sel.addStyle({ 'background': '', 'background-image': 'none', 'background-color': rgba });
+  document.getElementById('tb-color-swatch').style.background = rgba;
+}
+
+function tbSetOpacity(val) {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  document.getElementById('tb-opacity-label').textContent = val + '%';
+  var hex = document.getElementById('tb-color-input').value;
+  var opacity = parseInt(val) / 100;
+  var rgba = hexToRgba(hex, opacity);
+  sel.addStyle({ 'background': '', 'background-image': 'none', 'background-color': rgba });
+  document.getElementById('tb-color-swatch').style.background = rgba;
+}
+
+function hexToRgba(hex, alpha) {
+  var r = parseInt(hex.slice(1,3), 16);
+  var g = parseInt(hex.slice(3,5), 16);
+  var b = parseInt(hex.slice(5,7), 16);
+  if (alpha >= 1) return hex;
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(2) + ')';
+}
+
+function tbBringToFront() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var current = sel.getStyle()['z-index'] || '';
+  if (current && parseInt(current) > 0) {
+    // Already in front — toggle it off (only clear z-index, preserve position if user-set)
+    sel.addStyle({ 'z-index': '' });
+    document.getElementById('tb-front-btn').classList.remove('active');
+    showToast('Layer reset', 'success');
+  } else {
+    // Only add position:relative if currently static
+    var el = sel.getEl();
+    var doc = editor.Canvas.getDocument();
+    var computedPos = (doc && el) ? (doc.defaultView || window).getComputedStyle(el).position : 'static';
+    var styles = { 'z-index': '10' };
+    if (computedPos === 'static') styles['position'] = 'relative';
+    sel.addStyle(styles);
+    document.getElementById('tb-front-btn').classList.add('active');
+    showToast('Brought to front', 'success');
+  }
+}
+
+function tbUploadImage() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = function() {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var src = ev.target.result;
+      var classes = sel.getClasses() || [];
+      var isPlaceholder = classes.indexOf('upload-placeholder') !== -1;
+      var isRetailer = classes.indexOf('retailer-card') !== -1;
+
+      if (isPlaceholder) {
+        var existingText = sel.getEl() ? sel.getEl().textContent.trim() : 'Image';
+        sel.components('');
+        sel.set('content', '');
+        sel.removeClass('upload-placeholder');
+        if (isRetailer) {
+          sel.append('<img src="' + src + '" alt="' + existingText + '" style="max-height:50px;max-width:80%;object-fit:contain;" />');
+        } else {
+          sel.append('<img src="' + src + '" alt="' + existingText + '" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />');
+        }
+      } else {
+        // Non-placeholder — set as background
+        sel.addStyle({
+          'background-image': 'url(' + src + ')',
+          'background-size': 'cover',
+          'background-position': 'center',
+          'background-repeat': 'no-repeat'
+        });
+      }
+      editor.AssetManager.add([{ src: src, name: file.name, type: 'image' }]);
+      input.remove();
+      showToast('Image uploaded!', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// Auto-detect and mark placeholder elements for upload
+function markUploadPlaceholders() {
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+  // Retailer cards without images
+  wrapper.find('.retailer-card').forEach(function(card) {
+    if (!card.find('img').length) card.addClass('upload-placeholder');
+  });
+  // Book cover placeholders
+  wrapper.find('.book-cover').forEach(function(bc) {
+    bc.components().forEach(function(child) {
+      if (child.get('tagName') !== 'img' && !child.find('img').length) {
+        child.addClass('upload-placeholder');
+      }
+    });
+  });
+  // Author image placeholders
+  wrapper.find('.author-image').forEach(function(ai) {
+    ai.components().forEach(function(child) {
+      if (child.get('tagName') !== 'img' && !child.find('img').length) {
+        child.addClass('upload-placeholder');
+      }
+    });
+  });
+}
+
+// Reposition toolbar on canvas scroll
+editor.on('load', function() {
+  var canvasDoc = editor.Canvas.getDocument();
+  if (canvasDoc) {
+    canvasDoc.addEventListener('scroll', function() {
+      if (rteActive) return;
+      var sel = editor.getSelected();
+      if (sel) showElementToolbar(sel);
+    }, true);
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// RTE (Rich Text Editor) — Text Color & Font Size
+// ════════════════════════════════════════════════════════
+(function() {
+  var rte = editor.RichTextEditor;
+
+  // Separator
+  rte.add('sep1', { icon: '<span class="rte-sep"></span>', result: function(){} });
+
+  // Text Color
+  rte.add('textColor', {
+    icon: '<span class="rte-color-wrap"><span style="font-weight:700;text-decoration:underline;text-decoration-color:var(--rte-clr,#ff0000);text-underline-offset:2px;">A</span><input type="color" value="#ff0000"></span>',
+    event: 'change',
+    result: function(r, action) {
+      var input = action.btn.querySelector('input[type=color]');
+      var color = input.value;
+      r.exec('foreColor', color);
+      // Update underline indicator
+      var wrap = action.btn.querySelector('.rte-color-wrap span');
+      if (wrap) wrap.style.textDecorationColor = color;
+    },
+    update: function(r, action) {
+      var doc = r.doc || document;
+      var color = doc.queryCommandValue('foreColor');
+      if (color) {
+        var input = action.btn.querySelector('input[type=color]');
+        // queryCommandValue returns rgb(), convert to hex
+        var hex = rgbToHex(color);
+        if (hex && input) {
+          input.value = hex;
+          var wrap = action.btn.querySelector('.rte-color-wrap span');
+          if (wrap) wrap.style.textDecorationColor = hex;
+        }
+      }
+    }
+  });
+
+  // Font Size
+  rte.add('fontSize', {
+    icon: '<select class="rte-fontsize">' +
+      '<option value="">Size</option>' +
+      '<option value="12px">12</option><option value="14px">14</option>' +
+      '<option value="16px">16</option><option value="18px">18</option>' +
+      '<option value="20px">20</option><option value="24px">24</option>' +
+      '<option value="28px">28</option><option value="32px">32</option>' +
+      '<option value="36px">36</option><option value="42px">42</option>' +
+      '<option value="48px">48</option><option value="56px">56</option>' +
+      '<option value="64px">64</option><option value="72px">72</option>' +
+      '</select>',
+    event: 'change',
+    result: function(r, action) {
+      var sel = action.btn.querySelector('select');
+      var size = sel.value;
+      if (!size) return;
+      // Use fontSize 7 as marker, then replace <font> tags with proper spans
+      r.exec('fontSize', '7');
+      var el = r.el;
+      if (el) {
+        var fonts = el.querySelectorAll('font[size="7"]');
+        var ownerDoc = el.ownerDocument || document;
+        fonts.forEach(function(font) {
+          var span = ownerDoc.createElement('span');
+          span.style.fontSize = size;
+          span.innerHTML = font.innerHTML;
+          font.parentNode.replaceChild(span, font);
+        });
+      }
+      sel.value = ''; // Reset dropdown
+    },
+    update: function(r, action) {
+      // Try to detect current font size from selection
+      var doc = r.doc || document;
+      var selObj = doc.getSelection();
+      if (selObj && selObj.rangeCount > 0) {
+        var node = selObj.anchorNode;
+        if (node && node.nodeType === 3) node = node.parentNode;
+        if (node) {
+          var computed = (r.doc || document).defaultView.getComputedStyle(node);
+          var px = Math.round(parseFloat(computed.fontSize));
+          var select = action.btn.querySelector('select');
+          var match = select.querySelector('option[value="' + px + 'px"]');
+          select.value = match ? px + 'px' : '';
+        }
+      }
+    }
+  });
+
+  // Helper: rgb string to hex
+  function rgbToHex(rgb) {
+    if (!rgb) return '';
+    if (rgb.charAt(0) === '#') return rgb;
+    var parts = rgb.match(/(\d+)/g);
+    if (!parts || parts.length < 3) return '#000000';
+    return '#' + parts.slice(0,3).map(function(x) {
+      return ('0' + parseInt(x).toString(16)).slice(-2);
+    }).join('');
+  }
+})();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('templateModal').classList.contains('active')) closeTemplates();
+    if (document.getElementById('codeModal').classList.contains('active')) closeCode();
+    if (document.getElementById('htmlEditorModal').classList.contains('active')) closeHtmlEditor();
+  }
+  // Don't intercept when typing in inputs/textareas
+  var tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  var mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); }
+  if (mod && e.key === 'z' && e.shiftKey) { e.preventDefault(); doRedo(); }
+  if (mod && e.key === 'y') { e.preventDefault(); doRedo(); }
+  if (mod && e.key === 's') { e.preventDefault(); saveToServer(); }
+  if (mod && e.key === 'd') { e.preventDefault(); tbDuplicate(); }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
+    // Only delete if no contenteditable or input is focused
+    if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+    var sel = editor.getSelected();
+    if (sel) { e.preventDefault(); sel.remove(); }
+  }
+});
+</script>
+
+  </body>
+</html>

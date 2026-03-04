@@ -596,6 +596,12 @@
         <% pending = Submission.pending_review.count %>
         <% if pending > 0 %><span class="badge"><%= pending %></span><% end %>
       </a>
+      <a href="<%= manage_campaigns_path %>" class="<%= 'active' if controller_name == 'campaigns' || controller_name == 'campaign_assets' %>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        Campaigns
+        <% pending_assets_count = CampaignAsset.pending.count rescue 0 %>
+        <% if pending_assets_count > 0 %><span class="badge"><%= pending_assets_count %></span><% end %>
+      </a>
       <a href="<%= manage_portal_messages_path %>" class="<%= 'active' if controller_name == 'portal_messages' %>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
         Messages

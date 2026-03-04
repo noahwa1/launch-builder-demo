@@ -1,0 +1,43 @@
+<% content_for :page_title, 'Logistics' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<%= form_with model: @campaign, url: update_logistics_portal_campaign_path(@campaign), method: :patch, html: { multipart: true } do |f| %>
+  <div class="two-col">
+    <div class="card">
+      <h3>Shipping Address</h3>
+      <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Where should we send bookplates and signing materials?</p>
+      <div class="form-group">
+        <label>Full Mailing Address</label>
+        <%= f.text_area :bookplate_address, placeholder: "Name\nStreet Address\nCity, State ZIP\nCountry", rows: 5 %>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Management Contacts</h3>
+      <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Email addresses for your management team (comma-separated).</p>
+      <div class="form-group">
+        <label>Contact Emails</label>
+        <%= f.text_field :management_emails, placeholder: 'manager@agency.com, publicist@pr.com' %>
+        <div class="hint">We'll CC these contacts on important campaign updates.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Bookplate Design</h3>
+    <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Upload the design file for your bookplate stickers (PDF, PNG, or JPG).</p>
+    <div class="form-group">
+      <label>Design File</label>
+      <%= f.file_field :bookplate_design %>
+      <% if @campaign.bookplate_design.present? %>
+        <div class="hint" style="margin-top:8px;">Current file: <%= File.basename(@campaign.bookplate_design.url) rescue 'uploaded' %></div>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;">
+    <%= f.submit 'Save Logistics Info', class: 'btn btn-primary' %>
+  </div>
+<% end %>
