@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   end
   root to: redirect('/users/sign_in')
 
+  # One-time setup route — creates demo accounts
+  get 'setup', to: 'setup#create_demo_accounts'
+
   # Creator Portal
   namespace :portal do
     root to: 'dashboard#index'
