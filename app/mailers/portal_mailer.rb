@@ -78,6 +78,16 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def build_requested(landing_page)
+    @landing_page = landing_page
+    @campaign = landing_page.campaign
+    @author = @campaign.author
+    mail(
+      to: User.admin.pluck(:email),
+      subject: "Build request: #{@campaign.title} landing page"
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author

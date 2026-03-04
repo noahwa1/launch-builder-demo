@@ -12,6 +12,7 @@ module Manage
       @items_by_category = @campaign.items_by_category
       @pending_assets = @campaign.campaign_assets.pending.order(created_at: :desc)
       @all_assets = @campaign.campaign_assets.order(created_at: :desc)
+      @landing_page = @campaign.landing_page
     end
 
     def toggle_checklist_item

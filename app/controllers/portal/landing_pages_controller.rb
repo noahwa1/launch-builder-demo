@@ -38,6 +38,12 @@ module Portal
       redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Page unpublished.'
     end
 
+    def request_build
+      @landing_page.request_build!
+      PortalMailer.build_requested(@landing_page).deliver_later
+      redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Build request sent to Premiere!'
+    end
+
     private
 
     def set_campaign

@@ -47,6 +47,7 @@ Rails.application.routes.draw do
           get  :builder
           patch :publish
           patch :unpublish
+          patch :request_build
         end
       end
     end
@@ -84,6 +85,11 @@ Rails.application.routes.draw do
         member do
           patch :approve
           patch :request_changes
+        end
+      end
+      resource :landing_page, only: [:update] do
+        member do
+          get :builder
         end
       end
     end
