@@ -1,9 +1,12 @@
 class LandingPage < ApplicationRecord
   belongs_to :campaign
+  has_many :page_submissions, dependent: :destroy
 
   validates :slug, uniqueness: true, allow_nil: true
+  validates :slug, format: { with: /\A[a-z0-9][a-z0-9\-]{1,98}[a-z0-9]\z/, message: 'must be 3-100 characters, letters/numbers/hyphens only' }, allow_blank: true
 
   before_validation :generate_slug, if: -> { slug.blank? && title.present? }
+  before_validation :normalize_slug, if: -> { slug.present? && slug_changed? }
 
   def publish!
     update!(published: true, published_at: Time.current)
@@ -23,6 +26,10 @@ class LandingPage < ApplicationRecord
   end
 
   private
+
+  def normalize_slug
+    self.slug = slug.downcase.parameterize
+  end
 
   def generate_slug
     base = title.parameterize

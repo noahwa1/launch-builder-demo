@@ -105,11 +105,46 @@
             <span class="text-muted" style="font-size:12px;">No content yet</span>
           <% end %>
         </div>
-        <%= link_to builder_manage_campaign_landing_page_path(@campaign), class: 'btn btn-primary btn-sm' do %>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-          Open Builder
-        <% end %>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <%= link_to builder_manage_campaign_landing_page_path(@campaign), class: 'btn btn-primary btn-sm' do %>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            Open Builder
+          <% end %>
+          <% if @landing_page.page_submissions.any? %>
+            <%= link_to manage_campaign_page_submissions_path(@campaign), class: 'btn btn-secondary btn-sm' do %>
+              Submissions (<%= @landing_page.page_submissions.count %>)
+            <% end %>
+          <% end %>
+        </div>
+
+        <%# Notification toggle %>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+          <%= button_to toggle_notifications_manage_campaign_landing_page_path(@campaign), method: :patch, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline' } do %>
+            <%= @landing_page.notify_on_submission? ? 'Notifications: ON' : 'Notifications: OFF' %>
+          <% end %>
+          <span class="text-muted" style="font-size:12px;">Email creator on new form submission</span>
+        </div>
       </div>
+    <% end %>
+
+    <%# Live Events card %>
+    <% live_events = @campaign.live_events.recent.limit(5) %>
+    <% if live_events.any? || @campaign.is_live? %>
+    <div class="card">
+      <h3>Live Events</h3>
+      <% if @campaign.is_live? %>
+        <div style="padding:12px;background:rgba(233,69,96,0.08);border:1px solid rgba(233,69,96,0.2);border-radius:8px;margin-bottom:12px;">
+          <span style="font-size:13px;font-weight:700;color:#e94560;">LIVE NOW — <%= @campaign.current_live_event&.title %></span>
+        </div>
+      <% end %>
+      <% live_events.each do |event| %>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:14px;"><%= event.title %></span>
+          <span class="status-badge status-<%= event.live? ? 'live' : event.ended? ? 'draft' : 'pending' %>"><%= event.status.titleize %></span>
+        </div>
+      <% end %>
+      <%= link_to 'All Events', manage_campaign_live_events_path(@campaign), class: 'btn btn-secondary btn-sm', style: 'margin-top:12px;' %>
+    </div>
     <% end %>
 
     <% approved = @all_assets.where(status: :approved) %>

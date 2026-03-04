@@ -1,0 +1,24 @@
+<% content_for :page_title, "Live Events — #{@campaign.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card">
+  <h3>Live Events (<%= @live_events.count %>)</h3>
+  <% if @live_events.any? %>
+    <% @live_events.each do |event| %>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:14px;font-weight:600;"><%= event.title %></div>
+          <div class="text-muted" style="font-size:12px;">
+            <%= event.stream_platform&.capitalize %> —
+            <% if event.scheduled_at %><%= event.scheduled_at.strftime('%b %d at %l:%M %p') %><% end %>
+          </div>
+        </div>
+        <span class="status-badge status-<%= event.live? ? 'live' : event.ended? ? 'draft' : 'pending' %>"><%= event.status.titleize %></span>
+      </div>
+    <% end %>
+  <% else %>
+    <div style="text-align:center;padding:40px;color:var(--text-muted);">No events yet.</div>
+  <% end %>
+</div>

@@ -8,6 +8,12 @@ module Manage
       render 'portal/landing_pages/builder', layout: false
     end
 
+    def toggle_notifications
+      @landing_page.update!(notify_on_submission: !@landing_page.notify_on_submission?)
+      status = @landing_page.notify_on_submission? ? 'enabled' : 'disabled'
+      redirect_to manage_campaign_path(@campaign), notice: "Submission notifications #{status}."
+    end
+
     def update
       if @landing_page.update(landing_page_params)
         render json: { success: true }

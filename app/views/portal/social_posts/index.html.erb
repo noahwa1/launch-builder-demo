@@ -1,0 +1,152 @@
+<% content_for :page_title, 'Social Post Creator' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .platform-tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .platform-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; }
+  .platform-tab:hover { border-color: var(--accent); color: var(--text-primary); }
+  .platform-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .template-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .template-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .template-card .category-tag { font-size: 11px; background: rgba(108,92,231,0.1); color: var(--accent, #6c5ce7); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 12px; }
+  .post-textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical; font-family: inherit; background: var(--bg-secondary, #f8f9fa); color: var(--text-primary, #333); }
+  .post-textarea:focus { outline: none; border-color: var(--accent, #6c5ce7); }
+  .char-counter { font-size: 12px; margin-top: 6px; text-align: right; }
+  .char-counter.over { color: #e94560; font-weight: 600; }
+  .hashtag-suggestions { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .hashtag { font-size: 12px; padding: 4px 10px; border-radius: 14px; background: rgba(108,92,231,0.08); color: var(--accent, #6c5ce7); cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .hashtag:hover { border-color: var(--accent, #6c5ce7); }
+  .copy-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { background: rgba(34,197,94,0.1); border-color: #22C55E; color: #22C55E; }
+  .template-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+</style>
+
+<%
+  book_title = @submission.title
+  author_name = @author.full_name
+  genre = @submission.genre || 'books'
+  page_url = @page_url ? request.base_url + @page_url : '[YOUR_LINK]'
+  signed_url = @signed_url.presence || '[SIGNED_EDITIONS_LINK]'
+
+  # Platform character limits
+  limits = { 'twitter' => 280, 'instagram' => 2200, 'facebook' => 63206, 'tiktok' => 2200 }
+
+  # Hashtag suggestions based on genre
+  genre_tags = case genre.to_s.downcase
+    when /romance/ then %w[#BookTok #RomanceBooks #LoveToRead #BookishRomance #NewRelease]
+    when /thriller|mystery|suspense/ then %w[#ThrillerBooks #MysteryReads #BookTok #PageTurner #CrimeFiction]
+    when /fantasy|sci.?fi/ then %w[#FantasyBooks #SciFiReads #BookTok #EpicReads #BookDragon]
+    when /memoir|biography|nonfiction/ then %w[#NonFiction #Memoir #TrueStory #MustRead #InspiringReads]
+    when /business|self.?help/ then %w[#BookRecommendation #SelfImprovement #MustRead #LeadershipBooks #GrowthMindset]
+    when /children|kids|ya|young/ then %w[#KidLit #YABooks #BookTok #YoungReaders #BookWorm]
+    else %w[#BookTok #NewRelease #MustRead #BookRecommendation #AuthorLife]
+  end
+
+  # Template definitions
+  templates = [
+    { category: 'Launch Announcement', platforms: %w[twitter instagram facebook tiktok], copies: {
+      'twitter' => "#{book_title} is here! Get your copy now.\n\n#{page_url}",
+      'instagram' => "It's finally here! #{book_title} is now available.\n\nI've poured my heart into this book and I can't wait for you to read it. Get your copy at the link in bio.\n\n#{page_url}",
+      'facebook' => "I'm thrilled to announce that #{book_title} is now available! This has been an incredible journey and I'm so excited to share it with the world.\n\nGet your copy here: #{page_url}",
+      'tiktok' => "#{book_title} just dropped! Link in bio to get your copy.\n\n#{page_url}"
+    }},
+    { category: 'Pre-order Reminder', platforms: %w[twitter instagram facebook tiktok], copies: {
+      'twitter' => "Pre-order #{book_title} now and be the first to read it!\n\n#{signed_url}",
+      'instagram' => "Don't miss out! Pre-order #{book_title} today and get exclusive bonus content.\n\nPre-order link in bio.\n\n#{signed_url}",
+      'facebook' => "Have you pre-ordered #{book_title} yet? Pre-orders help us so much and there's exclusive bonus content for early supporters!\n\nPre-order here: #{signed_url}",
+      'tiktok' => "POV: You pre-order #{book_title} and get exclusive bonus content. Link in bio!\n\n#{signed_url}"
+    }},
+    { category: 'Live Event Promo', platforms: %w[twitter instagram facebook tiktok], copies: {
+      'twitter' => "Going LIVE soon to talk about #{book_title}! Join me for a signing, Q&A, and exclusive behind-the-scenes.\n\n#{page_url}",
+      'instagram' => "LIVE EVENT ALERT! Join me for a live book signing and Q&A about #{book_title}.\n\nI'll be answering your questions, sharing behind-the-scenes stories, and signing copies!\n\nTune in at the link in bio.\n\n#{page_url}",
+      'facebook' => "Save the date! I'm going live to celebrate #{book_title}. We'll do a live signing, answer your questions, and share some exclusive content. See you there!\n\n#{page_url}",
+      'tiktok' => "GOING LIVE! Come hang out and talk about #{book_title}. Signing copies and answering your questions!\n\n#{page_url}"
+    }},
+    { category: 'Reader Testimonial', platforms: %w[twitter instagram facebook], copies: {
+      'twitter' => "\"[Reader quote here]\" — @reader\n\nThank you for the kind words! Get #{book_title} at #{page_url}",
+      'instagram' => "This made my day! Thank you to everyone who has read #{book_title} and shared their experience.\n\n\"[Reader quote here]\" — @reader\n\nGet your copy at the link in bio.\n\n#{page_url}",
+      'facebook' => "Nothing means more than hearing from readers. Thank you!\n\n\"[Reader quote here]\" — Reader Name\n\nGet #{book_title} here: #{page_url}"
+    }},
+    { category: 'Retailer Push', platforms: %w[twitter instagram facebook], copies: {
+      'twitter' => "#{book_title} is available at all major retailers!\n\nGet your signed copy: #{signed_url}\n\nOr find it at your favorite bookstore: #{page_url}",
+      'instagram' => "Multiple ways to get #{book_title}!\n\nSigned copies: Link in bio\nAmazon, Barnes & Noble, Target, Walmart, and more!\n\n#{page_url}",
+      'facebook' => "#{book_title} is available everywhere books are sold! Get your copy at your favorite retailer — or grab a signed edition at #{signed_url}\n\nAll retailer links: #{page_url}"
+    }}
+  ]
+%>
+
+<div class="card">
+  <h3>Social Post Creator</h3>
+  <p class="text-secondary" style="margin-bottom:20px;font-size:14px;">Pre-filled templates for your campaign. Edit, copy, and post to your socials.</p>
+
+  <%# Platform filter tabs %>
+  <div class="platform-tabs">
+    <button class="platform-tab active" data-platform="all" onclick="filterPlatform('all',this)">All</button>
+    <button class="platform-tab" data-platform="twitter" onclick="filterPlatform('twitter',this)">Twitter/X</button>
+    <button class="platform-tab" data-platform="instagram" onclick="filterPlatform('instagram',this)">Instagram</button>
+    <button class="platform-tab" data-platform="facebook" onclick="filterPlatform('facebook',this)">Facebook</button>
+    <button class="platform-tab" data-platform="tiktok" onclick="filterPlatform('tiktok',this)">TikTok</button>
+  </div>
+
+  <% templates.each_with_index do |tmpl, ti| %>
+    <% tmpl[:copies].each do |platform, copy| %>
+      <div class="template-card" data-platform="<%= platform %>">
+        <span class="category-tag"><%= tmpl[:category] %></span>
+        <h4><%= platform.capitalize %><%= platform == 'twitter' ? ' / X' : '' %></h4>
+        <textarea class="post-textarea" id="post-<%= ti %>-<%= platform %>" data-limit="<%= limits[platform] %>" oninput="updateCounter(this)"><%= copy %></textarea>
+        <div class="char-counter" id="counter-<%= ti %>-<%= platform %>">
+          <span class="count"><%= copy.length %></span> / <%= limits[platform] %>
+        </div>
+        <div class="hashtag-suggestions">
+          <% genre_tags.each do |tag| %>
+            <span class="hashtag" onclick="insertHashtag(this, 'post-<%= ti %>-<%= platform %>')"><%= tag %></span>
+          <% end %>
+        </div>
+        <div class="template-actions">
+          <button class="copy-btn" onclick="copyPost('post-<%= ti %>-<%= platform %>', this)">Copy to Clipboard</button>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<script>
+  function filterPlatform(platform, btn) {
+    document.querySelectorAll('.platform-tab').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.template-card').forEach(function(card) {
+      card.style.display = (platform === 'all' || card.dataset.platform === platform) ? '' : 'none';
+    });
+  }
+
+  function updateCounter(textarea) {
+    var limit = parseInt(textarea.dataset.limit);
+    var count = textarea.value.length;
+    var counter = textarea.parentElement.querySelector('.char-counter');
+    counter.querySelector('.count').textContent = count;
+    counter.classList.toggle('over', count > limit);
+  }
+
+  function insertHashtag(el, textareaId) {
+    var ta = document.getElementById(textareaId);
+    var tag = el.textContent;
+    if (ta.value.includes(tag)) return;
+    ta.value = ta.value.trimEnd() + ' ' + tag;
+    updateCounter(ta);
+  }
+
+  function copyPost(textareaId, btn) {
+    var ta = document.getElementById(textareaId);
+    navigator.clipboard.writeText(ta.value).then(function() {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Init counters
+  document.querySelectorAll('.post-textarea').forEach(function(ta) { updateCounter(ta); });
+</script>

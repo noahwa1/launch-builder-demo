@@ -4,6 +4,7 @@ module Portal
     before_action :set_landing_page
 
     def show
+      @submissions = @landing_page.page_submissions.recent.limit(10)
       respond_to do |format|
         format.html
         format.json { render json: { html_content: @landing_page.html_content, css_content: @landing_page.css_content } }
@@ -17,7 +18,13 @@ module Portal
     def update
       if @landing_page.update(landing_page_params)
         respond_to do |format|
-          format.html { redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Landing page saved.' }
+          format.html do
+            if params[:redirect_to_builder]
+              redirect_to builder_portal_campaign_landing_page_path(@campaign)
+            else
+              redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Landing page saved.'
+            end
+          end
           format.json { render json: { success: true } }
         end
       else
@@ -38,6 +45,16 @@ module Portal
       redirect_to portal_campaign_landing_page_path(@campaign), notice: 'Page unpublished.'
     end
 
+    def generate
+      result = LandingPageGenerator.new(@campaign).generate
+      @landing_page.update!(
+        html_content: result[:html],
+        css_content: result[:css],
+        slug: params.dig(:landing_page, :slug).presence || @landing_page.slug
+      )
+      redirect_to builder_portal_campaign_landing_page_path(@campaign), notice: 'Page generated! Customize it in the builder.'
+    end
+
     def request_build
       @landing_page.request_build!
       PortalMailer.build_requested(@landing_page).deliver_later
@@ -55,7 +72,7 @@ module Portal
     end
 
     def landing_page_params
-      params.require(:landing_page).permit(:title, :html_content, :css_content)
+      params.require(:landing_page).permit(:title, :html_content, :css_content, :slug)
     end
   end
 end

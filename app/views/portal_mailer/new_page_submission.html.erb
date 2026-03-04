@@ -1,0 +1,22 @@
+<h2>New Form Submission</h2>
+
+<p>You have a new <strong><%= @submission.form_type.titleize %></strong> submission on your <strong><%= @campaign.title %></strong> landing page.</p>
+
+<% if @submission.email.present? %>
+  <p><strong>From:</strong> <%= @submission.email %></p>
+<% end %>
+
+<% if @submission.data.present? %>
+  <table style="border-collapse:collapse;width:100%;margin-top:16px;">
+    <% @submission.data.each do |key, value| %>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #ddd;font-weight:600;background:#f9f9f9;"><%= key %></td>
+        <td style="padding:8px 12px;border:1px solid #ddd;"><%= value.presence || '—' %></td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+
+<p style="margin-top:24px;font-size:13px;color:#888;">
+  Received at <%= @submission.created_at.strftime('%B %d, %Y at %l:%M %p') %>
+</p>

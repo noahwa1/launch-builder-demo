@@ -1,0 +1,10 @@
+<% content_for :page_title, 'Schedule Live Event' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:600px;">
+  <h3>Schedule a Live Event</h3>
+  <p class="text-secondary" style="margin-bottom:20px;font-size:14px;">Set up a live stream for your campaign. When you go live, your landing page will show a LIVE NOW banner and your stream embed.</p>
+  <%= render 'form', live_event: @live_event, url: portal_campaign_live_events_path(@campaign), method: :post %>
+</div>

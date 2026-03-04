@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_04_100005) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_04_200003) do
   create_table "authors", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -103,8 +103,41 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_100005) do
     t.datetime "updated_at", null: false
     t.boolean "build_requested", default: false
     t.datetime "build_requested_at"
+    t.boolean "notify_on_submission", default: true
     t.index ["campaign_id"], name: "index_landing_pages_on_campaign_id", unique: true
     t.index ["slug"], name: "index_landing_pages_on_slug", unique: true
+  end
+
+  create_table "live_events", force: :cascade do |t|
+    t.integer "campaign_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "embed_url"
+    t.string "stream_platform"
+    t.integer "status", default: 0, null: false
+    t.datetime "scheduled_at"
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_live_events_on_campaign_id"
+    t.index ["status"], name: "index_live_events_on_status"
+  end
+
+  create_table "page_submissions", force: :cascade do |t|
+    t.integer "landing_page_id", null: false
+    t.string "form_type"
+    t.json "data"
+    t.string "receipt"
+    t.string "email"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_page_submissions_on_email"
+    t.index ["landing_page_id"], name: "index_page_submissions_on_landing_page_id"
+    t.index ["status"], name: "index_page_submissions_on_status"
   end
 
   create_table "portal_messages", force: :cascade do |t|
@@ -214,4 +247,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_100005) do
   add_foreign_key "campaigns", "submissions"
   add_foreign_key "checklist_items", "campaigns"
   add_foreign_key "landing_pages", "campaigns"
+  add_foreign_key "live_events", "campaigns"
+  add_foreign_key "page_submissions", "landing_pages"
 end

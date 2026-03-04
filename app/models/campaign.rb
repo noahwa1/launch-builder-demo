@@ -7,6 +7,7 @@ class Campaign < ApplicationRecord
   has_many :checklist_items, dependent: :destroy
   has_many :campaign_assets, dependent: :destroy
   has_one :landing_page, dependent: :destroy
+  has_many :live_events, dependent: :destroy
 
   mount_uploader :bookplate_design, AssetUploader
 
@@ -41,6 +42,18 @@ class Campaign < ApplicationRecord
     required = checklist_items.where(optional: false)
     return 0 if required.empty?
     (required.where(status: :complete).count.to_f / required.count * 100).round
+  end
+
+  def current_live_event
+    live_events.find_by(status: :live)
+  end
+
+  def next_scheduled_event
+    live_events.upcoming.first
+  end
+
+  def is_live?
+    live_events.where(status: :live).exists?
   end
 
   def items_by_category

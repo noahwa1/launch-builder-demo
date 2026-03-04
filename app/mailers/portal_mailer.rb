@@ -88,6 +88,19 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def new_page_submission(submission)
+    @submission = submission
+    @landing_page = submission.landing_page
+    @campaign = @landing_page.campaign
+    @creator = @campaign.author.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "New form submission on your #{@campaign.title} landing page"
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author
