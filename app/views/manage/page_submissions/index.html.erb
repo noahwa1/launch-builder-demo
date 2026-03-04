@@ -1,0 +1,36 @@
+<% content_for :page_title, "Submissions — #{@campaign.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card">
+  <h3>Form Submissions (<%= @submissions.count %>)</h3>
+  <% if @submissions.any? %>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);text-align:left;">
+            <th style="padding:8px 12px;font-size:12px;text-transform:uppercase;color:var(--text-muted);">Email</th>
+            <th style="padding:8px 12px;font-size:12px;text-transform:uppercase;color:var(--text-muted);">Type</th>
+            <th style="padding:8px 12px;font-size:12px;text-transform:uppercase;color:var(--text-muted);">Status</th>
+            <th style="padding:8px 12px;font-size:12px;text-transform:uppercase;color:var(--text-muted);">Received</th>
+            <th style="padding:8px 12px;font-size:12px;text-transform:uppercase;color:var(--text-muted);"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @submissions.each do |sub| %>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:10px 12px;"><%= sub.email || 'N/A' %></td>
+              <td style="padding:10px 12px;"><%= sub.form_type.titleize %></td>
+              <td style="padding:10px 12px;"><span class="status-badge status-<%= sub.new_submission? ? 'pending' : 'approved' %>"><%= sub.status.titleize %></span></td>
+              <td style="padding:10px 12px;" class="text-muted"><%= time_ago_in_words(sub.created_at) %> ago</td>
+              <td style="padding:10px 12px;"><%= link_to 'View', manage_campaign_page_submission_path(@campaign, sub), class: 'btn btn-secondary btn-sm' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div style="text-align:center;padding:40px;color:var(--text-muted);">No submissions yet.</div>
+  <% end %>
+</div>

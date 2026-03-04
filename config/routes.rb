@@ -42,9 +42,17 @@ Rails.application.routes.draw do
         patch :update_logistics
       end
       resources :campaign_assets, only: [:index, :create, :destroy]
+      resources :social_posts, only: [:index]
+      resources :live_events, except: [:index, :show] do
+        member do
+          patch :go_live
+          patch :end_stream
+        end
+      end
       resource :landing_page, only: [:show, :update] do
         member do
           get  :builder
+          patch :generate
           patch :publish
           patch :unpublish
           patch :request_build
@@ -90,11 +98,15 @@ Rails.application.routes.draw do
       resource :landing_page, only: [:update] do
         member do
           get :builder
+          patch :toggle_notifications
         end
       end
+      resources :page_submissions, only: [:index, :show]
+      resources :live_events, only: [:index]
     end
   end
 
   # Public landing pages
-  get 'pages/:slug', to: 'pages#show', as: :public_page
+  get  'pages/:slug', to: 'pages#show', as: :public_page
+  post 'pages/:slug/submit', to: 'pages#submit', as: :public_page_submit
 end

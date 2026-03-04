@@ -10,11 +10,126 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
     <%= raw @page.css_content %>
+    .form-feedback { padding: 12px 16px; border-radius: 6px; margin-top: 12px; font-size: 14px; display: none; }
+    .form-feedback.success { background: rgba(34,197,94,0.1); color: #16A34A; display: block; }
+    .form-feedback.error { background: rgba(239,68,68,0.1); color: #DC2626; display: block; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    <% if @page.campaign&.is_live? %>
+    .live-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: linear-gradient(90deg, #e94560, #c0392b); color: #fff; padding: 10px 20px; text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 1px; animation: livePulse 2s ease-in-out infinite; }
+    .live-banner .live-dot { display: inline-block; width: 10px; height: 10px; background: #fff; border-radius: 50%; margin-right: 8px; animation: liveDot 1.5s ease-in-out infinite; }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.85; } }
+    @keyframes liveDot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .live-stream-embed { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+    .live-stream-embed .embed-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .live-stream-embed .embed-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    body { padding-top: 44px; }
+    <% end %>
   </style>
 </head>
 <body>
+  <% if @page.campaign&.is_live? %>
+    <% event = @page.campaign.current_live_event %>
+    <div class="live-banner"><span class="live-dot"></span>LIVE NOW<%= event ? " — #{event.title}" : '' %></div>
+    <% if event %>
+      <div class="live-stream-embed"><div class="embed-wrap"><%= raw event.embed_html %></div></div>
+    <% end %>
+  <% elsif @page.campaign&.next_scheduled_event %>
+    <% event = @page.campaign.next_scheduled_event %>
+    <div style="background:#1a1a2e;color:#fff;padding:14px 20px;text-align:center;font-size:14px;">
+      <strong>Upcoming Event:</strong> <%= event.title %> — <%= event.scheduled_at.strftime('%B %d at %l:%M %p %Z') %>
+    </div>
+  <% end %>
+
   <%= raw @page.html_content %>
+
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>AOS.init({ duration: 800, once: true });</script>
+  <script>
+    AOS.init({ duration: 800, once: true });
+
+    // Form submission handler — intercepts .btn-submit clicks
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.btn-submit').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (btn.disabled) return;
+
+          // Find the closest form container (.bg-form or parent section)
+          var formContainer = btn.closest('.bg-form') || btn.parentElement;
+          var formData = new FormData();
+          var formType = null;
+
+          // Collect all inputs within the form container
+          formContainer.querySelectorAll('.field-group').forEach(function(group) {
+            var label = group.querySelector('label');
+            var input = group.querySelector('input, select, textarea');
+            if (!label || !input) return;
+
+            var fieldName = label.textContent.trim();
+            if (input.type === 'file') {
+              if (input.files.length > 0) {
+                formData.append('receipt', input.files[0]);
+                if (fieldName.toLowerCase().includes('confirmation') || fieldName.toLowerCase().includes('receipt')) {
+                  formType = 'order_confirmation';
+                }
+              }
+            } else {
+              formData.append(fieldName, input.value);
+              if (fieldName.toLowerCase() === 'email') {
+                formData.append('email', input.value);
+              }
+            }
+
+            // Detect form type from fields
+            if (!formType) {
+              var fn = fieldName.toLowerCase();
+              if (fn.includes('address') || fn.includes('city') || fn.includes('state') || fn.includes('postal')) {
+                formType = 'address_capture';
+              }
+            }
+          });
+
+          formData.append('form_type', formType || 'contact');
+
+          // Remove existing feedback
+          var oldFeedback = formContainer.querySelector('.form-feedback');
+          if (oldFeedback) oldFeedback.remove();
+
+          btn.disabled = true;
+          btn.textContent = 'Submitting...';
+
+          fetch('<%= public_page_submit_path(@page.slug) %>', {
+            method: 'POST',
+            body: formData
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            var fb = document.createElement('div');
+            fb.className = 'form-feedback ' + (data.success ? 'success' : 'error');
+            fb.textContent = data.message;
+            btn.after(fb);
+
+            if (data.success) {
+              btn.textContent = 'Submitted!';
+              // Clear form fields
+              formContainer.querySelectorAll('input:not([type=file]), select, textarea').forEach(function(input) {
+                input.value = '';
+              });
+            } else {
+              btn.disabled = false;
+              btn.textContent = 'Submit';
+            }
+          })
+          .catch(function() {
+            btn.disabled = false;
+            btn.textContent = 'Submit';
+            var fb = document.createElement('div');
+            fb.className = 'form-feedback error';
+            fb.textContent = 'Network error. Please try again.';
+            btn.after(fb);
+          });
+        });
+      });
+    });
+  </script>
 </body>
 </html>

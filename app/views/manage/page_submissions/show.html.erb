@@ -1,0 +1,50 @@
+<% content_for :page_title, "Submission ##{@submission.id}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'All Submissions', manage_campaign_page_submissions_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Submission Details</h3>
+    <div class="form-group">
+      <div class="detail-label">Type</div>
+      <div style="font-size:14px;margin-top:4px;"><%= @submission.form_type.titleize %></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">Email</div>
+      <div style="font-size:14px;margin-top:4px;"><%= @submission.email || 'Not provided' %></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">Status</div>
+      <div style="margin-top:4px;"><span class="status-badge status-<%= @submission.new_submission? ? 'pending' : 'approved' %>"><%= @submission.status.titleize %></span></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">Received</div>
+      <div style="font-size:14px;margin-top:4px;" class="text-muted"><%= @submission.created_at.strftime('%B %d, %Y at %l:%M %p') %></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">IP Address</div>
+      <div style="font-size:14px;margin-top:4px;font-family:monospace;" class="text-muted"><%= @submission.ip_address %></div>
+    </div>
+    <% if @submission.receipt.present? %>
+      <div class="form-group">
+        <div class="detail-label">Receipt</div>
+        <div style="margin-top:4px;"><%= link_to 'Download', @submission.receipt.url, class: 'btn btn-secondary btn-sm', target: '_blank' %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h3>Form Data</h3>
+    <% if @submission.data.present? %>
+      <% @submission.data.each do |key, value| %>
+        <div class="form-group">
+          <div class="detail-label"><%= key %></div>
+          <div style="font-size:14px;margin-top:4px;"><%= value.presence || '—' %></div>
+        </div>
+      <% end %>
+    <% else %>
+      <div style="text-align:center;padding:24px;color:var(--text-muted);">No form data.</div>
+    <% end %>
+  </div>
+</div>

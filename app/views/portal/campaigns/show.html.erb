@@ -76,6 +76,7 @@
       <%= link_to 'Ad Access', ad_access_portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
       <%= link_to 'Logistics', logistics_portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
       <%= link_to 'Landing Page', portal_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+      <%= link_to 'Social Posts', portal_campaign_social_posts_path(@campaign), class: 'btn btn-secondary btn-sm' %>
     </div>
   </div>
 
@@ -94,6 +95,54 @@
     <% end %>
     <%= link_to 'Upload Content', portal_campaign_campaign_assets_path(@campaign), class: 'btn btn-primary btn-sm', style: 'margin-top:12px;' %>
   </div>
+</div>
+
+<!-- Go Live -->
+<div class="card" style="margin-top:4px;">
+  <h3>Go Live</h3>
+  <% current_event = @campaign.current_live_event %>
+  <% if current_event %>
+    <div style="padding:16px;background:rgba(233,69,96,0.06);border:1px solid rgba(233,69,96,0.2);border-radius:10px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:10px;height:10px;background:#e94560;border-radius:50%;animation:liveDot 1.5s ease-in-out infinite;"></span>
+        <span style="font-size:14px;font-weight:700;color:#e94560;">LIVE NOW</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;"><%= current_event.title %></div>
+      <div class="text-muted" style="font-size:13px;margin-top:2px;">Started <%= time_ago_in_words(current_event.started_at) %> ago</div>
+      <div style="margin-top:12px;">
+        <%= button_to 'End Stream', end_stream_portal_campaign_live_event_path(@campaign, current_event), method: :patch, class: 'btn btn-danger btn-sm', form: { style: 'display:inline' }, data: { confirm: 'End the live stream?' } %>
+      </div>
+    </div>
+    <style>@keyframes liveDot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }</style>
+  <% end %>
+
+  <% upcoming = @campaign.live_events.upcoming.limit(3) %>
+  <% if upcoming.any? %>
+    <div style="margin-bottom:16px;">
+      <div class="detail-label" style="margin-bottom:8px;">Upcoming Events</div>
+      <% upcoming.each do |event| %>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-size:14px;font-weight:600;"><%= event.title %></div>
+            <div class="text-muted" style="font-size:12px;"><%= event.scheduled_at&.strftime('%b %d at %l:%M %p') %> — <%= event.stream_platform&.capitalize || 'TBD' %></div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <%= button_to 'Go Live', go_live_portal_campaign_live_event_path(@campaign, event), method: :patch, class: 'btn btn-primary btn-sm', form: { style: 'display:inline' }, data: { confirm: 'Go live now?' } %>
+            <%= link_to 'Edit', edit_portal_campaign_live_event_path(@campaign, event), class: 'btn btn-secondary btn-sm' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if current_event.nil? && upcoming.empty? %>
+    <p class="text-secondary" style="font-size:14px;margin-bottom:16px;">No events scheduled. Set up a live stream for your campaign.</p>
+  <% end %>
+
+  <%= link_to new_portal_campaign_live_event_path(@campaign), class: 'btn btn-secondary btn-sm' do %>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+    Schedule Event
+  <% end %>
 </div>
 
 <!-- Checklist by Category -->
