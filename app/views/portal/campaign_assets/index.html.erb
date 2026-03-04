@@ -60,7 +60,7 @@
           </div>
           <div class="asset-actions">
             <span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>" style="font-size:11px;padding:2px 8px;"><%= asset.status.titleize %></span>
-            <%= link_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, data: { confirm: 'Remove this asset?' }, class: 'text-muted', style: 'font-size:12px;text-decoration:none;' %>
+            <%= button_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %>
           </div>
           <% if asset.needs_changes? && asset.admin_notes.present? %>
             <div style="padding:0 12px 12px;">
@@ -90,7 +90,7 @@
               <td><%= asset.asset_type.titleize %></td>
               <td><span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>"><%= asset.status.titleize %></span></td>
               <td class="text-muted"><%= asset.created_at.strftime('%b %d, %Y') %></td>
-              <td><%= link_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, data: { confirm: 'Remove?' }, class: 'text-muted', style: 'font-size:12px;text-decoration:none;' %></td>
+              <td><%= button_to 'Remove', portal_campaign_asset_path(asset, campaign_id: @campaign.id), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %></td>
             </tr>
             <% if asset.needs_changes? && asset.admin_notes.present? %>
               <tr>

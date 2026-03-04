@@ -1,7 +1,7 @@
 <% content_for :page_title, "Payment ##{@payment.id}" %>
 <% content_for :page_actions do %>
   <% unless @payment.paid? || @payment.cancelled? %>
-    <%= link_to 'Mark Paid', mark_paid_manage_royalty_path(@payment), method: :patch, class: 'btn btn-success', data: { confirm: 'Mark as paid?' } %>
+    <%= button_to 'Mark Paid', mark_paid_manage_royalty_path(@payment), method: :patch, class: 'btn btn-success', form: { style: 'display:inline' } %>
   <% end %>
   <%= link_to 'Back', manage_royalties_path, class: 'btn btn-secondary' %>
 <% end %>

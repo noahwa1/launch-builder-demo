@@ -46,7 +46,7 @@
       <div style="margin-bottom:16px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px;"><%= cat.titleize %></div>
         <% items.each do |item| %>
-          <%= link_to toggle_checklist_item_manage_campaign_path(@campaign, checklist_item_id: item.id), method: :patch, class: "checklist-toggle #{item.status}" do %>
+          <%= button_to toggle_checklist_item_manage_campaign_path(@campaign, checklist_item_id: item.id), method: :patch, class: "checklist-toggle #{item.status}", form: { style: 'display:inline' } do %>
             <span class="dot <%= item.status %>"></span>
             <%= item.title %>
             <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);">(optional)</span><% end %>
@@ -72,7 +72,7 @@
               <span class="status-badge status-pending">Pending</span>
             </div>
             <div class="asset-review-actions">
-              <%= link_to 'Approve', approve_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'btn btn-success btn-sm' %>
+              <%= button_to 'Approve', approve_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'btn btn-success btn-sm', form: { style: 'display:inline' } %>
               <%= form_with url: request_changes_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, style: 'display:flex;gap:6px;flex:1;' do %>
                 <input type="text" name="admin_notes" placeholder="Notes for creator..." class="notes-input" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;">
                 <button type="submit" class="btn btn-danger btn-sm">Request Changes</button>

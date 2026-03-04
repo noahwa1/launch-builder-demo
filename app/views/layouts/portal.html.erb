@@ -675,7 +675,7 @@
         <div class="name"><%= current_user.full_name %></div>
         <div class="role">Creator</div>
       </div>
-      <%= link_to 'Logout', destroy_user_session_path, method: :delete, class: 'logout' %>
+      <%= button_to 'Logout', destroy_user_session_path, method: :delete, class: 'logout', form: { style: 'display:inline' }, style: 'background:none;border:none;cursor:pointer;font-family:inherit;' %>
     </div>
   </aside>
 

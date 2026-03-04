@@ -30,7 +30,7 @@
               <td>
                 <%= link_to 'View', manage_royalty_path(payment), class: 'btn btn-secondary btn-sm' %>
                 <% unless payment.paid? || payment.cancelled? %>
-                  <%= link_to 'Mark Paid', mark_paid_manage_royalty_path(payment), method: :patch, class: 'btn btn-success btn-sm', data: { confirm: 'Mark as paid?' } %>
+                  <%= button_to 'Mark Paid', mark_paid_manage_royalty_path(payment), method: :patch, class: 'btn btn-success btn-sm', form: { style: 'display:inline' } %>
                 <% end %>
               </td>
             </tr>

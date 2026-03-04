@@ -53,10 +53,10 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="var u=document.getElementById('pub-url');navigator.clipboard.writeText(window.location.origin+u.textContent);this.textContent='Copied!';setTimeout(function(){this.textContent='Copy';}.bind(this),1500);">Copy</button>
           </div>
         </div>
-        <%= link_to 'Unpublish', unpublish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-danger btn-sm' %>
+        <%= button_to 'Unpublish', unpublish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-danger btn-sm', form: { style: 'display:inline' } %>
       <% else %>
         <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Your page is ready to go live. Publishing makes it accessible at the slug URL.</p>
-        <%= link_to 'Publish Page', publish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-primary' %>
+        <%= button_to 'Publish Page', publish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-primary', form: { style: 'display:inline' } %>
       <% end %>
     <% else %>
       <div class="empty-state" style="padding:24px;">

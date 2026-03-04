@@ -39,10 +39,10 @@
       <h3>Actions</h3>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <% if @submission.submitted? %>
-          <%= link_to 'Mark In Review', mark_in_review_manage_submission_path(@submission), method: :patch, class: 'btn btn-primary' %>
+          <%= button_to 'Mark In Review', mark_in_review_manage_submission_path(@submission), method: :patch, class: 'btn btn-primary', form: { style: 'display:inline' } %>
         <% end %>
         <% if @submission.submitted? || @submission.in_review? %>
-          <%= link_to 'Approve', approve_manage_submission_path(@submission), method: :patch, class: 'btn btn-success', data: { confirm: 'Approve this submission?' } %>
+          <%= button_to 'Approve', approve_manage_submission_path(@submission), method: :patch, class: 'btn btn-success', form: { style: 'display:inline' } %>
         <% end %>
         <% unless @submission.rejected? || @submission.approved? || @submission.live? %>
           <button class="btn btn-danger" onclick="document.getElementById('reject-form').style.display='block'; this.style.display='none';">Reject</button>

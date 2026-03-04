@@ -2,7 +2,7 @@
 <% content_for :page_actions do %>
   <% if @submission.draft? %>
     <%= link_to 'Edit', edit_portal_submission_path(@submission), class: 'btn btn-secondary' %>
-    <%= link_to 'Submit for Review', submit_for_review_portal_submission_path(@submission), method: :patch, class: 'btn btn-primary', data: { confirm: 'Submit this title for review? You won\'t be able to edit it after submission.' } %>
+    <%= button_to 'Submit for Review', submit_for_review_portal_submission_path(@submission), method: :patch, class: 'btn btn-primary', form: { style: 'display:inline' } %>
   <% end %>
   <%= link_to 'Back', portal_submissions_path, class: 'btn btn-secondary' %>
 <% end %>
