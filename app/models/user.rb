@@ -5,6 +5,23 @@ class User < ApplicationRecord
 
   belongs_to :account, polymorphic: true, optional: true
 
+  after_create :create_author_profile!, if: :creator?
+
+  private
+
+  def create_author_profile!
+    return if account.present?
+    name_parts = (full_name.presence || email.split('@').first).split(' ', 2)
+    author = Author.create!(
+      first_name: name_parts.first,
+      last_name: name_parts.last,
+      status: :active
+    )
+    update!(account: author)
+  end
+
+  public
+
   has_many :submissions, foreign_key: :submitted_by
   has_many :sent_messages, class_name: 'PortalMessage', foreign_key: :sender_id
 
