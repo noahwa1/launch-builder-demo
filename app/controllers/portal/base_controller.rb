@@ -14,7 +14,8 @@ module Portal
 
     def require_creator!
       unless current_user.creator? && current_author.present?
-        redirect_to root_path, alert: 'Access denied.'
+        sign_out current_user
+      redirect_to new_user_session_path, alert: 'Access denied. Your account needs to be linked to an author profile.'
       end
     end
 
