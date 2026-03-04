@@ -568,7 +568,7 @@
 // CONFIG
 // ════════════════════════════════════════════════════════
 var CAMPAIGN_ID = '<%= @campaign.id %>';
-var SAVE_URL = '<%= portal_campaign_landing_page_path(@campaign, format: :json) %>';
+var SAVE_URL = '<%= @admin_mode ? manage_campaign_landing_page_path(@campaign, format: :json) : portal_campaign_landing_page_path(@campaign, format: :json) %>';
 var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 
 // ════════════════════════════════════════════════════════
@@ -1387,7 +1387,7 @@ function saveToServer() {
   btn.disabled = true;
 
   var html = editor.getHtml();
-  var css = editor.getCss();
+  var css = launchCSS + '\n' + editor.getCss();
   restoreAfterExport();
 
   var formData = new FormData();

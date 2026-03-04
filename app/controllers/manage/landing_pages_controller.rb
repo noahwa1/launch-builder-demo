@@ -1,0 +1,33 @@
+module Manage
+  class LandingPagesController < BaseController
+    before_action :set_campaign
+    before_action :set_landing_page
+
+    def builder
+      @admin_mode = true
+      render 'portal/landing_pages/builder', layout: false
+    end
+
+    def update
+      if @landing_page.update(landing_page_params)
+        render json: { success: true }
+      else
+        render json: { success: false, errors: @landing_page.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
+    private
+
+    def set_campaign
+      @campaign = Campaign.find(params[:campaign_id])
+    end
+
+    def set_landing_page
+      @landing_page = @campaign.landing_page || @campaign.create_landing_page!(title: @campaign.title)
+    end
+
+    def landing_page_params
+      params.require(:landing_page).permit(:title, :html_content, :css_content)
+    end
+  end
+end

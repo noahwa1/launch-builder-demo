@@ -14,6 +14,14 @@ class LandingPage < ApplicationRecord
     update!(published: false, published_at: nil)
   end
 
+  def request_build!
+    update!(build_requested: true, build_requested_at: Time.current)
+  end
+
+  def has_content?
+    html_content.present?
+  end
+
   private
 
   def generate_slug
