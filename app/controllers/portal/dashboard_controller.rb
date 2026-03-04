@@ -1,6 +1,11 @@
 module Portal
   class DashboardController < BaseController
     def index
+      if current_campaign
+        redirect_to portal_campaign_path(current_campaign)
+        return
+      end
+
       @books_count = current_author.books.count
       @submissions = current_author.submissions.recent.limit(5)
       @submissions_by_status = current_author.submissions.group(:status).count

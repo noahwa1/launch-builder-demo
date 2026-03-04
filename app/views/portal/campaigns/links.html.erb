@@ -1,0 +1,82 @@
+<% content_for :page_title, 'Links' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .url-copy-wrap { display: flex; gap: 8px; align-items: center; }
+  .url-copy-wrap input { flex: 1; }
+  .copy-btn { white-space: nowrap; }
+  .placement-list { list-style: none; padding: 0; }
+  .placement-list li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; transition: background 0.1s; }
+  .placement-list li:hover { background: var(--accent-wash); }
+  .placement-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+  .placement-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .placement-check svg { width: 12px; height: 12px; }
+</style>
+
+<div class="card">
+  <h3>Signed Editions URL</h3>
+  <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Enter your signed editions purchase URL. This is the link fans will use to buy your signed copies.</p>
+
+  <%= form_with model: @campaign, url: update_links_portal_campaign_path(@campaign), method: :patch do |f| %>
+    <div class="form-group">
+      <label>Purchase URL</label>
+      <div class="url-copy-wrap">
+        <%= f.text_field :signed_editions_url, placeholder: 'https://your-store.com/signed-editions', class: '', id: 'signed-url' %>
+        <button type="button" class="btn btn-secondary btn-sm copy-btn" onclick="copyURL()">Copy</button>
+      </div>
+      <div class="hint">This URL will appear on your campaign page and marketing materials.</div>
+    </div>
+    <%= f.submit 'Save Link', class: 'btn btn-primary' %>
+  <% end %>
+</div>
+
+<div class="card">
+  <h3>Link Placement Checklist</h3>
+  <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Check off each place you've added your signed editions link:</p>
+  <ul class="placement-list">
+    <% [
+      { key: 'url_shared_social', label: 'Social media bios (Instagram, Twitter, TikTok)' },
+      { key: 'url_added_linktree', label: 'Linktree or link-in-bio page' },
+    ].each do |placement| %>
+      <% item = @campaign.checklist_items.find_by(key: placement[:key]) %>
+      <li>
+        <div class="placement-check <%= 'checked' if item&.complete? %>" data-key="<%= placement[:key] %>" onclick="togglePlacement(this, '<%= placement[:key] %>')">
+          <% if item&.complete? %>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          <% end %>
+        </div>
+        <span style="font-size:14px;"><%= placement[:label] %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+<script>
+function copyURL() {
+  var input = document.getElementById('signed-url');
+  input.select();
+  document.execCommand('copy');
+  var btn = document.querySelector('.copy-btn');
+  btn.textContent = 'Copied!';
+  setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+}
+
+function togglePlacement(el, key) {
+  var isChecked = el.classList.contains('checked');
+  fetch('<%= portal_campaign_path(@campaign) %>', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
+    body: JSON.stringify({ checklist_key: key, complete: !isChecked })
+  }).then(function() {
+    if (isChecked) {
+      el.classList.remove('checked');
+      el.innerHTML = '';
+    } else {
+      el.classList.add('checked');
+      el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+  });
+}
+</script>

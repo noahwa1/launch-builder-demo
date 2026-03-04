@@ -4,12 +4,16 @@ module Portal
     before_action :require_creator!
     layout 'portal'
 
-    helper_method :current_author, :unread_message_count
+    helper_method :current_author, :unread_message_count, :current_campaign
 
     private
 
     def current_author
       @current_author ||= current_user.author
+    end
+
+    def current_campaign
+      @current_campaign ||= current_author&.campaigns&.order(created_at: :desc)&.first
     end
 
     def require_creator!

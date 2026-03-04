@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_03_201007) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_04_100004) do
   create_table "authors", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -35,6 +35,74 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_201007) do
     t.index ["author_id"], name: "index_books_on_author_id"
     t.index ["isbn"], name: "index_books_on_isbn", unique: true
     t.index ["publisher_id"], name: "index_books_on_publisher_id"
+  end
+
+  create_table "campaign_assets", force: :cascade do |t|
+    t.integer "campaign_id", null: false
+    t.string "asset_type", null: false
+    t.string "file"
+    t.string "original_filename"
+    t.integer "status", default: 0, null: false
+    t.text "admin_notes"
+    t.integer "reviewed_by"
+    t.datetime "reviewed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id", "asset_type"], name: "index_campaign_assets_on_campaign_id_and_asset_type"
+    t.index ["campaign_id"], name: "index_campaign_assets_on_campaign_id"
+    t.index ["status"], name: "index_campaign_assets_on_status"
+  end
+
+  create_table "campaigns", force: :cascade do |t|
+    t.integer "submission_id", null: false
+    t.integer "author_id", null: false
+    t.integer "book_id"
+    t.string "title", null: false
+    t.integer "status", default: 0, null: false
+    t.string "signed_editions_url"
+    t.text "bookplate_address"
+    t.string "bookplate_design"
+    t.string "management_emails"
+    t.boolean "facebook_access", default: false
+    t.boolean "instagram_access", default: false
+    t.boolean "tiktok_access", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_campaigns_on_author_id"
+    t.index ["book_id"], name: "index_campaigns_on_book_id"
+    t.index ["status"], name: "index_campaigns_on_status"
+    t.index ["submission_id"], name: "index_campaigns_on_submission_id", unique: true
+  end
+
+  create_table "checklist_items", force: :cascade do |t|
+    t.integer "campaign_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "category", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "position", default: 0
+    t.boolean "optional", default: false
+    t.string "key"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id", "category"], name: "index_checklist_items_on_campaign_id_and_category"
+    t.index ["campaign_id", "key"], name: "index_checklist_items_on_campaign_id_and_key", unique: true
+    t.index ["campaign_id"], name: "index_checklist_items_on_campaign_id"
+  end
+
+  create_table "landing_pages", force: :cascade do |t|
+    t.integer "campaign_id", null: false
+    t.string "title"
+    t.text "html_content"
+    t.text "css_content"
+    t.boolean "published", default: false
+    t.string "slug"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_landing_pages_on_campaign_id", unique: true
+    t.index ["slug"], name: "index_landing_pages_on_slug", unique: true
   end
 
   create_table "portal_messages", force: :cascade do |t|
@@ -137,4 +205,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_03_201007) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
+
+  add_foreign_key "campaign_assets", "campaigns"
+  add_foreign_key "campaigns", "authors"
+  add_foreign_key "campaigns", "books"
+  add_foreign_key "campaigns", "submissions"
+  add_foreign_key "checklist_items", "campaigns"
+  add_foreign_key "landing_pages", "campaigns"
 end

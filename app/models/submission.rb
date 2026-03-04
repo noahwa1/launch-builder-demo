@@ -5,6 +5,7 @@ class Submission < ApplicationRecord
   belongs_to :submitter, class_name: 'User', foreign_key: :submitted_by
   belongs_to :reviewer, class_name: 'User', foreign_key: :reviewed_by, optional: true
   has_many :portal_messages
+  has_one :campaign
 
   mount_uploader :cover, CoverUploader
 
@@ -19,6 +20,7 @@ class Submission < ApplicationRecord
 
   def approve!(admin)
     update!(status: :approved, reviewed_by: admin.id, reviewed_at: Time.current)
+    create_campaign_on_approval
   end
 
   def reject!(admin, notes)
@@ -27,5 +29,17 @@ class Submission < ApplicationRecord
 
   def mark_in_review!(admin)
     update!(status: :in_review, reviewed_by: admin.id)
+  end
+
+  private
+
+  def create_campaign_on_approval
+    return if campaign.present?
+    Campaign.create!(
+      submission: self,
+      author: author,
+      title: title
+    )
+    PortalMailer.campaign_created(campaign.reload).deliver_later
   end
 end

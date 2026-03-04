@@ -30,6 +30,26 @@ Rails.application.routes.draw do
         get :submission_thread
       end
     end
+
+    # Campaign system
+    resources :campaigns, only: [:show] do
+      member do
+        get  :links
+        patch :update_links
+        get  :ad_access
+        patch :update_ad_access
+        get  :logistics
+        patch :update_logistics
+      end
+      resources :campaign_assets, only: [:index, :create, :destroy]
+      resource :landing_page, only: [:show, :update] do
+        member do
+          get  :builder
+          patch :publish
+          patch :unpublish
+        end
+      end
+    end
   end
 
   # Admin Panel
@@ -54,5 +74,21 @@ Rails.application.routes.draw do
         post :create_rate
       end
     end
+
+    # Admin campaign management
+    resources :campaigns, only: [:index, :show] do
+      member do
+        patch :toggle_checklist_item
+      end
+      resources :campaign_assets, only: [] do
+        member do
+          patch :approve
+          patch :request_changes
+        end
+      end
+    end
   end
+
+  # Public landing pages
+  get 'pages/:slug', to: 'pages#show', as: :public_page
 end

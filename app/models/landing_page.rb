@@ -1,0 +1,29 @@
+class LandingPage < ApplicationRecord
+  belongs_to :campaign
+
+  validates :slug, uniqueness: true, allow_nil: true
+
+  before_validation :generate_slug, if: -> { slug.blank? && title.present? }
+
+  def publish!
+    update!(published: true, published_at: Time.current)
+    campaign.checklist_items.find_by(key: 'landing_page_built')&.mark_complete!
+  end
+
+  def unpublish!
+    update!(published: false, published_at: nil)
+  end
+
+  private
+
+  def generate_slug
+    base = title.parameterize
+    candidate = base
+    counter = 1
+    while LandingPage.where.not(id: id).exists?(slug: candidate)
+      candidate = "#{base}-#{counter}"
+      counter += 1
+    end
+    self.slug = candidate
+  end
+end

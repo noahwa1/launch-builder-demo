@@ -1,0 +1,67 @@
+<% content_for :page_title, 'Landing Page' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="text-align:center;padding:40px;">
+  <h3 style="text-transform:none;font-size:18px;color:var(--text-primary);margin-bottom:8px;">Landing Page Builder</h3>
+  <p class="text-secondary" style="margin-bottom:24px;">Design your campaign's landing page with our drag-and-drop builder.</p>
+
+  <%= link_to builder_portal_landing_page_path(campaign_id: @campaign.id), class: 'btn btn-primary', style: 'font-size:16px;padding:14px 32px;' do %>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+    Open Builder
+  <% end %>
+</div>
+
+<div class="two-col" style="margin-top:4px;">
+  <div class="card">
+    <h3>Page Details</h3>
+    <div class="form-group">
+      <div class="detail-label">Title</div>
+      <div style="font-size:14px;margin-top:4px;"><%= @landing_page.title || 'Untitled' %></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">Slug</div>
+      <div style="font-size:14px;margin-top:4px;font-family:monospace;">/pages/<%= @landing_page.slug %></div>
+    </div>
+    <div class="form-group">
+      <div class="detail-label">Status</div>
+      <div style="margin-top:4px;">
+        <% if @landing_page.published? %>
+          <span class="status-badge status-live">Published</span>
+        <% else %>
+          <span class="status-badge status-draft">Draft</span>
+        <% end %>
+      </div>
+    </div>
+    <% if @landing_page.published_at %>
+      <div class="form-group">
+        <div class="detail-label">Published At</div>
+        <div style="font-size:14px;margin-top:4px;" class="text-secondary"><%= @landing_page.published_at.strftime('%B %d, %Y at %l:%M %p') %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h3>Publish Controls</h3>
+    <% if @landing_page.html_content.present? %>
+      <% if @landing_page.published? %>
+        <div style="padding:16px;background:rgba(34,197,94,0.06);border-radius:10px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:600;color:#16A34A;margin-bottom:4px;">Live at:</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <code style="font-size:13px;flex:1;" id="pub-url">/pages/<%= @landing_page.slug %></code>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="var u=document.getElementById('pub-url');navigator.clipboard.writeText(window.location.origin+u.textContent);this.textContent='Copied!';setTimeout(function(){this.textContent='Copy';}.bind(this),1500);">Copy</button>
+          </div>
+        </div>
+        <%= link_to 'Unpublish', unpublish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-danger btn-sm' %>
+      <% else %>
+        <p class="text-secondary" style="margin-bottom:16px;font-size:14px;">Your page is ready to go live. Publishing makes it accessible at the slug URL.</p>
+        <%= link_to 'Publish Page', publish_portal_landing_page_path(campaign_id: @campaign.id), method: :patch, class: 'btn btn-primary' %>
+      <% end %>
+    <% else %>
+      <div class="empty-state" style="padding:24px;">
+        <p>Open the builder first and save your page before publishing.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -43,6 +43,41 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def campaign_created(campaign)
+    @campaign = campaign
+    @creator = campaign.author.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "Your campaign \"#{@campaign.title}\" is live!"
+    )
+  end
+
+  def asset_approved(asset)
+    @asset = asset
+    @campaign = asset.campaign
+    @creator = @campaign.author.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "Asset approved: #{@asset.original_filename || @asset.asset_type.titleize}"
+    )
+  end
+
+  def asset_needs_changes(asset)
+    @asset = asset
+    @campaign = asset.campaign
+    @creator = @campaign.author.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "Changes requested: #{@asset.original_filename || @asset.asset_type.titleize}"
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author
