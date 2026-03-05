@@ -6,7 +6,7 @@ class AssetUploader < CarrierWave::Uploader::Base
   end
 
   def extension_allowlist
-    %w[jpg jpeg png gif webp mp4 mov avi wmv pdf]
+    %w[jpg jpeg png gif webp mp4 mov avi wmv pdf webm]
   end
 
   def size_range

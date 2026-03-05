@@ -8,6 +8,7 @@ class Campaign < ApplicationRecord
   has_many :campaign_assets, dependent: :destroy
   has_one :landing_page, dependent: :destroy
   has_many :live_events, dependent: :destroy
+  has_many :personal_videos, dependent: :destroy
 
   mount_uploader :bookplate_design, AssetUploader
 

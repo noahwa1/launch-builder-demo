@@ -114,6 +114,22 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def personal_video_delivered(personal_video)
+    @personal_video = personal_video
+    @campaign = personal_video.campaign
+    @author = @campaign.author
+    @submission = personal_video.page_submission
+    @buyer_name = @submission.data&.dig('name') || @submission.data&.dig('first_name') || 'there'
+    @video_url = personal_video.file&.url
+
+    return unless @submission.email.present?
+
+    mail(
+      to: @submission.email,
+      subject: "A personal video from #{@author.full_name} — #{@campaign.title}"
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author

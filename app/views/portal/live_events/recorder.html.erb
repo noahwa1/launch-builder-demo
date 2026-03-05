@@ -273,6 +273,57 @@
   .progress-bar { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin: 12px 0; }
   .progress-bar .fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; width: 0; }
   .progress-text { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── Queue Mode ── */
+  .sub-mode-pills { display: inline-flex; background: var(--bg-primary); border-radius: 6px; padding: 2px; gap: 2px; margin-left: 4px; }
+  .sub-mode-pill {
+    padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s; border: none; background: none;
+  }
+  .sub-mode-pill:hover { color: var(--text-secondary); }
+  .sub-mode-pill.active { background: var(--bg-tertiary); color: var(--text-primary); }
+
+  .queue-sidebar { display: none; flex-direction: column; height: 100%; }
+  .queue-sidebar.active { display: flex; }
+  .queue-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .queue-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
+  .queue-progress { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .queue-progress .fill { height: 100%; background: var(--success); border-radius: 3px; transition: width 0.3s; }
+  .queue-progress-text { font-size: 11px; color: var(--text-muted); }
+
+  .queue-section { padding: 8px 16px; }
+  .queue-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+
+  .queue-current { padding: 12px 16px; background: var(--accent-soft); border-left: 3px solid var(--accent); margin: 0 8px; border-radius: 0 6px 6px 0; }
+  .queue-current .buyer-name { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .queue-current .buyer-location { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .queue-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
+  .queue-list li { padding: 6px 16px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+  .queue-list li .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+
+  .queue-done-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+  .queue-done-list li { padding: 5px 16px; font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 8px; }
+  .queue-done-list .check { flex-shrink: 0; }
+  .queue-done-list .redo-btn {
+    margin-left: auto; font-size: 10px; color: var(--text-muted); cursor: pointer;
+    background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px;
+  }
+  .queue-done-list .redo-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .queue-controls { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .queue-controls .q-btn {
+    flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-secondary);
+    cursor: pointer; text-align: center; transition: all 0.15s;
+  }
+  .queue-controls .q-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .queue-controls .q-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .queue-uploading { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--text-muted); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .queue-empty { padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -284,6 +335,12 @@
     <div class="mode-pills">
       <a href="<%= studio_portal_campaign_live_events_path(@campaign) %>" class="mode-pill">Live</a>
       <span class="mode-pill active">Record</span>
+    </div>
+    <div class="sub-mode-pills">
+      <button class="sub-mode-pill active" id="pillStudio" onclick="R.switchToStudio()">Studio</button>
+      <% if @campaign.personal_videos_enabled? %>
+        <button class="sub-mode-pill" id="pillQueue" onclick="R.switchToQueue()">Queue</button>
+      <% end %>
     </div>
   </div>
   <div class="top-bar-right">
@@ -644,6 +701,37 @@
         </select>
       </div>
     </div>
+
+    <!-- Queue Sidebar (hidden by default, shown in Queue mode) -->
+    <div class="queue-sidebar" id="queueSidebar">
+      <div class="queue-header">
+        <h3>Recording Queue</h3>
+        <div class="queue-progress"><div class="fill" id="queueProgressBar" style="width:0%"></div></div>
+        <div class="queue-progress-text" id="queueProgressText">0/0</div>
+      </div>
+
+      <div class="queue-section">
+        <div class="queue-section-label">Now</div>
+      </div>
+      <div class="queue-current" id="queueCurrent" style="display:none;">
+        <div class="buyer-name" id="queueBuyerName"></div>
+        <div class="buyer-location" id="queueBuyerLocation"></div>
+      </div>
+
+      <div class="queue-section" style="margin-top:12px;">
+        <div class="queue-section-label">Up Next</div>
+      </div>
+      <ul class="queue-list" id="queueUpNext"></ul>
+
+      <div class="queue-section" style="margin-top:12px;">
+        <div class="queue-section-label">Done (<span id="queueDoneCount">0</span>)</div>
+      </div>
+      <ul class="queue-done-list" id="queueDoneList"></ul>
+
+      <div class="queue-controls">
+        <button class="q-btn" id="queueSkipBtn" onclick="R.skipBuyer()" disabled>Skip</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -718,6 +806,16 @@ var R = (function() {
   var timeLimit = 0;
   var timeLimitTimer = null;
   var timeLimitRemaining = 0;
+
+  // ── Queue Mode ──
+  var queueMode = false;
+  var queueData = [];
+  var queueIndex = 0;
+  var queueUploading = {};
+  var campaignId = <%= @campaign.id %>;
+  var queueDataUrl = '<%= queue_data_portal_campaign_personal_videos_path(@campaign, format: :json) %>';
+  var queueCreateUrl = '<%= portal_campaign_personal_videos_path(@campaign) %>';
+  var csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
   // ── Teleprompter ──
   var prompterActive = false;
@@ -885,6 +983,9 @@ var R = (function() {
         ctx.drawImage(lt.img, lt.x, lt.y, ltW, ltH);
         ctx.globalAlpha = 1;
       }
+
+      // Draw queue auto lower-third
+      drawQueueLowerThird();
 
       // Update timer
       if (isRecording && !isPaused) {
@@ -2147,6 +2248,295 @@ var R = (function() {
     });
   }
 
+  // ── Queue Mode Functions ──
+
+  function switchToQueue() {
+    queueMode = true;
+    document.getElementById('pillStudio').classList.remove('active');
+    document.getElementById('pillQueue').classList.add('active');
+
+    // Hide studio sidebar tabs/panels, show queue sidebar
+    document.querySelector('.sidebar-tabs').style.display = 'none';
+    var panels = document.querySelectorAll('.sidebar-panel');
+    for (var i = 0; i < panels.length; i++) panels[i].style.display = 'none';
+    document.getElementById('queueSidebar').classList.add('active');
+
+    // Hide timeline
+    document.querySelector('.timeline').style.display = 'none';
+
+    // Hide studio-only controls
+    document.getElementById('btnPause').style.display = 'none';
+    document.getElementById('btnPlay').style.display = 'none';
+    document.getElementById('btnTrim').style.display = 'none';
+    document.getElementById('btnExport').style.display = 'none';
+    document.getElementById('btnDownloadRaw').style.display = 'none';
+
+    // Enable skip
+    document.getElementById('queueSkipBtn').disabled = false;
+
+    loadQueueData();
+  }
+
+  function switchToStudio() {
+    queueMode = false;
+    document.getElementById('pillQueue')?.classList.remove('active');
+    document.getElementById('pillStudio').classList.add('active');
+
+    // Restore studio sidebar
+    document.querySelector('.sidebar-tabs').style.display = '';
+    document.getElementById('queueSidebar').classList.remove('active');
+    // Re-show active panel
+    var activeTab = document.querySelector('.sidebar-tab.active');
+    if (activeTab) activeTab.click();
+
+    // Restore timeline
+    document.querySelector('.timeline').style.display = '';
+
+    // Restore studio controls
+    document.getElementById('btnPlay').style.display = '';
+    document.getElementById('btnTrim').style.display = '';
+    document.getElementById('btnExport').style.display = '';
+  }
+
+  function loadQueueData() {
+    fetch(queueDataUrl, { headers: { 'Accept': 'application/json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        queueData = data.queue || [];
+        renderQueueSidebar();
+        // Load first pending buyer
+        var firstPending = findNextPendingIndex(0);
+        if (firstPending >= 0) loadBuyer(firstPending);
+      });
+  }
+
+  function findNextPendingIndex(fromIndex) {
+    for (var i = fromIndex; i < queueData.length; i++) {
+      if (queueData[i].status === 'pending') return i;
+    }
+    return -1;
+  }
+
+  function loadBuyer(index) {
+    if (index < 0 || index >= queueData.length) {
+      document.getElementById('queueCurrent').style.display = 'none';
+      return;
+    }
+    queueIndex = index;
+    var buyer = queueData[index];
+    document.getElementById('queueCurrent').style.display = '';
+    document.getElementById('queueBuyerName').textContent = buyer.name || 'Unknown';
+    var loc = [buyer.city, buyer.state].filter(Boolean).join(', ');
+    document.getElementById('queueBuyerLocation').textContent = loc || '';
+    renderQueueSidebar();
+  }
+
+  function queueRecord() {
+    if (!cameraStream) {
+      alert('Launch the recorder first (camera + mic access required).');
+      return;
+    }
+    // Instant start — no countdown in Queue mode
+    startRecording();
+  }
+
+  function queueStop() {
+    if (!isRecording) return;
+    recordElapsed = getCurrentTime();
+    isRecording = false;
+    isPaused = false;
+    mediaRecorder.stop();
+
+    // Clear time limit timer
+    if (timeLimitTimer) { clearTimeout(timeLimitTimer); timeLimitTimer = null; }
+    setSettingsDisabled(false);
+
+    // UI reset
+    document.getElementById('btnRec').classList.remove('active');
+    document.getElementById('btnStop').style.display = 'none';
+    document.getElementById('badge').className = 'canvas-badge';
+    document.getElementById('badge').style.display = 'none';
+
+    // Wait for blob, then upload
+    var waitForBlob = setInterval(function() {
+      if (recordedBlob) {
+        clearInterval(waitForBlob);
+        var buyer = queueData[queueIndex];
+        uploadPersonalVideo(recordedBlob, buyer.id, queueIndex);
+        advanceQueue();
+      }
+    }, 100);
+  }
+
+  function uploadPersonalVideo(blob, submissionId, buyerIndex) {
+    queueUploading[buyerIndex] = true;
+    renderQueueSidebar();
+
+    var formData = new FormData();
+    formData.append('file', blob, 'personal_video_' + submissionId + '.webm');
+    formData.append('page_submission_id', submissionId);
+
+    fetch(queueCreateUrl, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrfToken },
+      body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      delete queueUploading[buyerIndex];
+      if (data.success) {
+        queueData[buyerIndex].status = 'recorded';
+        queueData[buyerIndex].personal_video_id = data.personal_video_id;
+      }
+      renderQueueSidebar();
+    })
+    .catch(function() {
+      delete queueUploading[buyerIndex];
+      queueData[buyerIndex].status = 'failed';
+      renderQueueSidebar();
+    });
+  }
+
+  function advanceQueue() {
+    var next = findNextPendingIndex(0);
+    if (next >= 0) {
+      loadBuyer(next);
+    } else {
+      document.getElementById('queueCurrent').style.display = 'none';
+      document.getElementById('queueBuyerName').textContent = 'All done!';
+    }
+    // Reset recording state for next take
+    recordedBlob = null;
+    if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
+    recordedChunks = [];
+  }
+
+  function skipBuyer() {
+    if (isRecording) return;
+    advanceQueue();
+  }
+
+  function retakeBuyer(index) {
+    // Mark as pending again so it shows up
+    queueData[index].status = 'pending';
+    loadBuyer(index);
+    renderQueueSidebar();
+  }
+
+  function renderQueueSidebar() {
+    var total = queueData.length;
+    var done = 0;
+    var pending = [];
+    var completed = [];
+
+    for (var i = 0; i < queueData.length; i++) {
+      if (queueData[i].status === 'recorded' || queueData[i].status === 'sent') {
+        done++;
+        completed.push(i);
+      } else if (queueData[i].status === 'pending' && i !== queueIndex) {
+        pending.push(i);
+      }
+    }
+
+    // Progress
+    var pct = total > 0 ? Math.round(done / total * 100) : 0;
+    document.getElementById('queueProgressBar').style.width = pct + '%';
+    document.getElementById('queueProgressText').textContent = done + '/' + total;
+
+    // Up next
+    var upNextEl = document.getElementById('queueUpNext');
+    var upNextHtml = '';
+    var shown = 0;
+    for (var j = 0; j < pending.length && shown < 5; j++) {
+      var idx = pending[j];
+      var b = queueData[idx];
+      upNextHtml += '<li><span class="dot"></span>' + escHtml(b.name || 'Unknown') + '</li>';
+      shown++;
+    }
+    if (pending.length > 5) {
+      upNextHtml += '<li style="color:var(--text-muted);font-size:11px;padding-left:30px;">... ' + (pending.length - 5) + ' more</li>';
+    }
+    if (pending.length === 0) {
+      upNextHtml = '<li style="color:var(--text-muted);font-style:italic;">No more buyers</li>';
+    }
+    upNextEl.innerHTML = upNextHtml;
+
+    // Done
+    document.getElementById('queueDoneCount').textContent = done;
+    var doneEl = document.getElementById('queueDoneList');
+    var doneHtml = '';
+    for (var k = completed.length - 1; k >= 0 && k >= completed.length - 10; k--) {
+      var di = completed[k];
+      var db = queueData[di];
+      var uploading = queueUploading[di];
+      doneHtml += '<li>';
+      if (uploading) {
+        doneHtml += '<span class="queue-uploading"></span>';
+      } else {
+        doneHtml += '<span class="check">&#10003;</span>';
+      }
+      doneHtml += escHtml(db.name || 'Unknown');
+      if (!uploading) {
+        doneHtml += '<button class="redo-btn" onclick="R.retakeBuyer(' + di + ')">redo</button>';
+      }
+      doneHtml += '</li>';
+    }
+    doneEl.innerHTML = doneHtml;
+  }
+
+  function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // Override toggleRecord and stopRecord in queue mode
+  var originalToggleRecord = toggleRecord;
+  var originalStopRecord = stopRecord;
+
+  toggleRecord = function() {
+    if (queueMode && !isRecording) {
+      queueRecord();
+    } else if (queueMode && isRecording) {
+      // In queue mode, clicking record while recording does nothing (use stop)
+      return;
+    } else {
+      originalToggleRecord();
+    }
+  };
+
+  stopRecord = function() {
+    if (queueMode) {
+      queueStop();
+    } else {
+      originalStopRecord();
+    }
+  };
+
+  // Draw queue lower-third in compositor
+  var originalDraw = null;
+  function drawQueueLowerThird() {
+    if (!queueMode || queueIndex < 0 || queueIndex >= queueData.length) return;
+    var buyer = queueData[queueIndex];
+    if (!buyer || !buyer.name) return;
+
+    var cw = canvas.width;
+    var ch = canvas.height;
+    var barH = 80;
+    var barY = ch - barH - 40;
+
+    // Semi-transparent dark bar
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(0, barY, cw, barH);
+
+    // "For [Buyer Name]"
+    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('For ' + buyer.name, cw / 2, barY + barH / 2);
+  }
+
   // ── Enumerate devices on load ──
   if (navigator.mediaDevices) {
     enumerateDeviceLists();
@@ -2189,7 +2579,11 @@ var R = (function() {
     toggleTrim: toggleTrim,
     setTextPositionPreset: setTextPositionPreset,
     addLowerThird: addLowerThird,
-    removeLowerThird: removeLowerThird
+    removeLowerThird: removeLowerThird,
+    switchToQueue: switchToQueue,
+    switchToStudio: switchToStudio,
+    skipBuyer: skipBuyer,
+    retakeBuyer: retakeBuyer
   };
 })();
 </script>

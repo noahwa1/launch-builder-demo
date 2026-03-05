@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_05_200002) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_300002) do
   create_table "authors", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -70,6 +70,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_200002) do
     t.datetime "updated_at", null: false
     t.datetime "onboarding_completed_at"
     t.string "example_category"
+    t.boolean "personal_videos_enabled", default: false
     t.index ["author_id"], name: "index_campaigns_on_author_id"
     t.index ["book_id"], name: "index_campaigns_on_book_id"
     t.index ["status"], name: "index_campaigns_on_status"
@@ -142,6 +143,19 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_200002) do
     t.index ["email"], name: "index_page_submissions_on_email"
     t.index ["landing_page_id"], name: "index_page_submissions_on_landing_page_id"
     t.index ["status"], name: "index_page_submissions_on_status"
+  end
+
+  create_table "personal_videos", force: :cascade do |t|
+    t.integer "campaign_id", null: false
+    t.integer "page_submission_id", null: false
+    t.string "file"
+    t.integer "status", default: 0, null: false
+    t.datetime "sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_personal_videos_on_campaign_id"
+    t.index ["page_submission_id"], name: "index_personal_videos_on_page_submission_id", unique: true
+    t.index ["status"], name: "index_personal_videos_on_status"
   end
 
   create_table "portal_messages", force: :cascade do |t|
@@ -254,4 +268,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_200002) do
   add_foreign_key "landing_pages", "campaigns", on_delete: :nullify
   add_foreign_key "live_events", "campaigns"
   add_foreign_key "page_submissions", "landing_pages"
+  add_foreign_key "personal_videos", "campaigns"
+  add_foreign_key "personal_videos", "page_submissions"
 end
