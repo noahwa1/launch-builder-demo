@@ -14,6 +14,7 @@ Rails.application.routes.draw do
 
   # One-time setup route — creates demo accounts
   get 'setup', to: 'setup#create_demo_accounts'
+  get 'setup/seed_buyers', to: 'setup#seed_buyers'
 
   # Creator Portal
   namespace :portal do
@@ -122,7 +123,7 @@ Rails.application.routes.draw do
           patch :request_changes
         end
       end
-      resource :landing_page, only: [:update] do
+      resource :landing_page, only: [:show, :update] do
         member do
           get :builder
           patch :generate

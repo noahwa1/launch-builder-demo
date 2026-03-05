@@ -3,6 +3,13 @@ module Manage
     before_action :set_campaign
     before_action :set_landing_page
 
+    def show
+      respond_to do |format|
+        format.html { redirect_to manage_campaign_path(@campaign) }
+        format.json { render json: { html_content: @landing_page.html_content, css_content: @landing_page.css_content } }
+      end
+    end
+
     def builder
       @admin_mode = true
       render 'portal/landing_pages/builder', layout: false

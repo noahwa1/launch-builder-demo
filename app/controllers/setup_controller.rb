@@ -48,4 +48,58 @@ class SetupController < ApplicationController
 
     redirect_to new_user_session_path, notice: 'Demo accounts created! Admin: admin@launch.com / password, Creator: creator@launch.com / password'
   end
+
+  def seed_buyers
+    campaign = Campaign.first
+    unless campaign
+      redirect_to root_path, alert: 'No campaigns found. Run /setup first and create a campaign.'
+      return
+    end
+
+    landing_page = campaign.landing_page
+    unless landing_page
+      redirect_to root_path, alert: 'Campaign has no landing page.'
+      return
+    end
+
+    # Enable personal videos on this campaign
+    campaign.update!(personal_videos_enabled: true)
+
+    buyers = [
+      { name: 'Sarah Johnson',     city: 'Portland',      state: 'OR', email: 'sarah.johnson@example.com' },
+      { name: 'Mike Chen',         city: 'San Francisco',  state: 'CA', email: 'mike.chen@example.com' },
+      { name: 'Lisa Rodriguez',    city: 'Austin',         state: 'TX', email: 'lisa.rodriguez@example.com' },
+      { name: 'David Park',        city: 'Seattle',        state: 'WA', email: 'david.park@example.com' },
+      { name: 'Amy Wilson',        city: 'Denver',         state: 'CO', email: 'amy.wilson@example.com' },
+      { name: 'Tom Brown',         city: 'Nashville',      state: 'TN', email: 'tom.brown@example.com' },
+      { name: 'Rachel Kim',        city: 'Chicago',        state: 'IL', email: 'rachel.kim@example.com' },
+      { name: 'James Martinez',    city: 'Miami',          state: 'FL', email: 'james.martinez@example.com' },
+      { name: 'Emily Davis',       city: 'Brooklyn',       state: 'NY', email: 'emily.davis@example.com' },
+      { name: 'Chris Taylor',      city: 'Los Angeles',    state: 'CA', email: 'chris.taylor@example.com' },
+      { name: 'Jennifer White',    city: 'Phoenix',        state: 'AZ', email: 'jennifer.white@example.com' },
+      { name: 'Robert Garcia',     city: 'Houston',        state: 'TX', email: 'robert.garcia@example.com' },
+      { name: 'Nicole Thompson',   city: 'Philadelphia',   state: 'PA', email: 'nicole.thompson@example.com' },
+      { name: 'Kevin Lee',         city: 'Boston',         state: 'MA', email: 'kevin.lee@example.com' },
+      { name: 'Amanda Clark',      city: 'Atlanta',        state: 'GA', email: 'amanda.clark@example.com' },
+      { name: 'Brian Hall',        city: 'Minneapolis',    state: 'MN', email: 'brian.hall@example.com' },
+      { name: 'Megan Wright',      city: 'Charlotte',      state: 'NC', email: 'megan.wright@example.com' },
+      { name: 'Daniel Scott',      city: 'Salt Lake City', state: 'UT', email: 'daniel.scott@example.com' },
+      { name: 'Samantha Green',    city: 'San Diego',      state: 'CA', email: 'samantha.green@example.com' },
+      { name: 'Matthew Adams',     city: 'Columbus',       state: 'OH', email: 'matthew.adams@example.com' },
+    ]
+
+    created = 0
+    buyers.each do |buyer|
+      next if landing_page.page_submissions.exists?(email: buyer[:email])
+      landing_page.page_submissions.create!(
+        form_type: 'receipt',
+        email: buyer[:email],
+        data: { 'name' => buyer[:name], 'city' => buyer[:city], 'state' => buyer[:state] },
+        status: :new_submission
+      )
+      created += 1
+    end
+
+    redirect_to manage_campaign_path(campaign), notice: "Seeded #{created} test buyers. Personal Videos enabled. Open the recorder and switch to Queue mode to test."
+  end
 end
