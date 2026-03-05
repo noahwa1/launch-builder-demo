@@ -101,6 +101,19 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def video_message(campaign_asset, recipient_email, message)
+    @asset = campaign_asset
+    @campaign = campaign_asset.campaign
+    @author = @campaign.author
+    @message = message
+    @video_url = @asset.file&.url
+
+    mail(
+      to: recipient_email,
+      subject: "A video message from #{@author.full_name} — #{@campaign.title}"
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author

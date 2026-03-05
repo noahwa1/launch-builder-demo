@@ -17,9 +17,9 @@
     --text-primary: #e8e8ef;
     --text-secondary: #8888a0;
     --text-muted: #55556a;
-    --accent: #6c5ce7;
-    --accent-hover: #7f71ed;
-    --accent-soft: rgba(108,92,231,0.12);
+    --accent: #003262;
+    --accent-hover: #1a4a7a;
+    --accent-soft: rgba(0,50,98,0.12);
     --danger: #e94560;
     --success: #219653;
   }
@@ -219,7 +219,7 @@
 <!-- ── Top Bar ── -->
 <div class="top-bar">
   <div class="top-bar-left">
-    <div class="logo">LAUNCH <span>STUDIO</span></div>
+    <div class="logo">PREMIERE <span>STUDIO</span></div>
     <div class="mode-pills">
       <a href="<%= studio_portal_campaign_live_events_path(@campaign) %>" class="mode-pill">Live</a>
       <span class="mode-pill active">Record</span>
@@ -228,6 +228,7 @@
   <div class="top-bar-right">
     <button class="tb-btn" id="btnLaunchRecorder" onclick="R.launchRecorder()">Launch Recorder</button>
     <a href="<%= studio_portal_campaign_live_events_path(@campaign) %>" class="tb-btn">Back to Studio</a>
+    <button class="tb-btn" id="btnDownloadRaw" onclick="R.downloadRaw()" style="display:none;">Download Raw</button>
     <button class="tb-btn primary" id="btnExport" onclick="R.startExport()" disabled>Export MP4</button>
   </div>
 </div>
@@ -478,6 +479,7 @@ var R = (function() {
   var musicSource = null;
   var musicGain = null;
   var audioDest = null;
+  var musicPendingConnect = false;
 
   var timelineDuration = 0;
   var animFrame = null;
@@ -534,6 +536,13 @@ var R = (function() {
     musicGain = audioCtx.createGain();
     musicGain.gain.value = 0.5;
     musicGain.connect(audioDest);
+
+    // Connect pending music if it was added before camera launch
+    if (musicPendingConnect && musicAudioEl) {
+      musicSource = audioCtx.createMediaElementSource(musicAudioEl);
+      musicSource.connect(musicGain);
+      musicPendingConnect = false;
+    }
   }
 
   // ── Compositor ──
@@ -736,12 +745,16 @@ var R = (function() {
     if (playbackVideo) { playbackVideo.pause(); playbackVideo.remove(); }
     playbackVideo = document.createElement('video');
     playbackVideo.src = recordedUrl;
-    playbackVideo.muted = true;
+    playbackVideo.muted = false;
     playbackVideo.playsInline = true;
     playbackVideo.addEventListener('ended', function() {
       isPlaying = false;
       document.getElementById('btnPlay').classList.remove('active');
+      // Restart compositor for live camera if still connected
+      if (cameraStream) { cameraOn = true; document.getElementById('btnCamera').classList.add('active'); startCompositor(); }
     });
+    // Show download button
+    document.getElementById('btnDownloadRaw').style.display = '';
   }
 
   function togglePlayback() {
@@ -751,8 +764,11 @@ var R = (function() {
       if (musicAudioEl) musicAudioEl.pause();
       isPlaying = false;
       document.getElementById('btnPlay').classList.remove('active');
+      // Restart compositor for live camera if still connected
+      if (cameraStream && cameraOn) startCompositor();
     } else {
-      // Switch compositor to playback mode
+      // Cancel the compositor loop before starting playback loop
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
       cameraOn = false;
       document.getElementById('btnCamera').classList.remove('active');
       playbackVideo.play();
@@ -765,7 +781,7 @@ var R = (function() {
 
   function drawPlayback() {
     if (!isPlaying) return;
-    requestAnimationFrame(drawPlayback);
+    animFrame = requestAnimationFrame(drawPlayback);
 
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, 1920, 1080);
@@ -775,6 +791,36 @@ var R = (function() {
       var vh = playbackVideo.videoHeight || 1080;
       var scale = Math.max(1920 / vw, 1080 / vh);
       ctx.drawImage(playbackVideo, (1920 - vw * scale) / 2, (1080 - vh * scale) / 2, vw * scale, vh * scale);
+    }
+
+    // Draw overlays during playback
+    var now = playbackVideo.currentTime;
+    for (var i = 0; i < imageOverlays.length; i++) {
+      var io = imageOverlays[i];
+      var opacity = getOverlayOpacity(io, now);
+      if (opacity <= 0) continue;
+      ctx.globalAlpha = opacity;
+      var w = io.img.naturalWidth * (io.scale / 100);
+      var h = io.img.naturalHeight * (io.scale / 100);
+      ctx.drawImage(io.img, io.x, io.y, w, h);
+      ctx.globalAlpha = 1;
+    }
+    for (var j = 0; j < textOverlays.length; j++) {
+      var to = textOverlays[j];
+      var textOpacity = getOverlayOpacity(to, now);
+      if (textOpacity <= 0) continue;
+      ctx.globalAlpha = textOpacity;
+      ctx.font = to.size + 'px ' + to.font;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (to.stroke) {
+        ctx.strokeStyle = to.stroke;
+        ctx.lineWidth = Math.max(2, to.size / 12);
+        ctx.strokeText(to.text, to.x, to.y);
+      }
+      ctx.fillStyle = to.color;
+      ctx.fillText(to.text, to.x, to.y);
+      ctx.globalAlpha = 1;
     }
 
     // Update playhead
@@ -879,16 +925,22 @@ var R = (function() {
     document.getElementById('musicName').textContent = musicFile.name;
     document.getElementById('musicInfo').style.display = '';
 
-    // Create audio element for playback
+    // Disconnect old music source to prevent leaks
+    if (musicSource) { try { musicSource.disconnect(); } catch(e) {} musicSource = null; }
     if (musicAudioEl) { musicAudioEl.pause(); }
+
+    // Create fresh audio element
     musicAudioEl = new Audio();
     musicAudioEl.src = URL.createObjectURL(musicFile);
     musicAudioEl.loop = true;
 
-    // Connect to audio mixer if available
+    // Connect to audio mixer if available, otherwise flag for later
     if (audioCtx && musicGain) {
-      var source = audioCtx.createMediaElementSource(musicAudioEl);
-      source.connect(musicGain);
+      musicSource = audioCtx.createMediaElementSource(musicAudioEl);
+      musicSource.connect(musicGain);
+      musicPendingConnect = false;
+    } else {
+      musicPendingConnect = true;
     }
 
     updateTimeline();
@@ -1130,6 +1182,11 @@ var R = (function() {
     document.getElementById('exportModal').classList.remove('show');
   }
 
+  function downloadRaw() {
+    if (!recordedBlob) return;
+    downloadBlob(recordedBlob, 'recording.webm');
+  }
+
   // ── Helpers ──
   function formatTime(s) {
     var m = Math.floor(s / 60);
@@ -1162,6 +1219,7 @@ var R = (function() {
     switchTab: switchTab,
     startExport: startExport,
     closeExportModal: closeExportModal,
+    downloadRaw: downloadRaw,
     scrub: scrub
   };
 })();

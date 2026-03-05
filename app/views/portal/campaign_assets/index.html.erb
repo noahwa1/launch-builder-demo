@@ -90,7 +90,25 @@
               <td><%= asset.asset_type.titleize %></td>
               <td><span class="status-badge status-<%= asset.status == 'pending_review' ? 'pending' : asset.status %>"><%= asset.status.titleize %></span></td>
               <td class="text-muted"><%= asset.created_at.strftime('%b %d, %Y') %></td>
-              <td><%= button_to 'Remove', portal_campaign_campaign_asset_path(@campaign, asset), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %></td>
+              <td style="white-space:nowrap;">
+                <button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(0,50,98,0.06);color:#003262;border:1px solid rgba(0,50,98,0.15);" onclick="this.parentElement.parentElement.nextElementSibling.style.display = this.parentElement.parentElement.nextElementSibling.style.display === 'none' ? '' : 'none'">Send</button>
+                <%= button_to 'Remove', portal_campaign_campaign_asset_path(@campaign, asset), method: :delete, class: 'text-muted', style: 'font-size:12px;text-decoration:none;background:none;border:none;cursor:pointer;', form: { style: 'display:inline' } %>
+              </td>
+            </tr>
+            <tr style="display:none;">
+              <td colspan="5" style="padding:4px 14px 14px;">
+                <%= form_with url: send_video_portal_campaign_campaign_asset_path(@campaign, asset), method: :post, style: 'display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:rgba(0,50,98,0.03);padding:12px;border-radius:8px;border:1px solid rgba(0,50,98,0.08);' do %>
+                  <div style="flex:1;min-width:180px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:3px;">Recipient Email</label>
+                    <input type="email" name="recipient_email" required placeholder="recipient@example.com" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                  </div>
+                  <div style="flex:2;min-width:200px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:3px;">Message (optional)</label>
+                    <input type="text" name="message" placeholder="A personal note..." style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm" style="height:34px;">Send Video</button>
+                <% end %>
+              </td>
             </tr>
             <% if asset.needs_changes? && asset.admin_notes.present? %>
               <tr>

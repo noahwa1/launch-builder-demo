@@ -1,10 +1,20 @@
 class LandingPageGenerator
+  TEMPLATES = {
+    'standard'            => 'Standard',
+    'personalized_video'  => 'Personalized Video',
+    'preorder_incentive'  => 'Preorder Incentive',
+    'address_capture'     => 'Address Capture',
+    'landing_page'        => 'Landing Page',
+    'vinyl'               => 'Vinyl / Music'
+  }.freeze
+
   # Campaign mode:   LandingPageGenerator.new(campaign)
   # Standalone mode:  LandingPageGenerator.new(nil, author: author, book: book, company_name: "Acme", company_email: "hi@acme.com")
-  def initialize(campaign, author: nil, book: nil, company_name: nil, company_email: nil)
+  def initialize(campaign, author: nil, book: nil, company_name: nil, company_email: nil, template: 'standard')
     @campaign = campaign
     @company_name = company_name
     @company_email = company_email
+    @template = TEMPLATES.key?(template.to_s) ? template.to_s : 'standard'
 
     if @campaign
       @submission = campaign.submission
@@ -92,12 +102,74 @@ class LandingPageGenerator
   end
 
   def build_html
+    case @template
+    when 'personalized_video'  then build_personalized_video_html
+    when 'preorder_incentive'  then build_preorder_incentive_html
+    when 'address_capture'     then build_address_capture_html
+    when 'landing_page'        then build_landing_page_html
+    when 'vinyl'               then build_vinyl_html
+    else build_standard_html
+    end
+  end
+
+  def build_standard_html
     <<~HTML
       #{company_bar_html}<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#book">The Book</a><a href="#author">The Author</a><a href="#{h purchase_url}" class="btn-order">Order Now</a></div></div></nav>
       <section class="section-wrapper section-intro" style="background-image:linear-gradient(135deg,rgba(0,50,98,0.92),rgba(0,30,60,0.95));background-size:cover;background-position:center center;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;"><div class="container" style="padding-top:60px;padding-bottom:60px;"><h1 class="page-headline text-shadow" style="color:#fff;">#{h book_title}</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);text-shadow:1px 1px 2px #000;">by #{h author_name}</p><a href="#{h purchase_url}" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Order Your Copy</a></div></section>
       <section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover">#{book_cover_html}</div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">#{h genre} — #{h release_date}</h4><div class="book-desc"><p>#{h book_description}</p></div></div></div></div></section>
       <section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image">#{author_image_html}</div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> #{h author_name}</h3><div class="author-desc"><p>#{h author_bio}</p></div></div></div></div></section>
       <footer class="launch-footer"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
+    HTML
+  end
+
+  def build_personalized_video_html
+    <<~HTML
+      #{company_bar_html}<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#video">Video Message</a><a href="#book">The Book</a><a href="#{h purchase_url}" class="btn-order">Order Now</a></div></div></nav>
+      <section class="section-wrapper section-intro" style="background:linear-gradient(135deg,rgba(0,50,98,0.92),rgba(0,30,60,0.95));text-align:center;color:#fff;padding:80px 0;"><div class="container"><h1 class="page-headline text-shadow" style="color:#fff;font-size:48px;">A Personal Message from #{h author_name}</h1><p style="font-size:20px;margin-top:16px;color:rgba(255,255,255,0.85);">Watch the video below for a special message about <em>#{h book_title}</em></p></div></section>
+      <section id="video" style="padding:50px 0;background:#f8f9fa;"><div class="container" style="max-width:800px;text-align:center;"><div style="background:#000;border-radius:12px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:#666;font-size:18px;margin-bottom:24px;">Video Player — Upload a recording in Campaign Assets</div><p style="color:#666;font-size:14px;">Personalized video from #{h author_name}</p></div></section>
+      <section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover">#{book_cover_html}</div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><h4 class="book-headline2">#{h genre} — #{h release_date}</h4><div class="book-desc"><p>#{h book_description}</p></div><a href="#{h purchase_url}" class="btn order-btn" style="margin-top:20px;display:inline-block;">Order Your Copy</a></div></div></div></section>
+      <footer class="launch-footer"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
+    HTML
+  end
+
+  def build_preorder_incentive_html
+    <<~HTML
+      #{company_bar_html}<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#preorder">Pre-Order</a><a href="#incentive">Bonus</a><a href="#{h purchase_url}" class="btn-order">Pre-Order Now</a></div></div></nav>
+      <section class="section-wrapper section-intro" style="background:linear-gradient(135deg,rgba(0,50,98,0.92),rgba(0,30,60,0.95));text-align:center;color:#fff;padding:80px 0;"><div class="container"><p style="font-size:16px;text-transform:uppercase;letter-spacing:3px;color:#C5A44E;margin-bottom:16px;">Available #{h release_date}</p><h1 class="page-headline text-shadow" style="color:#fff;font-size:56px;">#{h book_title}</h1><p style="font-size:22px;margin-top:16px;color:rgba(255,255,255,0.85);">by #{h author_name}</p><a href="#{h purchase_url}" class="btn order-btn" style="margin-top:28px;font-size:18px;padding:14px 40px;">Pre-Order Now</a></div></section>
+      <section id="incentive" style="padding:60px 0;background:#fff;"><div class="container" style="max-width:800px;text-align:center;"><h2 style="font-size:36px;color:#003262;font-family:'Montserrat',sans-serif;margin-bottom:16px;">Pre-Order Bonus</h2><p style="font-size:18px;color:#666;margin-bottom:32px;">Pre-order before #{h release_date} and receive exclusive bonus content.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;"><div style="padding:24px;border:1px solid #e5e7eb;border-radius:12px;"><div style="font-size:32px;margin-bottom:12px;">✍️</div><h3 style="color:#003262;font-size:16px;">Signed Bookplate</h3><p style="color:#888;font-size:13px;margin-top:6px;">A personal signed bookplate from the author</p></div><div style="padding:24px;border:1px solid #e5e7eb;border-radius:12px;"><div style="font-size:32px;margin-bottom:12px;">📖</div><h3 style="color:#003262;font-size:16px;">Bonus Chapter</h3><p style="color:#888;font-size:13px;margin-top:6px;">An exclusive bonus chapter not in the final book</p></div><div style="padding:24px;border:1px solid #e5e7eb;border-radius:12px;"><div style="font-size:32px;margin-bottom:12px;">🎁</div><h3 style="color:#003262;font-size:16px;">Limited Print</h3><p style="color:#888;font-size:13px;margin-top:6px;">Exclusive art print (first 500 orders)</p></div></div></div></section>
+      <section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover">#{book_cover_html}</div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><div class="book-desc"><p>#{h book_description}</p></div></div></div></div></section>
+      <footer class="launch-footer"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
+    HTML
+  end
+
+  def build_address_capture_html
+    <<~HTML
+      #{company_bar_html}<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#signup">Get Your Copy</a><a href="#book">The Book</a></div></div></nav>
+      <section class="section-wrapper section-intro" style="background:linear-gradient(135deg,rgba(0,50,98,0.92),rgba(0,30,60,0.95));text-align:center;color:#fff;padding:80px 0;"><div class="container"><h1 class="page-headline text-shadow" style="color:#fff;font-size:48px;">#{h book_title}</h1><p style="font-size:20px;margin-top:16px;color:rgba(255,255,255,0.85);">by #{h author_name}</p></div></section>
+      <section id="signup" style="padding:60px 0;background:#fff;"><div class="container" style="max-width:600px;"><h2 style="font-size:28px;color:#003262;font-family:'Montserrat',sans-serif;text-align:center;margin-bottom:8px;">Claim Your Signed Copy</h2><p style="text-align:center;color:#666;font-size:15px;margin-bottom:32px;">Enter your shipping address to receive your personally signed edition.</p><form class="page-form" data-form="address"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;"><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">First Name</label><input type="text" name="first_name" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Last Name</label><input type="text" name="last_name" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div></div><div style="margin-bottom:16px;"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Email</label><input type="email" name="email" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div><div style="margin-bottom:16px;"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Street Address</label><input type="text" name="address" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div><div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:24px;"><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">City</label><input type="text" name="city" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">State</label><input type="text" name="state" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">ZIP</label><input type="text" name="zip" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div></div><button type="submit" class="btn order-btn" style="width:100%;padding:14px;font-size:16px;border:none;border-radius:8px;cursor:pointer;">Submit Address</button></form></div></section>
+      <section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover">#{book_cover_html}</div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><div class="book-desc"><p>#{h book_description}</p></div></div></div></div></section>
+      <footer class="launch-footer"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
+    HTML
+  end
+
+  def build_landing_page_html
+    <<~HTML
+      #{company_bar_html}<nav class="project-header"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#book">The Book</a><a href="#author">The Author</a><a href="#signup">Get Notified</a></div></div></nav>
+      <section class="section-wrapper section-intro" style="background:linear-gradient(135deg,rgba(0,50,98,0.92),rgba(0,30,60,0.95));text-align:center;color:#fff;padding:100px 0;"><div class="container"><h1 class="page-headline text-shadow" style="color:#fff;font-size:64px;">#{h book_title}</h1><p style="font-size:24px;margin-top:16px;color:rgba(255,255,255,0.85);">by #{h author_name}</p><p style="font-size:16px;margin-top:8px;color:#C5A44E;">#{h genre} — #{h release_date}</p></div></section>
+      <section id="book" class="book-section"><div class="container"><div class="book-row"><div class="book-cover">#{book_cover_html}</div><div class="book-detail"><h3 class="book-headline1"><strong>About</strong> The Book</h3><div class="book-desc"><p>#{h book_description}</p></div></div></div></div></section>
+      <section id="author" class="author-section"><div class="container"><div class="author-row"><div class="author-image">#{author_image_html}</div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> #{h author_name}</h3><div class="author-desc"><p>#{h author_bio}</p></div></div></div></div></section>
+      <section id="signup" style="padding:60px 0;background:#fff;text-align:center;"><div class="container" style="max-width:500px;"><h2 style="font-size:28px;color:#003262;font-family:'Montserrat',sans-serif;margin-bottom:8px;">Stay Updated</h2><p style="color:#666;font-size:15px;margin-bottom:24px;">Be the first to know about release dates, signed editions, and events.</p><form class="page-form" data-form="notify"><div style="display:flex;gap:12px;"><input type="email" name="email" required placeholder="your@email.com" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;"><button type="submit" class="btn order-btn" style="padding:12px 24px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;">Notify Me</button></div></form></div></section>
+      <footer class="launch-footer"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
+    HTML
+  end
+
+  def build_vinyl_html
+    <<~HTML
+      #{company_bar_html}<nav class="project-header" style="background:#111;"><div class="container"><div style="font-size:20px;font-weight:700;color:#C5A44E;">#{h book_title}</div><div class="nav-links"><a href="#release">The Release</a><a href="#artist">The Artist</a><a href="#{h purchase_url}" class="btn-order">Order Now</a></div></div></nav>
+      <section class="section-wrapper section-intro" style="background:linear-gradient(135deg,#111,#1a1a2e);text-align:center;color:#fff;padding:100px 0;"><div class="container"><p style="font-size:14px;text-transform:uppercase;letter-spacing:4px;color:#C5A44E;margin-bottom:20px;">New Release</p><h1 class="page-headline" style="color:#fff;font-size:64px;">#{h book_title}</h1><p style="font-size:22px;margin-top:16px;color:rgba(255,255,255,0.7);">#{h author_name}</p><a href="#{h purchase_url}" class="btn order-btn" style="margin-top:32px;font-size:18px;padding:14px 40px;">Order Vinyl</a></div></section>
+      <section id="release" style="padding:60px 0;background:#fff;"><div class="container"><div style="display:flex;flex-wrap:wrap;gap:40px;align-items:center;"><div style="flex:0 0 300px;">#{book_cover_html}</div><div style="flex:1;min-width:280px;"><h2 style="font-size:36px;color:#111;font-family:'Montserrat',sans-serif;">About the Release</h2><p style="color:#C5A44E;font-weight:600;margin:12px 0;">#{h genre} — #{h release_date}</p><p style="color:#555;font-size:15px;line-height:1.8;">#{h book_description}</p></div></div></div></section>
+      <section id="artist" class="author-section" style="background:#f5f5f5;"><div class="container"><div class="author-row"><div class="author-image">#{author_image_html}</div><div class="author-detail"><h3 class="author-headline1"><strong>About</strong> #{h author_name}</h3><div class="author-desc"><p>#{h author_bio}</p></div></div></div></div></section>
+      <footer class="launch-footer" style="background:#111;"><div class="container"><span>&copy; #{Time.current.year} #{h author_name}. All Rights Reserved.</span><span><a href="#">Privacy Policy</a></span></div></footer>
     HTML
   end
 
