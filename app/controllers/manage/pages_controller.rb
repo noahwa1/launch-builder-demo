@@ -1,6 +1,6 @@
 module Manage
   class PagesController < BaseController
-    before_action :set_page, only: [:show, :update, :destroy, :builder, :toggle_publish]
+    before_action :set_page, only: [:show, :update, :destroy, :builder, :toggle_publish, :generate]
 
     def index
       @pages = LandingPage.where(campaign_id: nil)
@@ -10,6 +10,7 @@ module Manage
 
     def new
       @authors = Author.active.order(:full_name)
+      @books = Book.includes(:author).order(:title)
     end
 
     def create
@@ -19,12 +20,39 @@ module Manage
         author_id: params[:author_id].presence
       )
       if @page.save
-        redirect_to builder_manage_page_path(@page), notice: 'Page created — opening builder.'
+        if params[:generate_page] == '1'
+          author = @page.author
+          book = params[:book_id].present? ? Book.find(params[:book_id]) : nil
+          result = LandingPageGenerator.new(nil,
+            author: author,
+            book: book,
+            company_name: params[:company_name].presence,
+            company_email: params[:company_email].presence
+          ).generate
+          @page.update!(html_content: result[:html], css_content: result[:css])
+          redirect_to builder_manage_page_path(@page), notice: 'Page created & generated! Customize it in the builder.'
+        else
+          redirect_to builder_manage_page_path(@page), notice: 'Page created — opening builder.'
+        end
       else
         @authors = Author.active.order(:full_name)
+        @books = Book.includes(:author).order(:title)
         flash.now[:alert] = @page.errors.full_messages.join(', ')
         render :new, status: :unprocessable_entity
       end
+    end
+
+    def generate
+      author = @page.author || (params[:author_id].present? ? Author.find(params[:author_id]) : nil)
+      book = params[:book_id].present? ? Book.find(params[:book_id]) : nil
+      result = LandingPageGenerator.new(nil,
+        author: author,
+        book: book,
+        company_name: params[:company_name].presence,
+        company_email: params[:company_email].presence
+      ).generate
+      @page.update!(html_content: result[:html], css_content: result[:css])
+      redirect_to builder_manage_page_path(@page), notice: 'Page regenerated! Customize it in the builder.'
     end
 
     def show
