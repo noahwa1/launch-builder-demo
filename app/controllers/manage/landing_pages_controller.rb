@@ -21,6 +21,13 @@ module Manage
       redirect_to builder_manage_campaign_landing_page_path(@campaign), notice: 'Page generated! Customize it in the builder.'
     end
 
+    def wizard_generate
+      wizard_data = params.require(:wizard_data).permit!.to_h
+      result = LandingPageGenerator.new(@campaign, wizard_data: wizard_data).generate
+      @landing_page.update!(html_content: result[:html], css_content: result[:css])
+      redirect_to builder_manage_campaign_landing_page_path(@campaign), notice: 'Page generated from wizard! Customize it in the builder.'
+    end
+
     def toggle_notifications
       @landing_page.update!(notify_on_submission: !@landing_page.notify_on_submission?)
       status = @landing_page.notify_on_submission? ? 'enabled' : 'disabled'

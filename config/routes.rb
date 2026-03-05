@@ -127,6 +127,7 @@ Rails.application.routes.draw do
         member do
           get :builder
           patch :generate
+          patch :wizard_generate
           patch :toggle_notifications
         end
       end

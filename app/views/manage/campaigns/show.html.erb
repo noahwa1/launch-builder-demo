@@ -159,6 +159,10 @@
             </div>
           </div>
           <script>document.addEventListener('click',function(e){if(!document.getElementById('generateDropdown').contains(e.target))document.getElementById('generateMenu').style.display='none';});</script>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openWizard()" style="display:inline-flex;align-items:center;gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Page Wizard
+          </button>
           <% if @landing_page.page_submissions.any? %>
             <%= link_to manage_campaign_page_submissions_path(@campaign), class: 'btn btn-secondary btn-sm' do %>
               Submissions (<%= @landing_page.page_submissions.count %>)
@@ -210,3 +214,396 @@
     <% end %>
   </div>
 </div>
+
+<%# ── Page Wizard Modal ── %>
+<% if @landing_page %>
+<div id="wizardOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:40px 16px;">
+<div style="max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+  <!-- Header -->
+  <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h2 style="font-size:18px;font-weight:700;margin:0;">Page Wizard</h2>
+      <p class="text-muted" style="font-size:12px;margin:2px 0 0;">Step <span id="wizardStepNum">1</span> of 3</p>
+    </div>
+    <button onclick="closeWizard()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
+  </div>
+
+  <!-- Step 1: Choose Template -->
+  <div id="wizardStep1" style="padding:24px;">
+    <h3 style="font-size:16px;margin-bottom:16px;">Choose a Template</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+      <% icons = { 'standard' => '&#128214;', 'personalized_video' => '&#127909;', 'preorder_incentive' => '&#127873;', 'address_capture' => '&#128230;', 'landing_page' => '&#127760;', 'vinyl' => '&#127926;' } %>
+      <% descs = { 'standard' => 'Book page with author bio', 'personalized_video' => 'Steps + receipt form + video', 'preorder_incentive' => 'Bonus cards + receipt form', 'address_capture' => 'Shipping address form', 'landing_page' => 'Showcase + email signup', 'vinyl' => 'Dark theme for music' } %>
+      <% LandingPageGenerator::TEMPLATES.each do |key, label| %>
+        <div class="wizard-tpl-card" data-tpl="<%= key %>" onclick="wizardSelectTemplate('<%= key %>')" style="padding:16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all 0.15s;">
+          <div style="font-size:28px;margin-bottom:8px;"><%= icons[key]&.html_safe %></div>
+          <div style="font-size:14px;font-weight:600;"><%= label %></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><%= descs[key] %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Step 2: Customize Content -->
+  <div id="wizardStep2" style="padding:24px;display:none;max-height:60vh;overflow-y:auto;">
+    <h3 style="font-size:16px;margin-bottom:16px;">Customize Content</h3>
+
+    <%# Hero — all templates %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-hero">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Hero</legend>
+      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Headline</label><input type="text" id="wiz-hero-headline" value="<%= h(@campaign.submission.title.presence || 'Your Book Title') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Subheadline</label><input type="text" id="wiz-hero-subheadline" value="by <%= h(@campaign.author.full_name) %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">CTA Text</label><input type="text" id="wiz-hero-cta-text" value="Order Your Copy" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">CTA URL</label><input type="text" id="wiz-hero-cta-url" value="<%= h(@campaign.signed_editions_url.presence || '#') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      </div>
+    </fieldset>
+
+    <%# Book — all templates %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-book">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Book</legend>
+      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Title</label><input type="text" id="wiz-book-title" value="<%= h(@campaign.submission.title.presence || '') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Description</label><textarea id="wiz-book-description" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;resize:vertical;"><%= h(@campaign.submission.description.presence || '') %></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Genre</label><input type="text" id="wiz-book-genre" value="<%= h(@campaign.submission.genre.presence || 'General') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Release Date</label><input type="text" id="wiz-book-release-date" value="<%= @campaign.submission.release_date&.strftime('%B %d, %Y') || 'Coming Soon' %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      </div>
+    </fieldset>
+
+    <%# Author — standard, landing_page, address_capture, vinyl %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-author">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Author</legend>
+      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Name</label><input type="text" id="wiz-author-name" value="<%= h(@campaign.author.full_name) %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+      <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Bio</label><textarea id="wiz-author-bio" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;resize:vertical;"><%= h(@campaign.author.description.presence || '') %></textarea></div>
+    </fieldset>
+
+    <%# Steps — personalized_video, preorder_incentive %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-steps">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">How It Works (Steps)</legend>
+      <div id="wiz-steps-list">
+        <% 4.times do |i| %>
+        <div style="display:grid;grid-template-columns:auto 1fr 2fr;gap:8px;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;font-weight:700;color:var(--text-muted);"><%= i+1 %>.</span>
+          <input type="text" class="wiz-step-title" data-idx="<%= i %>" value="" placeholder="Step title" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <input type="text" class="wiz-step-desc" data-idx="<%= i %>" value="" placeholder="Description" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        </div>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <%# Retailers — personalized_video, preorder_incentive, landing_page %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-retailers">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Retailers</legend>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <% [['Amazon','amazon'], ['Barnes & Noble','barnes_noble'], ['Bookshop.org','bookshop'], ['Target','target'], ['Walmart','walmart'], ['Books-A-Million','bam']].each do |name, key| %>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="wiz-retailer" data-name="<%= name %>" checked> <%= name %></label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <%# Testimonials — personalized_video, landing_page, standard, vinyl %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-testimonials">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Testimonials</legend>
+      <div id="wiz-testimonials-list">
+        <div class="wiz-testimonial-row" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;">
+          <input type="text" class="wiz-testimonial-quote" placeholder="Quote text..." value="&quot;An absolutely captivating read from start to finish.&quot;" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <input type="text" class="wiz-testimonial-attr" placeholder="- Attribution" value="- Reader Review" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        </div>
+      </div>
+      <button type="button" onclick="wizardAddTestimonial()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;">+ Add testimonial</button>
+    </fieldset>
+
+    <%# Bonuses — preorder_incentive only %>
+    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-bonuses">
+      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Bonus Items</legend>
+      <div id="wiz-bonuses-list">
+        <% [['&#9997;&#65039;', 'Signed Bookplate', 'A personal signed bookplate from the author'], ['&#128214;', 'Bonus Chapter', 'An exclusive bonus chapter not in the final book'], ['&#127873;', 'Limited Print', 'Exclusive art print (first 500 orders)']].each_with_index do |(emoji, title, desc), i| %>
+        <div class="wiz-bonus-row" style="display:grid;grid-template-columns:50px 1fr 2fr;gap:8px;align-items:center;margin-bottom:8px;">
+          <input type="text" class="wiz-bonus-emoji" data-idx="<%= i %>" value="<%= emoji %>" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:16px;text-align:center;">
+          <input type="text" class="wiz-bonus-title" data-idx="<%= i %>" value="<%= title %>" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <input type="text" class="wiz-bonus-desc" data-idx="<%= i %>" value="<%= desc %>" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        </div>
+        <% end %>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- Step 3: Review & Generate -->
+  <div id="wizardStep3" style="padding:24px;display:none;">
+    <h3 style="font-size:16px;margin-bottom:16px;">Review & Generate</h3>
+    <div style="background:var(--surface-alt,#f8f9fa);border-radius:8px;padding:20px;margin-bottom:20px;">
+      <div style="margin-bottom:12px;"><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Template</span><div id="wiz-review-template" style="font-size:15px;font-weight:600;margin-top:2px;">Standard</div></div>
+      <div style="margin-bottom:12px;"><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Sections Included</span><div id="wiz-review-sections" style="font-size:13px;margin-top:2px;color:var(--text-primary);">—</div></div>
+      <div><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Customized Fields</span><div id="wiz-review-fields" style="font-size:13px;margin-top:2px;color:var(--text-primary);">—</div></div>
+    </div>
+    <% if @landing_page.has_content? %>
+      <p style="font-size:12px;color:#b45309;margin-bottom:12px;">This will overwrite the current page content.</p>
+    <% end %>
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+    <button type="button" id="wizardBackBtn" onclick="wizardBack()" style="display:none;padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">Back</button>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button type="button" onclick="closeWizard()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">Cancel</button>
+      <button type="button" id="wizardNextBtn" onclick="wizardNext()" class="btn btn-primary btn-sm" style="padding:8px 20px;">Next</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<style>
+  .wizard-tpl-card:hover { border-color: var(--accent) !important; background: var(--accent-wash); }
+  .wizard-tpl-card.selected { border-color: var(--accent) !important; background: var(--accent-wash); box-shadow: 0 0 0 1px var(--accent); }
+</style>
+
+<script>
+(function(){
+  var wizardStep = 1;
+  var wizardTemplate = 'standard';
+
+  var tplSections = {
+    standard:           { hero:true, book:true, author:true, steps:false, retailers:false, testimonials:true, bonuses:false },
+    personalized_video: { hero:true, book:true, author:true, steps:true, retailers:true, testimonials:true, bonuses:false },
+    preorder_incentive: { hero:true, book:true, author:false, steps:true, retailers:true, testimonials:false, bonuses:true },
+    address_capture:    { hero:true, book:true, author:true, steps:false, retailers:false, testimonials:false, bonuses:false },
+    landing_page:       { hero:true, book:true, author:true, steps:false, retailers:true, testimonials:true, bonuses:false },
+    vinyl:              { hero:true, book:true, author:true, steps:false, retailers:false, testimonials:true, bonuses:false }
+  };
+
+  var tplStepDefaults = {
+    personalized_video: [
+      { title: 'Order the Book', desc: 'Purchase from any retailer below' },
+      { title: 'Submit Your Receipt', desc: 'Upload your proof of purchase' },
+      { title: 'Get Confirmed', desc: "We'll verify your order" },
+      { title: 'Enjoy Your Video', desc: 'Receive a personalized video message' }
+    ],
+    preorder_incentive: [
+      { title: 'Pre-Order the Book', desc: 'Purchase from any retailer below' },
+      { title: 'Submit Your Receipt', desc: 'Upload your proof of purchase' },
+      { title: 'Get Confirmed', desc: "We'll verify your pre-order" },
+      { title: 'Enjoy Your Bonus', desc: 'Receive your exclusive bonus content' }
+    ]
+  };
+
+  var tplCTADefaults = {
+    standard: 'Order Your Copy',
+    personalized_video: 'Get Your Personalized Video',
+    preorder_incentive: 'Pre-Order Now',
+    address_capture: 'Claim Your Signed Copy',
+    landing_page: 'Learn More',
+    vinyl: 'Order Vinyl'
+  };
+
+  var templateNames = <%= raw LandingPageGenerator::TEMPLATES.to_json %>;
+
+  window.openWizard = function() {
+    document.getElementById('wizardOverlay').style.display = 'block';
+    showStep(1);
+    wizardSelectTemplate('standard');
+  };
+
+  window.closeWizard = function() {
+    document.getElementById('wizardOverlay').style.display = 'none';
+  };
+
+  window.wizardSelectTemplate = function(key) {
+    wizardTemplate = key;
+    document.querySelectorAll('.wizard-tpl-card').forEach(function(el){
+      el.classList.toggle('selected', el.dataset.tpl === key);
+    });
+    document.getElementById('wiz-hero-cta-text').placeholder = tplCTADefaults[key] || 'Order Your Copy';
+    if (!document.getElementById('wiz-hero-cta-text')._userEdited) {
+      document.getElementById('wiz-hero-cta-text').value = tplCTADefaults[key] || 'Order Your Copy';
+    }
+    var stepDefaults = tplStepDefaults[key] || tplStepDefaults['personalized_video'];
+    document.querySelectorAll('.wiz-step-title').forEach(function(el, i) {
+      if (stepDefaults[i] && !el._userEdited) { el.value = stepDefaults[i].title; }
+    });
+    document.querySelectorAll('.wiz-step-desc').forEach(function(el, i) {
+      if (stepDefaults[i] && !el._userEdited) { el.value = stepDefaults[i].desc; }
+    });
+    wizardUpdateSections();
+  };
+
+  function wizardUpdateSections() {
+    var vis = tplSections[wizardTemplate] || tplSections.standard;
+    ['hero','book','author','steps','retailers','testimonials','bonuses'].forEach(function(s){
+      var el = document.getElementById('wiz-section-' + s);
+      if (el) el.style.display = vis[s] ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('input', function(e) {
+    if (e.target.id && e.target.id.startsWith('wiz-')) e.target._userEdited = true;
+    if (e.target.classList.contains('wiz-step-title') || e.target.classList.contains('wiz-step-desc')) e.target._userEdited = true;
+  });
+
+  window.wizardAddTestimonial = function() {
+    var list = document.getElementById('wiz-testimonials-list');
+    if (list.querySelectorAll('.wiz-testimonial-row').length >= 3) return;
+    var row = document.createElement('div');
+    row.className = 'wiz-testimonial-row';
+    row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;';
+    row.innerHTML = '<input type="text" class="wiz-testimonial-quote" placeholder="Quote text..." style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">' +
+                    '<input type="text" class="wiz-testimonial-attr" placeholder="- Attribution" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">';
+    list.appendChild(row);
+  };
+
+  function showStep(n) {
+    wizardStep = n;
+    document.getElementById('wizardStep1').style.display = n === 1 ? '' : 'none';
+    document.getElementById('wizardStep2').style.display = n === 2 ? '' : 'none';
+    document.getElementById('wizardStep3').style.display = n === 3 ? '' : 'none';
+    document.getElementById('wizardStepNum').textContent = n;
+    document.getElementById('wizardBackBtn').style.display = n > 1 ? '' : 'none';
+    document.getElementById('wizardNextBtn').textContent = n === 3 ? 'Generate Page' : 'Next';
+    if (n === 2) wizardUpdateSections();
+    if (n === 3) buildReview();
+  }
+
+  function buildReview() {
+    document.getElementById('wiz-review-template').textContent = templateNames[wizardTemplate] || wizardTemplate;
+    var vis = tplSections[wizardTemplate] || tplSections.standard;
+    var secs = [];
+    if (vis.hero) secs.push('Hero');
+    if (vis.book) secs.push('Book');
+    if (vis.author) secs.push('Author');
+    if (vis.steps) secs.push('How It Works');
+    if (vis.retailers) secs.push('Retailers');
+    if (vis.testimonials) secs.push('Testimonials');
+    if (vis.bonuses) secs.push('Bonuses');
+    secs.push('Footer');
+    document.getElementById('wiz-review-sections').textContent = secs.join(', ');
+    var total = 0, customized = 0;
+    var fieldIds = ['wiz-hero-headline','wiz-hero-subheadline','wiz-hero-cta-text','wiz-hero-cta-url','wiz-book-title','wiz-book-description','wiz-book-genre','wiz-book-release-date','wiz-author-name','wiz-author-bio'];
+    fieldIds.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { total++; if (el.value.trim()) customized++; }
+    });
+    document.getElementById('wiz-review-fields').textContent = customized + ' of ' + total + ' fields populated';
+  }
+
+  window.wizardNext = function() {
+    if (wizardStep === 3) { wizardGenerate(); return; }
+    showStep(wizardStep + 1);
+  };
+
+  window.wizardBack = function() {
+    if (wizardStep > 1) showStep(wizardStep - 1);
+  };
+
+  function collectWizardData() {
+    var vis = tplSections[wizardTemplate] || tplSections.standard;
+    var data = { template: wizardTemplate };
+    data.hero = {
+      headline: document.getElementById('wiz-hero-headline').value,
+      subheadline: document.getElementById('wiz-hero-subheadline').value,
+      cta_text: document.getElementById('wiz-hero-cta-text').value,
+      cta_url: document.getElementById('wiz-hero-cta-url').value
+    };
+    data.book = {
+      description: document.getElementById('wiz-book-description').value,
+      genre: document.getElementById('wiz-book-genre').value,
+      release_date: document.getElementById('wiz-book-release-date').value
+    };
+    if (vis.author) {
+      data.author = {
+        name: document.getElementById('wiz-author-name').value,
+        bio: document.getElementById('wiz-author-bio').value
+      };
+    }
+    if (vis.steps) {
+      data.steps = [];
+      document.querySelectorAll('.wiz-step-title').forEach(function(el, i) {
+        var desc = document.querySelectorAll('.wiz-step-desc')[i];
+        if (el.value.trim()) {
+          data.steps.push({ number: String(i+1), title: el.value, description: desc ? desc.value : '' });
+        }
+      });
+    }
+    if (vis.retailers) {
+      var defaultUrls = { 'Amazon': 'https://amazon.com', 'Barnes & Noble': 'https://barnesandnoble.com', 'Bookshop.org': 'https://bookshop.org', 'Target': 'https://target.com', 'Walmart': 'https://walmart.com', 'Books-A-Million': 'https://booksamillion.com' };
+      var defaultIcons = { 'Amazon': "\uD83D\uDCE6", 'Barnes & Noble': "\uD83D\uDCDA", 'Bookshop.org': "\uD83C\uDFEA", 'Target': "\uD83C\uDFAF", 'Walmart': "\uD83D\uDED2", 'Books-A-Million': "\uD83D\uDCD6" };
+      data.retailers = [];
+      document.querySelectorAll('.wiz-retailer:checked').forEach(function(el) {
+        var name = el.dataset.name;
+        data.retailers.push({ name: name, url: defaultUrls[name] || '#', icon: defaultIcons[name] || "\uD83D\uDCDA" });
+      });
+    }
+    if (vis.testimonials) {
+      data.testimonials = [];
+      document.querySelectorAll('.wiz-testimonial-row').forEach(function(row) {
+        var q = row.querySelector('.wiz-testimonial-quote');
+        var a = row.querySelector('.wiz-testimonial-attr');
+        if (q && q.value.trim()) {
+          data.testimonials.push({ quote: q.value, attribution: a ? a.value : '' });
+        }
+      });
+    }
+    if (vis.bonuses) {
+      data.bonuses = [];
+      document.querySelectorAll('.wiz-bonus-row').forEach(function(row) {
+        var emoji = row.querySelector('.wiz-bonus-emoji');
+        var title = row.querySelector('.wiz-bonus-title');
+        var desc = row.querySelector('.wiz-bonus-desc');
+        if (title && title.value.trim()) {
+          data.bonuses.push({ emoji: emoji ? emoji.value : '', title: title.value, description: desc ? desc.value : '' });
+        }
+      });
+    }
+    return data;
+  }
+
+  function wizardGenerate() {
+    var data = collectWizardData();
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<%= wizard_generate_manage_campaign_landing_page_path(@campaign) %>';
+    form.style.display = 'none';
+    var csrfParam = document.querySelector('meta[name="csrf-param"]');
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfParam && csrfToken) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = csrfParam.content; inp.value = csrfToken.content;
+      form.appendChild(inp);
+    }
+    var methodInput = document.createElement('input');
+    methodInput.type = 'hidden'; methodInput.name = '_method'; methodInput.value = 'patch';
+    form.appendChild(methodInput);
+    function addField(name, value) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = name; inp.value = value;
+      form.appendChild(inp);
+    }
+    function flattenToForm(obj, prefix) {
+      for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        var val = obj[key];
+        var fieldName = prefix ? prefix + '[' + key + ']' : key;
+        if (Array.isArray(val)) {
+          val.forEach(function(item, idx) {
+            if (typeof item === 'object' && item !== null) {
+              flattenToForm(item, fieldName + '[' + idx + ']');
+            } else {
+              addField(fieldName + '[]', item);
+            }
+          });
+        } else if (typeof val === 'object' && val !== null) {
+          flattenToForm(val, fieldName);
+        } else {
+          addField(fieldName, val);
+        }
+      }
+    }
+    flattenToForm(data, 'wizard_data');
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  document.getElementById('wizardOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeWizard();
+  });
+})();
+</script>
+<% end %>
