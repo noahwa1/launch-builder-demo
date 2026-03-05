@@ -7,23 +7,39 @@
   <%= form_with model: @book, url: manage_books_path, method: :post, multipart: true do |f| %>
     <div class="form-group">
       <%= f.label :title %>
-      <%= f.text_field :title, placeholder: 'Book title' %>
+      <%= f.text_field :title, placeholder: 'Book title', id: 'book_title' %>
     </div>
     <div class="form-group">
       <%= f.label :isbn, 'ISBN' %>
-      <%= f.text_field :isbn, placeholder: '978-...' %>
+      <div style="display:flex;gap:8px;">
+        <%= f.text_field :isbn, placeholder: '978-...', id: 'book_isbn', style: 'flex:1;' %>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="lookupISBN()" id="isbnLookupBtn">Lookup ISBN</button>
+      </div>
+      <div id="isbnStatus" style="font-size:12px;margin-top:4px;"></div>
+    </div>
+    <div id="isbnPreview" style="display:none;padding:12px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:8px;margin-bottom:16px;">
+      <div style="display:flex;gap:12px;align-items:start;">
+        <img id="isbnCoverPreview" src="" style="max-width:80px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" alt="">
+        <div>
+          <div id="isbnTitlePreview" style="font-weight:600;font-size:14px;"></div>
+          <div id="isbnAuthorPreview" class="text-muted" style="font-size:12px;margin-top:2px;"></div>
+          <div id="isbnPublisherPreview" class="text-muted" style="font-size:12px;"></div>
+          <button type="button" class="btn btn-success btn-sm" style="margin-top:8px;" onclick="applyISBNData()">Apply to Form</button>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <%= f.label :description %>
-      <%= f.text_area :description, placeholder: 'Book description...' %>
+      <%= f.text_area :description, placeholder: 'Book description...', id: 'book_description' %>
     </div>
     <div class="form-group">
       <%= f.label :cover, 'Cover Image' %>
       <%= f.file_field :cover %>
+      <div id="coverUrlNote" style="display:none;font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
     </div>
     <div class="form-group">
       <%= f.label :release_date %>
-      <%= f.date_field :release_date %>
+      <%= f.date_field :release_date, id: 'book_release_date' %>
     </div>
     <div class="form-group">
       <%= f.label :author_id, 'Author' %>
@@ -39,3 +55,78 @@
     </div>
   <% end %>
 </div>
+
+<script>
+var isbnData = null;
+
+function lookupISBN() {
+  var isbn = document.getElementById('book_isbn').value.replace(/[-\s]/g, '');
+  var status = document.getElementById('isbnStatus');
+  var preview = document.getElementById('isbnPreview');
+  var btn = document.getElementById('isbnLookupBtn');
+
+  if (!isbn || isbn.length < 10) {
+    status.innerHTML = '<span style="color:#DC2626;">Enter a valid ISBN (10 or 13 digits)</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Looking up...';
+  status.innerHTML = '<span style="color:var(--text-muted);">Searching Google Books...</span>';
+
+  fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = 'Lookup ISBN';
+
+      if (!data.items || data.items.length === 0) {
+        status.innerHTML = '<span style="color:#DC2626;">No results found for this ISBN</span>';
+        preview.style.display = 'none';
+        return;
+      }
+
+      var vol = data.items[0].volumeInfo;
+      isbnData = {
+        title: vol.title || '',
+        description: vol.description || '',
+        authors: (vol.authors || []).join(', '),
+        publisher: vol.publisher || '',
+        publishedDate: vol.publishedDate || '',
+        cover: (vol.imageLinks && vol.imageLinks.thumbnail) ? vol.imageLinks.thumbnail.replace('http://', 'https://') : ''
+      };
+
+      document.getElementById('isbnTitlePreview').textContent = isbnData.title;
+      document.getElementById('isbnAuthorPreview').textContent = isbnData.authors;
+      document.getElementById('isbnPublisherPreview').textContent = isbnData.publisher + (isbnData.publishedDate ? ' — ' + isbnData.publishedDate : '');
+      if (isbnData.cover) {
+        document.getElementById('isbnCoverPreview').src = isbnData.cover;
+        document.getElementById('isbnCoverPreview').style.display = '';
+      } else {
+        document.getElementById('isbnCoverPreview').style.display = 'none';
+      }
+
+      preview.style.display = '';
+      status.innerHTML = '<span style="color:#16A34A;">Found! Click "Apply to Form" to fill in the details.</span>';
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Lookup ISBN';
+      status.innerHTML = '<span style="color:#DC2626;">Lookup failed: ' + err.message + '</span>';
+    });
+}
+
+function applyISBNData() {
+  if (!isbnData) return;
+  if (isbnData.title) document.getElementById('book_title').value = isbnData.title;
+  if (isbnData.description) document.getElementById('book_description').value = isbnData.description;
+  if (isbnData.publishedDate && isbnData.publishedDate.length >= 10) {
+    document.getElementById('book_release_date').value = isbnData.publishedDate.substring(0, 10);
+  }
+  if (isbnData.cover) {
+    document.getElementById('coverUrlNote').style.display = '';
+    document.getElementById('coverUrlNote').innerHTML = 'Cover from Google Books: <a href="' + isbnData.cover + '" target="_blank">preview</a> — upload a higher-res version if available.';
+  }
+  document.getElementById('isbnStatus').innerHTML = '<span style="color:#16A34A;">Applied! Review and save.</span>';
+}
+</script>

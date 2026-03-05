@@ -1,6 +1,6 @@
 module Manage
   class PagesController < BaseController
-    before_action :set_page, only: [:show, :update, :destroy, :builder, :toggle_publish, :generate]
+    before_action :set_page, only: [:show, :edit, :update, :destroy, :builder, :toggle_publish, :generate]
 
     def index
       @pages = LandingPage.where(campaign_id: nil)
@@ -55,6 +55,11 @@ module Manage
       redirect_to builder_manage_page_path(@page), notice: 'Page regenerated! Customize it in the builder.'
     end
 
+    def edit
+      @authors = Author.active.order(:full_name)
+      @books = Book.includes(:author).order(:title)
+    end
+
     def show
       respond_to do |format|
         format.json { render json: { html_content: @page.html_content, css_content: @page.css_content } }
@@ -77,6 +82,8 @@ module Manage
         respond_to do |format|
           format.json { render json: { success: false, errors: @page.errors.full_messages }, status: :unprocessable_entity }
           format.html do
+            @authors = Author.active.order(:full_name)
+            @books = Book.includes(:author).order(:title)
             flash.now[:alert] = @page.errors.full_messages.join(', ')
             render :edit, status: :unprocessable_entity
           end
@@ -106,7 +113,7 @@ module Manage
     end
 
     def page_params
-      params.require(:landing_page).permit(:title, :slug, :html_content, :css_content)
+      params.require(:landing_page).permit(:title, :slug, :author_id, :html_content, :css_content)
     end
   end
 end
