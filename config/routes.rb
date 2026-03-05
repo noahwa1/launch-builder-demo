@@ -18,11 +18,7 @@ Rails.application.routes.draw do
   # Creator Portal
   namespace :portal do
     root to: 'dashboard#index'
-    resources :submissions do
-      member do
-        patch :submit_for_review
-      end
-    end
+    # Submissions removed — campaigns are now created by admins directly
     resources :sales, only: [:index]
     resources :royalties, only: [:index, :show]
     resources :messages, only: [:index, :create] do
@@ -89,7 +85,7 @@ Rails.application.routes.draw do
     end
 
     # Admin campaign management
-    resources :campaigns, only: [:index, :show, :new, :create] do
+    resources :campaigns, only: [:index, :show, :new, :create, :edit, :update] do
       member do
         patch :toggle_checklist_item
         patch :update_settings

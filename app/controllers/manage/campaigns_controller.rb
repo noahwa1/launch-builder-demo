@@ -1,6 +1,6 @@
 module Manage
   class CampaignsController < BaseController
-    before_action :set_campaign, only: [:show, :toggle_checklist_item, :update_settings]
+    before_action :set_campaign, only: [:show, :edit, :update, :toggle_checklist_item, :update_settings]
 
     def index
       @campaigns = Campaign.includes(:author, :checklist_items, :campaign_assets)
@@ -72,6 +72,31 @@ module Manage
       render :new, status: :unprocessable_entity
     end
 
+    def edit
+      @authors = Author.active.order(:full_name)
+      @submission = @campaign.submission
+    end
+
+    def update
+      ActiveRecord::Base.transaction do
+        # Update author details
+        @campaign.author.update!(author_params) if author_params.values.any?(&:present?)
+
+        # Update submission (book details)
+        @campaign.submission.update!(submission_params)
+
+        # Update campaign
+        @campaign.update!(campaign_params)
+      end
+
+      redirect_to manage_campaign_path(@campaign), notice: 'Campaign updated.'
+    rescue ActiveRecord::RecordInvalid => e
+      @authors = Author.active.order(:full_name)
+      @submission = @campaign.submission
+      flash.now[:alert] = e.record.errors.full_messages.join(', ')
+      render :edit, status: :unprocessable_entity
+    end
+
     def toggle_checklist_item
       item = @campaign.checklist_items.find(params[:checklist_item_id])
       if item.complete?
@@ -95,6 +120,17 @@ module Manage
 
     def author_params
       params.permit(:first_name, :last_name, :description, :image)
+    end
+
+    def submission_params
+      params.permit(:title, :isbn, :book_description, :genre, :release_date, :cover).tap do |p|
+        p[:description] = p.delete(:book_description) if p.key?(:book_description)
+        p.reject! { |_, v| v.nil? }
+      end
+    end
+
+    def campaign_params
+      params.permit(:title, :example_category)
     end
   end
 end

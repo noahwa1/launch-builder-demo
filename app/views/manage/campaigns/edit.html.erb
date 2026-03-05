@@ -1,0 +1,93 @@
+<% content_for :page_title, "Edit: #{@campaign.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', manage_campaign_path(@campaign), class: 'btn btn-secondary' %>
+<% end %>
+
+<%= form_tag manage_campaign_path(@campaign), method: :patch, multipart: true, style: 'max-width:760px;' do %>
+
+  <%# ── Author ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Author</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="first_name">First Name *</label>
+        <input type="text" name="first_name" id="first_name" value="<%= @campaign.author.first_name %>">
+      </div>
+      <div class="form-group">
+        <label for="last_name">Last Name *</label>
+        <input type="text" name="last_name" id="last_name" value="<%= @campaign.author.last_name %>">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="description">Bio / Description</label>
+      <textarea name="description" id="description" rows="3"><%= @campaign.author.description %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="image">Author Photo URL</label>
+      <input type="text" name="image" id="image" value="<%= @campaign.author.image %>">
+    </div>
+    <% if @campaign.author.user.present? %>
+      <p class="text-muted" style="font-size:12px;">Creator login: <%= @campaign.author.user.email %></p>
+    <% end %>
+  </div>
+
+  <%# ── Book Details ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Book Details</h3>
+    <div class="form-group">
+      <label for="title">Title *</label>
+      <input type="text" name="title" id="title" required value="<%= @submission.title %>">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="isbn">ISBN</label>
+        <input type="text" name="isbn" id="isbn" value="<%= @submission.isbn %>">
+      </div>
+      <div class="form-group">
+        <label for="genre">Genre</label>
+        <select name="genre" id="genre">
+          <option value="">Select genre...</option>
+          <% %w[Romance Thriller Fantasy Sci-Fi Mystery Non-Fiction Business Memoir Self-Help Children's YA Political Other].each do |g| %>
+            <option value="<%= g %>" <%= 'selected' if @submission.genre == g %>><%= g %></option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="book_description">Description</label>
+      <textarea name="book_description" id="book_description" rows="4"><%= @submission.description %></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="release_date">Release Date</label>
+        <input type="date" name="release_date" id="release_date" value="<%= @submission.release_date %>">
+      </div>
+      <div class="form-group">
+        <label for="cover">Cover Image</label>
+        <input type="file" name="cover" id="cover" accept="image/*">
+        <% if @submission.cover.present? %>
+          <p class="text-muted" style="font-size:12px;margin-top:4px;">Current: <%= File.basename(@submission.cover.url) rescue 'uploaded' %></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Campaign Settings ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Campaign Settings</h3>
+    <div class="form-group">
+      <label for="example_category">Example Category</label>
+      <select name="example_category" id="example_category">
+        <option value="">None (default)</option>
+        <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
+          <option value="<%= cat %>" <%= 'selected' if @campaign.example_category == cat %>><%= cat.titleize %></option>
+        <% end %>
+      </select>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;">
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <%= link_to 'Cancel', manage_campaign_path(@campaign), class: 'btn btn-secondary' %>
+  </div>
+<% end %>
