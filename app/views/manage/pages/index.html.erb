@@ -30,8 +30,29 @@
               <% end %>
             </td>
             <td class="text-muted"><%= page.created_at.strftime('%b %d, %Y') %></td>
-            <td style="white-space:nowrap;">
+            <td style="white-space:nowrap;position:relative;">
               <%= link_to 'Builder', builder_manage_page_path(page), class: 'btn btn-primary btn-sm' %>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">Generate</button>
+              <div style="display:none;position:absolute;right:0;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;min-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <%= form_with url: generate_manage_page_path(page), method: :patch, style: 'display:flex;flex-direction:column;gap:10px;' do %>
+                  <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Regenerate Content</div>
+                  <select name="author_id" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                    <option value="">Author (use page default)</option>
+                    <% Author.active.order(:full_name).each do |author| %>
+                      <option value="<%= author.id %>" <%= 'selected' if page.author_id == author.id %>><%= author.full_name %></option>
+                    <% end %>
+                  </select>
+                  <select name="book_id" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                    <option value="">Book (optional)</option>
+                    <% Book.includes(:author).order(:title).each do |book| %>
+                      <option value="<%= book.id %>"><%= book.display_title %></option>
+                    <% end %>
+                  </select>
+                  <input type="text" name="company_name" placeholder="Company name (optional)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                  <input type="email" name="company_email" placeholder="Company email (optional)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                  <button type="submit" class="btn btn-success btn-sm">Generate</button>
+                <% end %>
+              </div>
               <%= button_to (page.published? ? 'Unpublish' : 'Publish'), toggle_publish_manage_page_path(page), method: :patch, class: "btn #{page.published? ? 'btn-secondary' : 'btn-success'} btn-sm", form: { style: 'display:inline' } %>
               <%= button_to 'Delete', manage_page_path(page), method: :delete, class: 'btn btn-danger btn-sm', form: { style: 'display:inline', data: { turbo_confirm: 'Delete this page?' } } %>
             </td>

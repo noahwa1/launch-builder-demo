@@ -8,6 +8,12 @@ module Manage
       render 'portal/landing_pages/builder', layout: false
     end
 
+    def generate
+      result = LandingPageGenerator.new(@campaign).generate
+      @landing_page.update!(html_content: result[:html], css_content: result[:css])
+      redirect_to builder_manage_campaign_landing_page_path(@campaign), notice: 'Page generated! Customize it in the builder.'
+    end
+
     def toggle_notifications
       @landing_page.update!(notify_on_submission: !@landing_page.notify_on_submission?)
       status = @landing_page.notify_on_submission? ? 'enabled' : 'disabled'

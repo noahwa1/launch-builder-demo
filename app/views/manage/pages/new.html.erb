@@ -26,8 +26,32 @@
         <% end %>
       </select>
     </div>
+
+    <hr style="margin:24px 0;border:none;border-top:1px solid var(--border);">
+    <h4 style="margin-bottom:12px;">Auto-Generate Content <span class="text-muted" style="font-weight:400;font-size:12px;">(optional)</span></h4>
+    <p class="text-secondary" style="font-size:12px;margin-bottom:16px;">Select a book and optionally a company to auto-fill the page with a landing page template.</p>
+
+    <div class="form-group">
+      <label for="book_id">Book</label>
+      <select name="book_id" id="book_id">
+        <option value="">None</option>
+        <% @books.each do |book| %>
+          <option value="<%= book.id %>" data-author-id="<%= book.author_id %>"><%= book.display_title %> — <%= book.author.full_name %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="company_name">Company Name <span class="text-muted" style="font-weight:400;font-size:12px;">(for corporate partner pages)</span></label>
+      <input type="text" name="company_name" id="company_name" placeholder="e.g. United Airlines">
+    </div>
+    <div class="form-group">
+      <label for="company_email">Company Contact Email</label>
+      <input type="email" name="company_email" id="company_email" placeholder="e.g. orders@united.com">
+    </div>
+
     <div style="display:flex;gap:10px;margin-top:24px;">
       <button type="submit" class="btn btn-primary">Create & Open Builder</button>
+      <button type="submit" name="generate_page" value="1" class="btn btn-success">Create & Generate Page</button>
       <%= link_to 'Cancel', manage_pages_path, class: 'btn btn-secondary' %>
     </div>
   <% end %>

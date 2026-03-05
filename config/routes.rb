@@ -76,6 +76,7 @@ Rails.application.routes.draw do
     resources :pages do
       member do
         get :builder
+        patch :generate
         patch :toggle_publish
       end
     end
@@ -116,6 +117,7 @@ Rails.application.routes.draw do
       resource :landing_page, only: [:update] do
         member do
           get :builder
+          patch :generate
           patch :toggle_notifications
         end
       end
