@@ -102,6 +102,21 @@
     </div>
   </div>
 
+  <%# ── Book ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Book</h3>
+    <div class="form-group">
+      <label for="book_id">Link Existing Book</label>
+      <select name="book_id" id="book_id">
+        <option value="">None — create from details above</option>
+        <% @books.each do |book| %>
+          <option value="<%= book.id %>"><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
+        <% end %>
+      </select>
+      <p class="text-muted" style="font-size:12px;margin-top:4px;">Optionally link this campaign to an existing book from the catalog.</p>
+    </div>
+  </div>
+
   <%# ── Campaign Settings ── %>
   <div class="card" style="margin-bottom:20px;">
     <h3>Campaign Settings</h3>

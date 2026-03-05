@@ -3,6 +3,17 @@
   <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
 <% end %>
 
+<div style="display:flex;justify-content:center;margin-bottom:20px;">
+  <div style="display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px;">
+    <%= link_to studio_portal_campaign_live_events_path(@campaign), style: 'padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:var(--accent);color:#fff;' do %>
+      Live
+    <% end %>
+    <%= link_to recorder_portal_campaign_live_events_path(@campaign), style: 'padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:var(--text-secondary);' do %>
+      Record
+    <% end %>
+  </div>
+</div>
+
 <style>
   .studio-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
   @media (max-width: 1000px) { .studio-layout { grid-template-columns: 1fr; } }

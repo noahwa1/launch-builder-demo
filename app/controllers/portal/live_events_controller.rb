@@ -13,6 +13,12 @@ module Portal
       @landing_page = @campaign.landing_page
     end
 
+    def recorder
+      response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+      response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+      render layout: false
+    end
+
     def new
       @live_event = @campaign.live_events.new
     end

@@ -43,7 +43,10 @@
     </div>
     <div class="form-group">
       <%= f.label :author_id, 'Author' %>
-      <%= f.select :author_id, @authors.map { |a| [a.full_name, a.id] }, { include_blank: 'Select author...' }, {} %>
+      <div style="display:flex;gap:8px;align-items:start;">
+        <%= f.select :author_id, @authors.map { |a| [a.full_name, a.id] }, { include_blank: 'Select author...' }, { style: 'flex:1;' } %>
+        <%= link_to '+ Add New Author', new_manage_author_path, target: '_blank', class: 'btn btn-secondary btn-sm', style: 'white-space:nowrap;' %>
+      </div>
     </div>
     <div class="form-group">
       <%= f.label :publisher_id, 'Publisher' %>

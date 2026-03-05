@@ -17,6 +17,7 @@ module Manage
 
     def new
       @authors = Author.active.order(:full_name)
+      @books = Book.order(:title)
     end
 
     def create
@@ -61,19 +62,22 @@ module Manage
           submission:       @submission,
           author:           @author,
           title:            params[:title],
-          example_category: params[:example_category].presence
+          example_category: params[:example_category].presence,
+          book_id:          params[:book_id].presence
         )
       end
 
       redirect_to manage_campaign_path(@campaign), notice: 'Campaign created — author, submission, and checklist are ready.'
     rescue ActiveRecord::RecordInvalid => e
       @authors = Author.active.order(:full_name)
+      @books = Book.order(:title)
       flash.now[:alert] = e.record.errors.full_messages.join(', ')
       render :new, status: :unprocessable_entity
     end
 
     def edit
       @authors = Author.active.order(:full_name)
+      @books = Book.order(:title)
       @submission = @campaign.submission
     end
 
@@ -92,6 +96,7 @@ module Manage
       redirect_to manage_campaign_path(@campaign), notice: 'Campaign updated.'
     rescue ActiveRecord::RecordInvalid => e
       @authors = Author.active.order(:full_name)
+      @books = Book.order(:title)
       @submission = @campaign.submission
       flash.now[:alert] = e.record.errors.full_messages.join(', ')
       render :edit, status: :unprocessable_entity
@@ -130,7 +135,7 @@ module Manage
     end
 
     def campaign_params
-      params.permit(:title, :example_category)
+      params.permit(:title, :example_category, :book_id)
     end
   end
 end
