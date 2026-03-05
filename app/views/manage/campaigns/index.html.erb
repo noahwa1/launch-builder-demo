@@ -1,4 +1,7 @@
 <% content_for :page_title, 'Campaigns' %>
+<% content_for :page_actions do %>
+  <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary' %>
+<% end %>
 
 <style>
   .progress-bar-wrap { background: var(--border); border-radius: 20px; height: 6px; overflow: hidden; width: 120px; display: inline-block; vertical-align: middle; }

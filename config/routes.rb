@@ -89,7 +89,7 @@ Rails.application.routes.draw do
     end
 
     # Admin campaign management
-    resources :campaigns, only: [:index, :show] do
+    resources :campaigns, only: [:index, :show, :new, :create] do
       member do
         patch :toggle_checklist_item
         patch :update_settings

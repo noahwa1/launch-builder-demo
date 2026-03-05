@@ -1,0 +1,165 @@
+<% content_for :page_title, 'New Campaign' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back', manage_campaigns_path, class: 'btn btn-secondary' %>
+<% end %>
+
+<%= form_tag manage_campaigns_path, method: :post, multipart: true, style: 'max-width:760px;' do %>
+
+  <%# ── Author ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Author</h3>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button type="button" class="btn btn-primary btn-sm" id="btn-new-author" onclick="toggleAuthorMode('new')">New Author</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-existing-author" onclick="toggleAuthorMode('existing')">Existing Author</button>
+    </div>
+
+    <div id="new-author-fields">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label for="first_name">First Name *</label>
+          <input type="text" name="first_name" id="first_name" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name *</label>
+          <input type="text" name="last_name" id="last_name" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="description">Bio / Description</label>
+        <textarea name="description" id="description" rows="3" placeholder="Author bio..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="image">Author Photo URL</label>
+        <input type="text" name="image" id="image" placeholder="https://...">
+      </div>
+    </div>
+
+    <div id="existing-author-fields" style="display:none;">
+      <div class="form-group">
+        <label for="existing_author_id">Select Author</label>
+        <select name="existing_author_id" id="existing_author_id">
+          <option value="">Choose an author...</option>
+          <% @authors.each do |author| %>
+            <option value="<%= author.id %>" data-has-user="<%= author.user.present? %>"><%= author.full_name %></option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Creator Login ── %>
+  <div class="card" style="margin-bottom:20px;" id="creator-login-card">
+    <h3>Creator Login</h3>
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px;">Creates a login the author can use to access the Creator Portal.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="creator_email">Email *</label>
+        <input type="email" name="creator_email" id="creator_email" placeholder="author@example.com">
+      </div>
+      <div class="form-group">
+        <label for="creator_password">Password *</label>
+        <input type="password" name="creator_password" id="creator_password" placeholder="Min 6 characters">
+      </div>
+    </div>
+  </div>
+
+  <%# ── Book Details ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Book Details</h3>
+    <div class="form-group">
+      <label for="title">Title *</label>
+      <input type="text" name="title" id="title" required placeholder="Book title">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="isbn">ISBN</label>
+        <input type="text" name="isbn" id="isbn" placeholder="978-...">
+      </div>
+      <div class="form-group">
+        <label for="genre">Genre</label>
+        <select name="genre" id="genre">
+          <option value="">Select genre...</option>
+          <% %w[Romance Thriller Fantasy Sci-Fi Mystery Non-Fiction Business Memoir Self-Help Children's YA Political Other].each do |g| %>
+            <option value="<%= g %>"><%= g %></option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="book_description">Description</label>
+      <textarea name="book_description" id="book_description" rows="4" placeholder="Book description..."></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="release_date">Release Date</label>
+        <input type="date" name="release_date" id="release_date">
+      </div>
+      <div class="form-group">
+        <label for="cover">Cover Image</label>
+        <input type="file" name="cover" id="cover" accept="image/*">
+      </div>
+    </div>
+  </div>
+
+  <%# ── Campaign Settings ── %>
+  <div class="card" style="margin-bottom:20px;">
+    <h3>Campaign Settings</h3>
+    <div class="form-group">
+      <label for="example_category">Example Category</label>
+      <select name="example_category" id="example_category">
+        <option value="">None (default)</option>
+        <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
+          <option value="<%= cat %>"><%= cat.titleize %></option>
+        <% end %>
+      </select>
+      <p class="text-muted" style="font-size:12px;margin-top:4px;">Which example campaigns the creator sees during onboarding.</p>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;">
+    <button type="submit" class="btn btn-primary">Create Campaign</button>
+    <%= link_to 'Cancel', manage_campaigns_path, class: 'btn btn-secondary' %>
+  </div>
+<% end %>
+
+<script>
+  function toggleAuthorMode(mode) {
+    var newFields = document.getElementById('new-author-fields');
+    var existingFields = document.getElementById('existing-author-fields');
+    var btnNew = document.getElementById('btn-new-author');
+    var btnExisting = document.getElementById('btn-existing-author');
+    var loginCard = document.getElementById('creator-login-card');
+
+    if (mode === 'new') {
+      newFields.style.display = '';
+      existingFields.style.display = 'none';
+      btnNew.className = 'btn btn-primary btn-sm';
+      btnExisting.className = 'btn btn-secondary btn-sm';
+      document.getElementById('existing_author_id').value = '';
+      loginCard.style.display = '';
+    } else {
+      newFields.style.display = 'none';
+      existingFields.style.display = '';
+      btnNew.className = 'btn btn-secondary btn-sm';
+      btnExisting.className = 'btn btn-primary btn-sm';
+      document.getElementById('first_name').value = '';
+      document.getElementById('last_name').value = '';
+      checkExistingAuthorUser();
+    }
+  }
+
+  // Hide login card if existing author already has a user account
+  document.getElementById('existing_author_id').addEventListener('change', checkExistingAuthorUser);
+
+  function checkExistingAuthorUser() {
+    var select = document.getElementById('existing_author_id');
+    var loginCard = document.getElementById('creator-login-card');
+    var selected = select.options[select.selectedIndex];
+    if (selected && selected.dataset.hasUser === 'true') {
+      loginCard.style.display = 'none';
+    } else {
+      loginCard.style.display = '';
+    }
+  }
+</script>
