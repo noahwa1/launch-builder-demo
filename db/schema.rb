@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_04_200003) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
   create_table "authors", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -68,6 +68,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_04_200003) do
     t.boolean "tiktok_access", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "onboarding_completed_at"
+    t.string "example_category"
     t.index ["author_id"], name: "index_campaigns_on_author_id"
     t.index ["book_id"], name: "index_campaigns_on_book_id"
     t.index ["status"], name: "index_campaigns_on_status"

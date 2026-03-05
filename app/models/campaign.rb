@@ -38,6 +38,16 @@ class Campaign < ApplicationRecord
 
   CATEGORIES = %w[links ad_access content logistics creative].freeze
 
+  EXAMPLE_CATEGORIES = %w[general political romance thriller fantasy nonfiction business children ya].freeze
+
+  def onboarding_completed?
+    onboarding_completed_at.present?
+  end
+
+  def complete_onboarding!
+    update!(onboarding_completed_at: Time.current) unless onboarding_completed?
+  end
+
   def progress_percentage
     required = checklist_items.where(optional: false)
     return 0 if required.empty?

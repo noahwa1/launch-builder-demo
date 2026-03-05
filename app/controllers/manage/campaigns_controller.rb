@@ -1,6 +1,6 @@
 module Manage
   class CampaignsController < BaseController
-    before_action :set_campaign, only: [:show, :toggle_checklist_item]
+    before_action :set_campaign, only: [:show, :toggle_checklist_item, :update_settings]
 
     def index
       @campaigns = Campaign.includes(:author, :checklist_items, :campaign_assets)
@@ -23,6 +23,11 @@ module Manage
         item.mark_complete!
       end
       redirect_to manage_campaign_path(@campaign), notice: "\"#{item.title}\" updated."
+    end
+
+    def update_settings
+      @campaign.update!(params.require(:campaign).permit(:example_category))
+      redirect_to manage_campaign_path(@campaign), notice: 'Campaign settings updated.'
     end
 
     private
