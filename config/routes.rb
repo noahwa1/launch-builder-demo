@@ -43,6 +43,7 @@ Rails.application.routes.draw do
       resources :live_events, except: [:index, :show] do
         collection do
           get :studio
+          get :recorder
         end
         member do
           patch :go_live
