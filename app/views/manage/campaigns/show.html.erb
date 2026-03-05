@@ -36,6 +36,21 @@
   </div>
 </div>
 
+<%# ── Onboarding Example Category ── %>
+<div class="card" style="margin-bottom:20px;">
+  <h3>Onboarding Examples</h3>
+  <p class="text-secondary" style="font-size:13px;margin-bottom:12px;">Choose which example campaigns the creator sees during their welcome onboarding.</p>
+  <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, style: 'display:flex;align-items:center;gap:12px;' do |f| %>
+    <%= f.select :example_category, options_for_select(Campaign::EXAMPLE_CATEGORIES.map { |c| [c.titleize, c] }, @campaign.example_category), { include_blank: 'None (default)' }, style: 'padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);min-width:180px;' %>
+    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+    <% if @campaign.onboarding_completed? %>
+      <span class="text-muted" style="font-size:12px;">Onboarding completed <%= time_ago_in_words(@campaign.onboarding_completed_at) %> ago</span>
+    <% else %>
+      <span style="font-size:12px;color:#D97706;">Not yet onboarded</span>
+    <% end %>
+  <% end %>
+</div>
+
 <div class="two-col">
   <!-- Checklist -->
   <div class="card">

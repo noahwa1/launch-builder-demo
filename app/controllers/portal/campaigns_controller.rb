@@ -17,6 +17,11 @@ module Portal
       @submission = @campaign.submission
     end
 
+    def complete_onboarding
+      @campaign.complete_onboarding!
+      redirect_to portal_campaign_path(@campaign), notice: "Let's get started!"
+    end
+
     def links
     end
 

@@ -40,6 +40,7 @@ Rails.application.routes.draw do
         patch :update_ad_access
         get  :logistics
         patch :update_logistics
+        patch :complete_onboarding
       end
       resources :campaign_assets, only: [:index, :create, :destroy]
       resources :social_posts, only: [:index]
@@ -91,6 +92,7 @@ Rails.application.routes.draw do
     resources :campaigns, only: [:index, :show] do
       member do
         patch :toggle_checklist_item
+        patch :update_settings
       end
       resources :campaign_assets, only: [] do
         member do

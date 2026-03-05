@@ -308,3 +308,368 @@
     <% end %>
   </div>
 </details>
+
+<%# ══════════════════════════════════════════════════════════ %>
+<%# ── ONBOARDING POPUP (first-time only) ── %>
+<%# ══════════════════════════════════════════════════════════ %>
+<% unless @campaign.onboarding_completed? %>
+<style>
+  .onboard-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: obFadeIn 0.3s ease;
+  }
+  @keyframes obFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .onboard-modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 680px;
+    max-width: 94vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    animation: obSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  @keyframes obSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+  .onboard-modal .ob-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    z-index: 2;
+  }
+  .onboard-modal .ob-close:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); }
+
+  /* Step 1: Video */
+  .ob-video-step {
+    padding: 40px 40px 32px;
+    text-align: center;
+  }
+  .ob-video-step h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .ob-video-step .ob-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .ob-video-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ob-video-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(79,70,229,0.15), transparent 70%);
+  }
+  .ob-video-placeholder .play-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    z-index: 1;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .ob-video-placeholder .play-circle:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+  .ob-video-placeholder .play-circle svg { width: 24px; height: 24px; fill: #fff; margin-left: 3px; }
+  .ob-video-placeholder .vid-label { font-size: 13px; z-index: 1; }
+
+  .ob-next-btn {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    box-shadow: 0 2px 12px rgba(79,70,229,0.3);
+  }
+  .ob-next-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(79,70,229,0.4); }
+
+  /* Step 2: Examples */
+  .ob-examples-step {
+    padding: 40px 40px 32px;
+  }
+  .ob-examples-step h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .ob-examples-step .ob-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .example-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  .example-card {
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .example-card:hover { border-color: rgba(79,70,229,0.3); background: var(--accent-wash); }
+  .example-card.selected { border-color: var(--accent); background: rgba(79,70,229,0.04); }
+  .example-card.selected::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-size: 12px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .example-card .ex-cover {
+    width: 100%;
+    aspect-ratio: 3/2;
+    background: linear-gradient(135deg, #f0f0f0, #e5e5e5);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .example-card .ex-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .example-card .ex-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+  .example-card .ex-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-top: 6px; }
+
+  .ob-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ob-steps-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .ob-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    transition: all 0.3s;
+  }
+  .ob-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+</style>
+
+<%
+  # Example campaigns by category
+  cat = @campaign.example_category.presence || 'general'
+  examples = case cat
+  when 'political'
+    [
+      { title: 'Democracy Reborn', desc: 'Targeted voter outreach with signed editions for donors and townhall live events.', tag: 'Political Non-Fiction' },
+      { title: 'The Senator\'s Playbook', desc: 'Pre-order campaign with bundled merch and rally-style live signings.', tag: 'Political Memoir' },
+      { title: 'Red State, Blue State', desc: 'Bi-partisan book club with social media blitz and retail push.', tag: 'Political Analysis' },
+      { title: 'Campaign Trail Diaries', desc: 'Behind-the-scenes launch with exclusive signed first editions.', tag: 'Political Memoir' },
+    ]
+  when 'romance'
+    [
+      { title: 'Summer Hearts', desc: 'BookTok-first launch with aesthetic content, AR bookmarks, and live reading.', tag: 'Contemporary Romance' },
+      { title: 'The Duke\'s Secret', desc: 'Historical romance with period-themed signing events and box sets.', tag: 'Historical Romance' },
+      { title: 'Tangled Tides', desc: 'Dark romance with exclusive annotated editions and midnight release.', tag: 'Dark Romance' },
+      { title: 'Love in Bloom', desc: 'Cozy romance with bookstore partnerships and floral-themed branding.', tag: 'Cozy Romance' },
+    ]
+  when 'thriller'
+    [
+      { title: 'The Last Witness', desc: 'Mystery-box unboxing campaign with clue-based social teasers.', tag: 'Psychological Thriller' },
+      { title: 'Blackout Protocol', desc: 'Tech thriller with countdown launch, encrypted ARG, and live Q&A.', tag: 'Tech Thriller' },
+      { title: 'Cold Trail', desc: 'True crime crossover with podcast tie-ins and evidence-style merch.', tag: 'Crime Thriller' },
+      { title: 'The Vanishing', desc: 'Suspense launch with chapter-a-day reveals and exclusive signed editions.', tag: 'Suspense' },
+    ]
+  when 'fantasy'
+    [
+      { title: 'Throne of Embers', desc: 'Epic fantasy with map poster bundles, character art reveals, and cosplay events.', tag: 'Epic Fantasy' },
+      { title: 'The Fae Accord', desc: 'Romantasy with exclusive sprayed edges, fairy light signing events.', tag: 'Romantasy' },
+      { title: 'Starforge', desc: 'Sci-fi fantasy with holographic covers and virtual launch party.', tag: 'Science Fantasy' },
+      { title: 'Grimwood Rising', desc: 'Dark fantasy with hand-signed bookplates and lore-based social content.', tag: 'Dark Fantasy' },
+    ]
+  when 'nonfiction'
+    [
+      { title: 'The Resilience Code', desc: 'Self-help launch with keynote-style live events and workbook bundles.', tag: 'Self-Help' },
+      { title: 'Untold America', desc: 'History book with museum partnerships and documentary-style social content.', tag: 'History' },
+      { title: 'Kitchen Roots', desc: 'Cookbook with live cooking demos, recipe card bundles, and grocery collabs.', tag: 'Food & Cooking' },
+      { title: 'Mind Over Market', desc: 'Business book with LinkedIn blitz, webinar series, and executive bundles.', tag: 'Business' },
+    ]
+  when 'business'
+    [
+      { title: 'Scale or Fail', desc: 'Startup launch with conference keynotes, bulk corporate orders, and podcast tour.', tag: 'Entrepreneurship' },
+      { title: 'The Leadership Shift', desc: 'Executive book with LinkedIn campaign, signed CEO editions, and webinar.', tag: 'Leadership' },
+      { title: 'Data-Driven', desc: 'Tech business with product hunt launch, newsletter partnerships, and bulk deals.', tag: 'Technology' },
+      { title: 'The Funding Playbook', desc: 'VC/startup with investor dinner events and exclusive audiobook early access.', tag: 'Finance' },
+    ]
+  when 'children'
+    [
+      { title: 'Captain Sparkle', desc: 'Kids book with school visits, coloring sheet downloads, and storytime lives.', tag: 'Picture Book' },
+      { title: 'The Magic Treehouse Club', desc: 'Middle grade with scavenger hunt launch, bookmarks, and library events.', tag: 'Middle Grade' },
+      { title: 'Dino Detectives', desc: 'Activity book with dinosaur-themed events, stamp-signed copies, and class sets.', tag: 'Activity Book' },
+      { title: 'Starlight Stories', desc: 'Bedtime stories with lullaby playlist, glow-in-dark cover, and pajama party event.', tag: 'Bedtime' },
+    ]
+  when 'ya'
+    [
+      { title: 'Neon Hearts', desc: 'YA contemporary with BookTok campaign, annotated editions, and Discord server.', tag: 'YA Contemporary' },
+      { title: 'The Uprising', desc: 'YA dystopia with resistance-themed merch and countdown social campaign.', tag: 'YA Dystopia' },
+      { title: 'Hex Academy', desc: 'YA fantasy with house-sorting quiz, exclusive pins, and midnight release.', tag: 'YA Fantasy' },
+      { title: 'Last Summer Before', desc: 'YA romance with playlist collab, aesthetic reels, and beach-themed signing.', tag: 'YA Romance' },
+    ]
+  else # general
+    [
+      { title: 'Bestseller Blueprint', desc: 'Full-funnel launch with landing page, signed editions, and social blitz.', tag: 'General Fiction' },
+      { title: 'The Author\'s Edge', desc: 'Multi-platform campaign with live events, retailer push, and ad creative.', tag: 'Non-Fiction' },
+      { title: 'Readers First', desc: 'Community-driven launch with ARC readers, book clubs, and pre-order incentives.', tag: 'Any Genre' },
+      { title: 'Launch & Scale', desc: 'Data-driven campaign with A/B tested ads, landing page optimization, and retargeting.', tag: 'Any Genre' },
+    ]
+  end
+%>
+
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-modal">
+    <button class="ob-close" onclick="closeOnboarding()" title="Skip">&times;</button>
+
+    <%# ── Step 1: Welcome Video ── %>
+    <div class="ob-video-step" id="obStep1">
+      <h2>Welcome to Launch</h2>
+      <div class="ob-sub">A quick message from our CEO about how we'll help you launch your book.</div>
+
+      <div class="ob-video-placeholder">
+        <div class="play-circle" onclick="playVideo()">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+        <div class="vid-label">CEO Welcome Video</div>
+      </div>
+
+      <div class="ob-footer">
+        <div class="ob-steps-dots">
+          <div class="ob-dot active"></div>
+          <div class="ob-dot"></div>
+        </div>
+        <button class="ob-next-btn" onclick="goToStep2()">Next</button>
+      </div>
+    </div>
+
+    <%# ── Step 2: Campaign Examples ── %>
+    <div class="ob-examples-step" id="obStep2" style="display:none;">
+      <h2>Set up your campaign like...</h2>
+      <div class="ob-sub">Here are some successful campaigns similar to yours. Pick one that inspires you, or skip to start from scratch.</div>
+
+      <div class="example-grid">
+        <% examples.each_with_index do |ex, i| %>
+          <div class="example-card" onclick="selectExample(this)" data-idx="<%= i %>">
+            <div class="ex-cover">Campaign Preview</div>
+            <div class="ex-title"><%= ex[:title] %></div>
+            <div class="ex-desc"><%= ex[:desc] %></div>
+            <div class="ex-tag"><%= ex[:tag] %></div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="ob-footer">
+        <div class="ob-steps-dots">
+          <div class="ob-dot"></div>
+          <div class="ob-dot active"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="ob-next-btn" style="background:var(--surface);color:var(--text-primary);border:1px solid var(--border-strong);box-shadow:var(--shadow-sm);" onclick="closeOnboarding()">Skip</button>
+          <%= button_to complete_onboarding_portal_campaign_path(@campaign), method: :patch, class: 'ob-next-btn', form: { style: 'display:inline', id: 'onboardForm' } do %>
+            Get Started
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  window.goToStep2 = function() {
+    document.getElementById('obStep1').style.display = 'none';
+    document.getElementById('obStep2').style.display = '';
+  };
+
+  window.selectExample = function(card) {
+    document.querySelectorAll('.example-card').forEach(function(c) { c.classList.remove('selected'); });
+    card.classList.add('selected');
+  };
+
+  window.playVideo = function() {
+    // Placeholder — will eventually load actual video
+    var placeholder = document.querySelector('.ob-video-placeholder');
+    placeholder.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:14px;z-index:1;">Video player will be embedded here</div>';
+  };
+
+  window.closeOnboarding = function() {
+    var overlay = document.getElementById('onboardOverlay');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.2s ease';
+    setTimeout(function() { overlay.remove(); }, 200);
+    // Mark onboarding complete via AJAX
+    var form = document.getElementById('onboardForm');
+    if (form) {
+      fetch(form.action, {
+        method: 'PATCH',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Accept': 'text/html'
+        }
+      });
+    }
+  };
+})();
+</script>
+<% end %>
