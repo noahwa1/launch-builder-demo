@@ -1,0 +1,87 @@
+<% content_for :page_title, @author.full_name %>
+<% content_for :page_actions do %>
+  <%= link_to 'Edit', edit_manage_author_path(@author), class: 'btn btn-primary btn-sm' %>
+  <%= button_to (@author.active? ? 'Deactivate' : 'Activate'), toggle_status_manage_author_path(@author), method: :patch, class: "btn #{@author.active? ? 'btn-danger' : 'btn-success'} btn-sm", form: { style: 'display:inline' } %>
+  <%= link_to 'All Authors', manage_authors_path, class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Status</div>
+    <div style="margin-top:8px;"><span class="status-badge status-<%= @author.active? ? 'approved' : 'rejected' %>"><%= @author.status.titleize %></span></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Campaigns</div>
+    <div class="value"><%= @campaigns.count %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Books</div>
+    <div class="value"><%= @books.count %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">User Account</div>
+    <div style="font-size:14px;font-weight:500;margin-top:8px;"><%= @author.user&.email || 'No account' %></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Details -->
+  <div class="card">
+    <h3>Details</h3>
+    <div style="margin-bottom:12px;">
+      <div class="detail-label">Full Name</div>
+      <div style="font-size:15px;margin-top:4px;"><%= @author.full_name %></div>
+    </div>
+    <% if @author.description.present? %>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label">Bio</div>
+        <div style="font-size:14px;margin-top:4px;line-height:1.6;color:var(--text-secondary);"><%= @author.description %></div>
+      </div>
+    <% end %>
+    <% if @author.image.present? %>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label">Image</div>
+        <img src="<%= @author.image %>" style="max-width:200px;border-radius:8px;margin-top:8px;" alt="<%= @author.full_name %>">
+      </div>
+    <% end %>
+    <div class="text-muted" style="font-size:12px;margin-top:16px;">Created <%= @author.created_at.strftime('%B %d, %Y') %></div>
+  </div>
+
+  <div>
+    <!-- Campaigns -->
+    <div class="card">
+      <h3>Campaigns</h3>
+      <% if @campaigns.any? %>
+        <% @campaigns.each do |campaign| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:500;"><%= campaign.title %></div>
+              <div class="text-muted" style="font-size:12px;">Progress: <%= campaign.progress_percentage %>%</div>
+            </div>
+            <%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:16px;">No campaigns yet.</p>
+      <% end %>
+    </div>
+
+    <!-- Books -->
+    <div class="card">
+      <h3>Books</h3>
+      <% if @books.any? %>
+        <% @books.each do |book| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:500;"><%= book.title %></div>
+              <div class="text-muted" style="font-size:12px;"><%= book.isbn %></div>
+            </div>
+            <%= link_to 'View', manage_book_path(book), class: 'btn btn-secondary btn-sm' %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:16px;">No books yet.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_05_200002) do
   create_table "authors", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -94,7 +94,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
   end
 
   create_table "landing_pages", force: :cascade do |t|
-    t.integer "campaign_id", null: false
+    t.integer "campaign_id"
     t.string "title"
     t.text "html_content"
     t.text "css_content"
@@ -106,6 +106,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
     t.boolean "build_requested", default: false
     t.datetime "build_requested_at"
     t.boolean "notify_on_submission", default: true
+    t.integer "author_id"
+    t.index ["author_id"], name: "index_landing_pages_on_author_id"
     t.index ["campaign_id"], name: "index_landing_pages_on_campaign_id", unique: true
     t.index ["slug"], name: "index_landing_pages_on_slug", unique: true
   end
@@ -238,6 +240,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
     t.string "last_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: true, null: false
     t.index ["account_type", "account_id"], name: "index_users_on_account_type_and_account_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -248,7 +251,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_05_143543) do
   add_foreign_key "campaigns", "books"
   add_foreign_key "campaigns", "submissions"
   add_foreign_key "checklist_items", "campaigns"
-  add_foreign_key "landing_pages", "campaigns"
+  add_foreign_key "landing_pages", "campaigns", on_delete: :nullify
   add_foreign_key "live_events", "campaigns"
   add_foreign_key "page_submissions", "landing_pages"
 end

@@ -1,0 +1,33 @@
+<% content_for :page_title, "Edit #{@user.full_name}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'View User', manage_user_path(@user), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:640px;">
+  <%= form_with model: @user, url: manage_user_path(@user), method: :patch do |f| %>
+    <div class="form-group">
+      <%= f.label :first_name %>
+      <%= f.text_field :first_name, placeholder: 'First name' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :last_name %>
+      <%= f.text_field :last_name, placeholder: 'Last name' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :email %>
+      <%= f.email_field :email, placeholder: 'user@example.com' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :password, 'Password (leave blank to keep current)' %>
+      <%= f.password_field :password, placeholder: 'Leave blank to keep current' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :role %>
+      <%= f.select :role, User.roles.keys.map { |r| [r.titleize, r] }, {}, {} %>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <%= f.submit 'Update User', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', manage_user_path(@user), class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,84 @@
+<% content_for :page_title, 'Settings' %>
+
+<!-- Platform Stats -->
+<div class="card">
+  <h3>Platform Stats</h3>
+  <div class="stats-grid" style="margin-bottom:0;">
+    <div class="stat-card">
+      <div class="label">Total Users</div>
+      <div class="value"><%= @total_users %></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Admins</div>
+      <div class="value"><%= @admin_count %></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Creators</div>
+      <div class="value"><%= @creator_count %></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Campaigns</div>
+      <div class="value"><%= @campaign_count %></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Books</div>
+      <div class="value"><%= @book_count %></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Authors</div>
+      <div class="value"><%= @author_count %></div>
+    </div>
+  </div>
+  <div class="text-muted" style="font-size:12px;margin-top:16px;">Database adapter: <strong><%= @db_adapter %></strong></div>
+</div>
+
+<div class="two-col">
+  <!-- Checklist Template -->
+  <div class="card">
+    <h3>Checklist Template</h3>
+    <p class="text-secondary" style="font-size:13px;margin-bottom:16px;">These items are auto-created for every new campaign.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Title</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% Campaign::CHECKLIST_SEED.each do |item| %>
+            <tr>
+              <td>
+                <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">
+                  <%= item[:category].titleize %>
+                </span>
+              </td>
+              <td style="font-size:13px;"><%= item[:title] %></td>
+              <td>
+                <% if item[:optional] %>
+                  <span class="text-muted" style="font-size:12px;">Optional</span>
+                <% else %>
+                  <span style="font-size:12px;color:#16A34A;font-weight:500;">Required</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Example Categories -->
+  <div class="card">
+    <h3>Example Categories</h3>
+    <p class="text-secondary" style="font-size:13px;margin-bottom:16px;">Categories available for campaign onboarding examples.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
+        <span style="padding:6px 14px;background:var(--accent-wash);border:1px solid var(--border);border-radius:20px;font-size:13px;font-weight:500;color:var(--text-primary);">
+          <%= cat.titleize %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+</div>

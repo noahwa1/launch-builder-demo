@@ -1,0 +1,88 @@
+<% content_for :page_title, @book.title %>
+<% content_for :page_actions do %>
+  <%= link_to 'Edit', edit_manage_book_path(@book), class: 'btn btn-primary btn-sm' %>
+  <%= button_to 'Delete', manage_book_path(@book), method: :delete, class: 'btn btn-danger btn-sm', form: { style: 'display:inline', data: { turbo_confirm: 'Are you sure?' } } %>
+  <%= link_to 'All Books', manage_books_path, class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Author</div>
+    <div style="font-size:16px;font-weight:600;margin-top:8px;"><%= @book.author.full_name %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">ISBN</div>
+    <div style="font-size:16px;font-weight:500;margin-top:8px;"><%= @book.isbn || '—' %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Publisher</div>
+    <div style="font-size:16px;font-weight:500;margin-top:8px;"><%= @book.publisher&.name || '—' %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Release Date</div>
+    <div style="font-size:16px;font-weight:500;margin-top:8px;"><%= @book.release_date&.strftime('%B %d, %Y') || '—' %></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Book Details -->
+  <div>
+    <% if @book.cover.present? %>
+      <div class="card">
+        <h3>Cover</h3>
+        <img src="<%= @book.cover.url %>" style="max-width:100%;border-radius:8px;" alt="<%= @book.title %>">
+      </div>
+    <% end %>
+    <div class="card">
+      <h3>Details</h3>
+      <% if @book.description.present? %>
+        <div style="font-size:14px;line-height:1.6;color:var(--text-secondary);"><%= @book.description %></div>
+      <% else %>
+        <p class="text-muted">No description.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <!-- Royalty Rates -->
+    <div class="card">
+      <h3>Royalty Rates</h3>
+      <% if @royalty_rates.any? %>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rate</th><th>From</th><th>To</th></tr></thead>
+            <tbody>
+              <% @royalty_rates.each do |rate| %>
+                <tr>
+                  <td style="font-weight:500;"><%= (rate.rate * 100).round(2) %>%</td>
+                  <td class="text-muted"><%= rate.effective_from.strftime('%b %d, %Y') %></td>
+                  <td class="text-muted"><%= rate.effective_to&.strftime('%b %d, %Y') || 'Ongoing' %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:16px;">No royalty rates set.</p>
+      <% end %>
+    </div>
+
+    <!-- Recent Statements -->
+    <div class="card">
+      <h3>Recent Statements</h3>
+      <% if @recent_statements.any? %>
+        <% @recent_statements.each do |stmt| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:500;"><%= number_to_currency(stmt.royalty_amount) %></div>
+              <div class="text-muted" style="font-size:12px;"><%= stmt.units_sold %> units sold</div>
+            </div>
+            <span class="text-muted" style="font-size:12px;"><%= stmt.created_at.strftime('%b %d, %Y') %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:16px;">No statements yet.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

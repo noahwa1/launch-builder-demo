@@ -1,0 +1,54 @@
+<% content_for :page_title, 'Users' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Invite User', new_manage_user_path, class: 'btn btn-primary' %>
+<% end %>
+
+<div class="filter-bar">
+  <%= link_to 'All', manage_users_path, class: "#{params[:role].blank? ? 'active' : ''}" %>
+  <%= link_to 'Admin', manage_users_path(role: :admin), class: "#{params[:role] == 'admin' ? 'active' : ''}" %>
+  <%= link_to 'Creator', manage_users_path(role: :creator), class: "#{params[:role] == 'creator' ? 'active' : ''}" %>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Linked Author</th>
+          <th>Active</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td style="font-weight:500;"><%= user.full_name %></td>
+            <td class="text-secondary"><%= user.email %></td>
+            <td>
+              <span class="status-badge status-<%= user.admin? ? 'submitted' : 'approved' %>"><%= user.role.titleize %></span>
+            </td>
+            <td class="text-muted"><%= user.author&.full_name || '—' %></td>
+            <td>
+              <% if user.active? %>
+                <span class="status-badge status-approved">Active</span>
+              <% else %>
+                <span class="status-badge status-rejected">Disabled</span>
+              <% end %>
+            </td>
+            <td><%= link_to 'View', manage_user_path(user), class: 'btn btn-secondary btn-sm' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= paginate @users %>
+</div>
+
+<% if @users.empty? %>
+  <div class="card">
+    <p class="text-muted" style="text-align:center;padding:24px;">No users found.</p>
+  </div>
+<% end %>

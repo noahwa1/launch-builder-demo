@@ -1,0 +1,48 @@
+<% content_for :page_title, 'Authors' %>
+<% content_for :page_actions do %>
+  <%= link_to 'New Author', new_manage_author_path, class: 'btn btn-primary' %>
+<% end %>
+
+<div class="filter-bar">
+  <%= link_to 'All', manage_authors_path, class: "#{params[:status].blank? ? 'active' : ''}" %>
+  <%= link_to 'Active', manage_authors_path(status: :active), class: "#{params[:status] == 'active' ? 'active' : ''}" %>
+  <%= link_to 'Inactive', manage_authors_path(status: :inactive), class: "#{params[:status] == 'inactive' ? 'active' : ''}" %>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Campaigns</th>
+          <th>Books</th>
+          <th>User Email</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @authors.each do |author| %>
+          <tr>
+            <td style="font-weight:500;"><%= author.full_name %></td>
+            <td><span class="status-badge status-<%= author.active? ? 'approved' : 'rejected' %>"><%= author.status.titleize %></span></td>
+            <td><%= author.campaigns.count %></td>
+            <td><%= author.books.count %></td>
+            <td class="text-muted"><%= author.user&.email || '—' %></td>
+            <td>
+              <%= link_to 'View', manage_author_path(author), class: 'btn btn-secondary btn-sm' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= paginate @authors %>
+</div>
+
+<% if @authors.empty? %>
+  <div class="card">
+    <p class="text-muted" style="text-align:center;padding:24px;">No authors found.</p>
+  </div>
+<% end %>
