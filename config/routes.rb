@@ -44,6 +44,9 @@ Rails.application.routes.draw do
       resources :campaign_assets, only: [:index, :create, :destroy]
       resources :social_posts, only: [:index]
       resources :live_events, except: [:index, :show] do
+        collection do
+          get :studio
+        end
         member do
           patch :go_live
           patch :end_stream

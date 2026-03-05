@@ -3,6 +3,16 @@ module Portal
     before_action :set_campaign
     before_action :set_live_event, only: [:edit, :update, :destroy, :go_live, :end_stream]
 
+    def studio
+      @current_live_event = @campaign.current_live_event
+      @next_event = @campaign.next_scheduled_event
+      @upcoming_events = @campaign.live_events.upcoming.limit(5)
+      @past_events = @campaign.live_events.where(status: :ended).order(ended_at: :desc).limit(10)
+      @new_event = @campaign.live_events.new
+      @submission = @campaign.submission
+      @landing_page = @campaign.landing_page
+    end
+
     def new
       @live_event = @campaign.live_events.new
     end

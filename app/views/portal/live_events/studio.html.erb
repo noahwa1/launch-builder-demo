@@ -1,0 +1,430 @@
+<% content_for :page_title, 'Go Live Studio' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .studio-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  @media (max-width: 1000px) { .studio-layout { grid-template-columns: 1fr; } }
+
+  /* ── Preview Area ── */
+  .preview-area {
+    background: #0a0a0f;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-area video, .preview-area iframe {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+  }
+  .preview-placeholder {
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    z-index: 1;
+  }
+  .preview-placeholder .cam-icon { font-size: 56px; margin-bottom: 12px; display: block; }
+  .preview-placeholder h3 { font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+  .preview-placeholder p { font-size: 13px; line-height: 1.5; max-width: 300px; margin: 0 auto; }
+
+  .live-badge-overlay {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: #e94560;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+    animation: livePulseOverlay 2s ease-in-out infinite;
+  }
+  .live-badge-overlay .rec-dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: dotBlink 1.5s ease-in-out infinite; }
+  @keyframes livePulseOverlay { 0%,100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.4); } 50% { box-shadow: 0 0 16px 4px rgba(233,69,96,0.2); } }
+  @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .timer-overlay {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    padding: 8px 14px;
+    border-radius: 8px;
+    z-index: 10;
+  }
+
+  /* ── Controls Bar ── */
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin-top: 16px;
+  }
+  .ctrl-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+  .ctrl-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .ctrl-btn.off { background: rgba(239,68,68,0.1); border-color: #EF4444; color: #EF4444; }
+  .ctrl-btn svg { width: 20px; height: 20px; }
+
+  .go-live-btn {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #e94560, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 28px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(233,69,96,0.3);
+    letter-spacing: 0.5px;
+  }
+  .go-live-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(233,69,96,0.4); }
+  .go-live-btn:active { transform: scale(0.97); }
+  .go-live-btn.end-btn { background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 4px 16px rgba(107,114,128,0.3); }
+
+  /* ── Sidebar Panel ── */
+  .studio-sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .studio-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+  .studio-panel h3 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    margin-bottom: 4px;
+  }
+  .event-row:hover { background: var(--accent-wash); }
+  .event-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .event-dot.live { background: #e94560; animation: dotBlink 1.5s ease-in-out infinite; }
+  .event-dot.scheduled { background: var(--accent); }
+  .event-dot.ended { background: var(--text-muted); }
+  .event-info { flex: 1; min-width: 0; }
+  .event-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .event-time { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .quick-setup-field { margin-bottom: 14px; }
+  .quick-setup-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+  }
+  .quick-setup-field input,
+  .quick-setup-field select,
+  .quick-setup-field textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #F8F8FA;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .quick-setup-field input:focus,
+  .quick-setup-field select:focus,
+  .quick-setup-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: #fff;
+  }
+  .quick-setup-field textarea { min-height: 60px; resize: vertical; }
+
+  .stream-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stream-stat {
+    text-align: center;
+    padding: 12px;
+    background: var(--accent-wash);
+    border-radius: 8px;
+  }
+  .stream-stat .val { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .stream-stat .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+</style>
+
+<div class="studio-layout">
+  <div>
+    <%# ── Preview Area ── %>
+    <div class="preview-area" id="previewArea">
+      <% if @current_live_event %>
+        <div class="live-badge-overlay"><span class="rec-dot"></span> LIVE</div>
+        <div class="timer-overlay" id="liveTimer">00:00:00</div>
+        <% if @current_live_event.embed_url.present? %>
+          <%= @current_live_event.embed_html.html_safe %>
+        <% end %>
+      <% end %>
+      <div class="preview-placeholder" id="previewPlaceholder" style="<%= 'display:none' if @current_live_event&.embed_url.present? %>">
+        <span class="cam-icon"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg></span>
+        <h3>Your Live Studio</h3>
+        <p>Enable your camera for a preview, or paste a stream URL to embed your broadcast.</p>
+      </div>
+      <video id="cameraPreview" autoplay muted playsinline style="display:none;"></video>
+    </div>
+
+    <%# ── Controls ── %>
+    <div class="controls-bar">
+      <button class="ctrl-btn" id="toggleCamera" title="Toggle Camera" onclick="toggleCamera()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg>
+      </button>
+      <button class="ctrl-btn" id="toggleMic" title="Toggle Mic" onclick="toggleMic()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+      </button>
+
+      <% if @current_live_event %>
+        <%= button_to end_stream_portal_campaign_live_event_path(@campaign, @current_live_event), method: :patch, class: 'go-live-btn end-btn', form: { style: 'display:inline' }, data: { confirm: 'End your live stream?' } do %>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          END STREAM
+        <% end %>
+      <% elsif @next_event %>
+        <%= button_to go_live_portal_campaign_live_event_path(@campaign, @next_event), method: :patch, class: 'go-live-btn', form: { style: 'display:inline' }, data: { confirm: "Go live with \"#{@next_event.title}\"?" } do %>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          GO LIVE
+        <% end %>
+      <% else %>
+        <button class="go-live-btn" style="opacity:0.5;cursor:default;" disabled title="Schedule an event first">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          GO LIVE
+        </button>
+      <% end %>
+
+      <button class="ctrl-btn" id="toggleFullscreen" title="Fullscreen" onclick="toggleFullscreen()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <%# ── Right Sidebar ── %>
+  <div class="studio-sidebar">
+    <%# Stream Setup %>
+    <div class="studio-panel">
+      <h3>Quick Setup</h3>
+      <%= form_with model: @new_event, url: portal_campaign_live_events_path(@campaign), method: :post do |f| %>
+        <div class="quick-setup-field">
+          <label>Event Title</label>
+          <%= f.text_field :title, placeholder: 'Live Book Signing', value: @next_event&.title %>
+        </div>
+        <div class="quick-setup-field">
+          <label>Platform</label>
+          <%= f.select :stream_platform, options_for_select([['YouTube', 'youtube'], ['Twitch', 'twitch'], ['Restream', 'restream'], ['StreamYard', 'streamyard'], ['Custom', 'custom']], @next_event&.stream_platform), { include_blank: 'Select...' } %>
+        </div>
+        <div class="quick-setup-field">
+          <label>Embed / Stream URL</label>
+          <%= f.url_field :embed_url, placeholder: 'https://youtube.com/live/...', value: @next_event&.embed_url %>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">Paste your YouTube, Twitch, or Restream embed URL</div>
+        </div>
+        <div class="quick-setup-field">
+          <label>Scheduled Time</label>
+          <%= f.datetime_local_field :scheduled_at, value: @next_event&.scheduled_at&.strftime('%Y-%m-%dT%H:%M') %>
+        </div>
+        <% unless @next_event %>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">Schedule Event</button>
+        <% end %>
+      <% end %>
+      <% if @next_event %>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <%= link_to 'Edit Event', edit_portal_campaign_live_event_path(@campaign, @next_event), class: 'btn btn-secondary btn-sm', style: 'flex:1;justify-content:center;' %>
+          <%= button_to 'Delete', portal_campaign_live_event_path(@campaign, @next_event), method: :delete, class: 'btn btn-sm', style: 'flex:1;justify-content:center;background:rgba(239,68,68,0.08);color:#DC2626;border:1px solid rgba(239,68,68,0.2);', data: { confirm: 'Delete this event?' }, form: { style: 'flex:1' } %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @current_live_event %>
+      <%# Stream Stats (visible when live) %>
+      <div class="studio-panel">
+        <h3>Stream Stats</h3>
+        <div class="stream-stats">
+          <div class="stream-stat">
+            <div class="val" id="statDuration">--:--</div>
+            <div class="lbl">Duration</div>
+          </div>
+          <div class="stream-stat">
+            <div class="val"><%= @landing_page&.published? ? 'Active' : 'Off' %></div>
+            <div class="lbl">Landing Page</div>
+          </div>
+        </div>
+        <% if @landing_page&.published? %>
+          <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,0.06);border-radius:8px;border:1px solid rgba(34,197,94,0.1);">
+            <div style="font-size:12px;color:#16A34A;font-weight:600;">Your landing page shows a LIVE banner</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Visitors see your embedded stream in real-time</div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Events List %>
+    <div class="studio-panel">
+      <h3>Events</h3>
+      <% if @upcoming_events.any? || @past_events.any? %>
+        <% @upcoming_events.each do |event| %>
+          <div class="event-row">
+            <div class="event-dot <%= event.live? ? 'live' : 'scheduled' %>"></div>
+            <div class="event-info">
+              <div class="event-name"><%= event.title %></div>
+              <div class="event-time"><%= event.live? ? 'Live now' : event.scheduled_at&.strftime('%b %d, %l:%M %p') %></div>
+            </div>
+            <% if event.scheduled? %>
+              <%= button_to 'Go Live', go_live_portal_campaign_live_event_path(@campaign, event), method: :patch, class: 'btn btn-sm', style: 'background:#e94560;color:#fff;border:none;padding:4px 12px;font-size:11px;', form: { style: 'display:inline' }, data: { confirm: 'Go live now?' } %>
+            <% end %>
+          </div>
+        <% end %>
+        <% if @past_events.any? %>
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px;">Past Streams</div>
+          <% @past_events.first(5).each do |event| %>
+            <div class="event-row">
+              <div class="event-dot ended"></div>
+              <div class="event-info">
+                <div class="event-name"><%= event.title %></div>
+                <div class="event-time"><%= event.ended_at&.strftime('%b %d') %> &middot; <%= event.started_at && event.ended_at ? distance_of_time_in_words(event.started_at, event.ended_at) : 'N/A' %></div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      <% else %>
+        <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">
+          No events yet. Schedule your first one above.
+        </div>
+      <% end %>
+      <div style="margin-top:12px;">
+        <%= link_to new_portal_campaign_live_event_path(@campaign), class: 'btn btn-secondary btn-sm', style: 'width:100%;justify-content:center;' do %>
+          + New Event
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var stream = null;
+  var cameraOn = false;
+  var micOn = false;
+  var timerInterval = null;
+
+  window.toggleCamera = function() {
+    var video = document.getElementById('cameraPreview');
+    var placeholder = document.getElementById('previewPlaceholder');
+    var btn = document.getElementById('toggleCamera');
+
+    if (cameraOn) {
+      // Turn off
+      if (stream) { stream.getTracks().forEach(function(t) { t.stop(); }); stream = null; }
+      video.style.display = 'none';
+      placeholder.style.display = '';
+      btn.classList.remove('active');
+      cameraOn = false;
+    } else {
+      // Turn on
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(function(s) {
+        stream = s;
+        video.srcObject = s;
+        video.style.display = '';
+        placeholder.style.display = 'none';
+        btn.classList.add('active');
+        document.getElementById('toggleMic').classList.add('active');
+        cameraOn = true;
+        micOn = true;
+      }).catch(function(err) {
+        alert('Camera access denied or unavailable: ' + err.message);
+      });
+    }
+  };
+
+  window.toggleMic = function() {
+    var btn = document.getElementById('toggleMic');
+    if (!stream) return;
+    var audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) return;
+    micOn = !micOn;
+    audioTracks[0].enabled = micOn;
+    btn.classList.toggle('active', micOn);
+    btn.classList.toggle('off', !micOn);
+  };
+
+  window.toggleFullscreen = function() {
+    var area = document.getElementById('previewArea');
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      area.requestFullscreen().catch(function() {});
+    }
+  };
+
+  // Live timer
+  <% if @current_live_event&.started_at %>
+    var startedAt = new Date('<%= @current_live_event.started_at.iso8601 %>');
+    function updateTimer() {
+      var diff = Math.floor((Date.now() - startedAt.getTime()) / 1000);
+      var h = Math.floor(diff / 3600);
+      var m = Math.floor((diff % 3600) / 60);
+      var s = diff % 60;
+      var str = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      var el = document.getElementById('liveTimer');
+      if (el) el.textContent = str;
+      var stat = document.getElementById('statDuration');
+      if (stat) stat.textContent = (h > 0 ? h + 'h ' : '') + m + 'm';
+    }
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+  <% end %>
+})();
+</script>
