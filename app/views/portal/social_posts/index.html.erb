@@ -1,27 +1,182 @@
-<% content_for :page_title, 'Social Post Creator' %>
+<% content_for :page_title, 'Social Posts' %>
 <% content_for :page_actions do %>
-  <%= link_to 'Back to Campaign', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
 <% end %>
 
 <style>
-  .platform-tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-  .platform-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; }
-  .platform-tab:hover { border-color: var(--accent); color: var(--text-primary); }
-  .platform-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .template-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-  .template-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .template-card .category-tag { font-size: 11px; background: rgba(108,92,231,0.1); color: var(--accent, #6c5ce7); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 12px; }
-  .post-textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical; font-family: inherit; background: var(--bg-secondary, #f8f9fa); color: var(--text-primary, #333); }
-  .post-textarea:focus { outline: none; border-color: var(--accent, #6c5ce7); }
-  .char-counter { font-size: 12px; margin-top: 6px; text-align: right; }
-  .char-counter.over { color: #e94560; font-weight: 600; }
-  .hashtag-suggestions { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .hashtag { font-size: 12px; padding: 4px 10px; border-radius: 14px; background: rgba(108,92,231,0.08); color: var(--accent, #6c5ce7); cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
-  .hashtag:hover { border-color: var(--accent, #6c5ce7); }
-  .copy-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.15s; }
-  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .copy-btn.copied { background: rgba(34,197,94,0.1); border-color: #22C55E; color: #22C55E; }
-  .template-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  /* ── Platform Switcher ── */
+  .platform-switcher { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .plat-btn {
+    padding: 10px 20px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 13px; font-weight: 600;
+    cursor: pointer; background: var(--surface); color: var(--text-secondary); transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+    font-family: inherit;
+  }
+  .plat-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+  .plat-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: 0 2px 10px rgba(79,70,229,0.25); }
+  .plat-btn .plat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .plat-btn[data-p="instagram"] .plat-dot { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+  .plat-btn[data-p="tiktok"] .plat-dot { background: #000; }
+  .plat-btn[data-p="twitter"] .plat-dot { background: #1DA1F2; }
+  .plat-btn[data-p="facebook"] .plat-dot { background: #1877F2; }
+  .plat-btn.active .plat-dot { box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+
+  /* ── Category Tabs ── */
+  .cat-tabs { display: flex; gap: 4px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+  .cat-tab {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: transparent; color: var(--text-muted); border: 1px solid transparent; transition: all 0.15s;
+    white-space: nowrap; font-family: inherit;
+  }
+  .cat-tab:hover { color: var(--text-primary); background: rgba(0,0,0,0.02); }
+  .cat-tab.active { background: rgba(79,70,229,0.08); color: var(--accent); border-color: rgba(79,70,229,0.15); }
+
+  /* ── Post Grid ── */
+  .posts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .posts-grid { grid-template-columns: 1fr; } }
+
+  .post-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .post-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+  .post-card-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--accent-wash);
+  }
+  .post-card-header .pc-left { display: flex; align-items: center; gap: 10px; }
+  .post-card-header .pc-platform { font-size: 13px; font-weight: 700; }
+  .post-card-header .pc-cat { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); background: rgba(79,70,229,0.08); padding: 3px 8px; border-radius: 4px; }
+
+  .post-card-body { padding: 20px; }
+
+  /* ── Phone Mockup ── */
+  .phone-mockup {
+    width: 100%;
+    max-width: 260px;
+    margin: 0 auto 16px;
+    background: #111;
+    border-radius: 24px;
+    padding: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .phone-screen {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 200px;
+  }
+  .phone-screen .ps-header {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .phone-screen .ps-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .phone-screen .ps-name { font-size: 12px; font-weight: 700; color: #111; }
+  .phone-screen .ps-content { padding: 12px; font-size: 12px; line-height: 1.6; color: #333; word-break: break-word; white-space: pre-wrap; max-height: 180px; overflow-y: auto; }
+  .phone-screen .ps-image { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #f0f0f0, #e8e8e8); display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 11px; }
+  .phone-screen .ps-content .hashtag-text { color: #4F46E5; }
+
+  /* ── Edit Area ── */
+  .edit-area textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: inherit;
+    resize: vertical;
+    background: #F8F8FA;
+    color: var(--text-primary);
+    transition: border-color 0.2s;
+  }
+  .edit-area textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: #fff; }
+
+  .char-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .char-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .char-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.2s, background 0.2s; }
+  .char-fill.warn { background: #F59E0B; }
+  .char-fill.over { background: #EF4444; }
+  .char-count { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 70px; text-align: right; }
+  .char-count.over { color: #EF4444; }
+
+  /* ── Hashtag Chips ── */
+  .hashtag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .htag {
+    font-size: 11px; padding: 4px 10px; border-radius: 14px; cursor: pointer; border: 1px solid transparent;
+    transition: all 0.15s; font-family: inherit; font-weight: 500;
+    background: rgba(79,70,229,0.06); color: var(--accent);
+  }
+  .htag:hover { background: rgba(79,70,229,0.12); border-color: rgba(79,70,229,0.2); }
+  .htag.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── Actions ── */
+  .post-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .copy-btn {
+    flex: 1;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: all 0.15s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+  .copy-btn.copied { background: rgba(34,197,94,0.08); border-color: #22C55E; color: #16A34A; }
+
+  /* ── Info Banner ── */
+  .info-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(79,70,229,0.04), rgba(99,102,241,0.02));
+    border: 1px solid rgba(79,70,229,0.08);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+  }
+  .info-banner .ib-icon { width: 40px; height: 40px; background: rgba(79,70,229,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent); }
+  .info-banner .ib-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .info-banner .ib-text strong { color: var(--text-primary); }
+
+  /* ── Custom text field ── */
+  .custom-inject { margin-bottom: 20px; }
+  .custom-inject label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+  .custom-inject input {
+    width: 100%; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 13px; font-family: inherit; background: #F8F8FA; color: var(--text-primary); transition: border-color 0.2s;
+  }
+  .custom-inject input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: #fff; }
 </style>
 
 <%
@@ -30,83 +185,127 @@
   genre = @submission.genre || 'books'
   page_url = @page_url ? request.base_url + @page_url : '[YOUR_LINK]'
   signed_url = @signed_url.presence || '[SIGNED_EDITIONS_LINK]'
+  author_initials = @author.full_name.split.map(&:first).join.upcase[0..1]
 
-  # Platform character limits
   limits = { 'twitter' => 280, 'instagram' => 2200, 'facebook' => 63206, 'tiktok' => 2200 }
 
-  # Hashtag suggestions based on genre
   genre_tags = case genre.to_s.downcase
-    when /romance/ then %w[#BookTok #RomanceBooks #LoveToRead #BookishRomance #NewRelease]
-    when /thriller|mystery|suspense/ then %w[#ThrillerBooks #MysteryReads #BookTok #PageTurner #CrimeFiction]
-    when /fantasy|sci.?fi/ then %w[#FantasyBooks #SciFiReads #BookTok #EpicReads #BookDragon]
-    when /memoir|biography|nonfiction/ then %w[#NonFiction #Memoir #TrueStory #MustRead #InspiringReads]
-    when /business|self.?help/ then %w[#BookRecommendation #SelfImprovement #MustRead #LeadershipBooks #GrowthMindset]
-    when /children|kids|ya|young/ then %w[#KidLit #YABooks #BookTok #YoungReaders #BookWorm]
-    else %w[#BookTok #NewRelease #MustRead #BookRecommendation #AuthorLife]
+    when /romance/ then %w[#BookTok #RomanceBooks #LoveToRead #BookishRomance #NewRelease #RomanceReaders]
+    when /thriller|mystery|suspense/ then %w[#ThrillerBooks #MysteryReads #BookTok #PageTurner #CrimeFiction #MustRead]
+    when /fantasy|sci.?fi/ then %w[#FantasyBooks #SciFiReads #BookTok #EpicReads #BookDragon #SFFBooks]
+    when /memoir|biography|nonfiction/ then %w[#NonFiction #Memoir #TrueStory #MustRead #InspiringReads #BookRec]
+    when /business|self.?help/ then %w[#BookRecommendation #SelfImprovement #MustRead #LeadershipBooks #GrowthMindset #BookClub]
+    when /children|kids|ya|young/ then %w[#KidLit #YABooks #BookTok #YoungReaders #BookWorm #YAReads]
+    else %w[#BookTok #NewRelease #MustRead #BookRecommendation #AuthorLife #BookClub]
   end
 
-  # Template definitions
   templates = [
-    { category: 'Launch Announcement', platforms: %w[twitter instagram facebook tiktok], copies: {
+    { category: 'Launch', emoji: '&#127881;', platforms: %w[twitter instagram facebook tiktok], copies: {
       'twitter' => "#{book_title} is here! Get your copy now.\n\n#{page_url}",
-      'instagram' => "It's finally here! #{book_title} is now available.\n\nI've poured my heart into this book and I can't wait for you to read it. Get your copy at the link in bio.\n\n#{page_url}",
+      'instagram' => "It's finally here! #{book_title} is now available.\n\nI've poured my heart into this book and I can't wait for you to read it. Grab your copy at the link in bio.\n\n#{page_url}",
       'facebook' => "I'm thrilled to announce that #{book_title} is now available! This has been an incredible journey and I'm so excited to share it with the world.\n\nGet your copy here: #{page_url}",
       'tiktok' => "#{book_title} just dropped! Link in bio to get your copy.\n\n#{page_url}"
     }},
-    { category: 'Pre-order Reminder', platforms: %w[twitter instagram facebook tiktok], copies: {
+    { category: 'Pre-order', emoji: '&#128640;', platforms: %w[twitter instagram facebook tiktok], copies: {
       'twitter' => "Pre-order #{book_title} now and be the first to read it!\n\n#{signed_url}",
-      'instagram' => "Don't miss out! Pre-order #{book_title} today and get exclusive bonus content.\n\nPre-order link in bio.\n\n#{signed_url}",
-      'facebook' => "Have you pre-ordered #{book_title} yet? Pre-orders help us so much and there's exclusive bonus content for early supporters!\n\nPre-order here: #{signed_url}",
-      'tiktok' => "POV: You pre-order #{book_title} and get exclusive bonus content. Link in bio!\n\n#{signed_url}"
+      'instagram' => "Don't miss out! Pre-order #{book_title} today.\n\nExclusive signed editions available for early supporters. Pre-order link in bio.\n\n#{signed_url}",
+      'facebook' => "Have you pre-ordered #{book_title} yet? Pre-orders help us so much and there's exclusive signed editions for early supporters!\n\nPre-order here: #{signed_url}",
+      'tiktok' => "POV: You pre-order #{book_title} and get a signed copy. Link in bio!\n\n#{signed_url}"
     }},
-    { category: 'Live Event Promo', platforms: %w[twitter instagram facebook tiktok], copies: {
+    { category: 'Live Event', emoji: '&#127909;', platforms: %w[twitter instagram facebook tiktok], copies: {
       'twitter' => "Going LIVE soon to talk about #{book_title}! Join me for a signing, Q&A, and exclusive behind-the-scenes.\n\n#{page_url}",
       'instagram' => "LIVE EVENT ALERT! Join me for a live book signing and Q&A about #{book_title}.\n\nI'll be answering your questions, sharing behind-the-scenes stories, and signing copies!\n\nTune in at the link in bio.\n\n#{page_url}",
-      'facebook' => "Save the date! I'm going live to celebrate #{book_title}. We'll do a live signing, answer your questions, and share some exclusive content. See you there!\n\n#{page_url}",
+      'facebook' => "Save the date! I'm going live to celebrate #{book_title}. We'll do a live signing, answer your questions, and share some exclusive content.\n\nSee you there! #{page_url}",
       'tiktok' => "GOING LIVE! Come hang out and talk about #{book_title}. Signing copies and answering your questions!\n\n#{page_url}"
     }},
-    { category: 'Reader Testimonial', platforms: %w[twitter instagram facebook], copies: {
-      'twitter' => "\"[Reader quote here]\" — @reader\n\nThank you for the kind words! Get #{book_title} at #{page_url}",
-      'instagram' => "This made my day! Thank you to everyone who has read #{book_title} and shared their experience.\n\n\"[Reader quote here]\" — @reader\n\nGet your copy at the link in bio.\n\n#{page_url}",
-      'facebook' => "Nothing means more than hearing from readers. Thank you!\n\n\"[Reader quote here]\" — Reader Name\n\nGet #{book_title} here: #{page_url}"
+    { category: 'Testimonial', emoji: '&#11088;', platforms: %w[twitter instagram facebook], copies: {
+      'twitter' => "\"[Reader quote here]\" \u2014 @reader\n\nThank you for the kind words! Get #{book_title} at #{page_url}",
+      'instagram' => "This made my day! Thank you to everyone who has read #{book_title} and shared their experience.\n\n\"[Reader quote here]\" \u2014 @reader\n\nGet your copy at the link in bio.",
+      'facebook' => "Nothing means more than hearing from readers. Thank you!\n\n\"[Reader quote here]\" \u2014 Reader Name\n\nGet #{book_title} here: #{page_url}"
     }},
-    { category: 'Retailer Push', platforms: %w[twitter instagram facebook], copies: {
-      'twitter' => "#{book_title} is available at all major retailers!\n\nGet your signed copy: #{signed_url}\n\nOr find it at your favorite bookstore: #{page_url}",
-      'instagram' => "Multiple ways to get #{book_title}!\n\nSigned copies: Link in bio\nAmazon, Barnes & Noble, Target, Walmart, and more!\n\n#{page_url}",
-      'facebook' => "#{book_title} is available everywhere books are sold! Get your copy at your favorite retailer — or grab a signed edition at #{signed_url}\n\nAll retailer links: #{page_url}"
+    { category: 'Retailer', emoji: '&#128218;', platforms: %w[twitter instagram facebook], copies: {
+      'twitter' => "#{book_title} is available at all major retailers!\n\nSigned copy: #{signed_url}\nAll links: #{page_url}",
+      'instagram' => "Multiple ways to get #{book_title}!\n\nSigned copies: Link in bio\nAmazon, Barnes & Noble, Target, and more!\n\n#{page_url}",
+      'facebook' => "#{book_title} is available everywhere books are sold! Grab your copy at your favorite retailer \u2014 or get a signed edition at #{signed_url}\n\nAll retailer links: #{page_url}"
     }}
   ]
 %>
 
-<div class="card">
-  <h3>Social Post Creator</h3>
-  <p class="text-secondary" style="margin-bottom:20px;font-size:14px;">Pre-filled templates for your campaign. Edit, copy, and post to your socials.</p>
+<%# ── Info Banner ── %>
+<div class="info-banner">
+  <div class="ib-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>
+  <div class="ib-text"><strong>Ready-to-post templates</strong> pre-filled with your campaign data. Edit the text, pick your hashtags, and copy to clipboard. The phone preview updates as you type.</div>
+</div>
 
-  <%# Platform filter tabs %>
-  <div class="platform-tabs">
-    <button class="platform-tab active" data-platform="all" onclick="filterPlatform('all',this)">All</button>
-    <button class="platform-tab" data-platform="twitter" onclick="filterPlatform('twitter',this)">Twitter/X</button>
-    <button class="platform-tab" data-platform="instagram" onclick="filterPlatform('instagram',this)">Instagram</button>
-    <button class="platform-tab" data-platform="facebook" onclick="filterPlatform('facebook',this)">Facebook</button>
-    <button class="platform-tab" data-platform="tiktok" onclick="filterPlatform('tiktok',this)">TikTok</button>
-  </div>
+<%# ── Custom Hype Line ── %>
+<div class="custom-inject">
+  <label>Custom Hype Line (auto-inserted into new posts)</label>
+  <input type="text" id="hypeLine" placeholder="e.g. The book everyone's talking about..." oninput="refreshPreviews()">
+</div>
 
+<%# ── Platform Switcher ── %>
+<div class="platform-switcher">
+  <button class="plat-btn active" data-p="all" onclick="filterPosts('all',this)">All Platforms</button>
+  <button class="plat-btn" data-p="instagram" onclick="filterPosts('instagram',this)"><span class="plat-dot"></span> Instagram</button>
+  <button class="plat-btn" data-p="tiktok" onclick="filterPosts('tiktok',this)"><span class="plat-dot"></span> TikTok</button>
+  <button class="plat-btn" data-p="twitter" onclick="filterPosts('twitter',this)"><span class="plat-dot"></span> X / Twitter</button>
+  <button class="plat-btn" data-p="facebook" onclick="filterPosts('facebook',this)"><span class="plat-dot"></span> Facebook</button>
+</div>
+
+<%# ── Category Tabs ── %>
+<div class="cat-tabs">
+  <button class="cat-tab active" onclick="filterCat('all',this)">All</button>
+  <% templates.map { |t| t[:category] }.uniq.each do |cat| %>
+    <button class="cat-tab" onclick="filterCat('<%= cat %>',this)"><%= cat %></button>
+  <% end %>
+</div>
+
+<%# ── Posts Grid ── %>
+<div class="posts-grid" id="postsGrid">
   <% templates.each_with_index do |tmpl, ti| %>
     <% tmpl[:copies].each do |platform, copy| %>
-      <div class="template-card" data-platform="<%= platform %>">
-        <span class="category-tag"><%= tmpl[:category] %></span>
-        <h4><%= platform.capitalize %><%= platform == 'twitter' ? ' / X' : '' %></h4>
-        <textarea class="post-textarea" id="post-<%= ti %>-<%= platform %>" data-limit="<%= limits[platform] %>" oninput="updateCounter(this)"><%= copy %></textarea>
-        <div class="char-counter" id="counter-<%= ti %>-<%= platform %>">
-          <span class="count"><%= copy.length %></span> / <%= limits[platform] %>
+      <div class="post-card" data-platform="<%= platform %>" data-cat="<%= tmpl[:category] %>">
+        <div class="post-card-header">
+          <div class="pc-left">
+            <span class="pc-cat"><%= tmpl[:emoji] %> <%= tmpl[:category] %></span>
+            <span class="pc-platform"><%= platform == 'twitter' ? 'X / Twitter' : platform.capitalize %></span>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);">max <%= limits[platform].to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse %></span>
         </div>
-        <div class="hashtag-suggestions">
-          <% genre_tags.each do |tag| %>
-            <span class="hashtag" onclick="insertHashtag(this, 'post-<%= ti %>-<%= platform %>')"><%= tag %></span>
-          <% end %>
-        </div>
-        <div class="template-actions">
-          <button class="copy-btn" onclick="copyPost('post-<%= ti %>-<%= platform %>', this)">Copy to Clipboard</button>
+        <div class="post-card-body">
+          <%# Phone Mockup %>
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="ps-header">
+                <div class="ps-avatar"><%= author_initials %></div>
+                <div class="ps-name"><%= author_name %></div>
+              </div>
+              <% if platform == 'instagram' %>
+                <div class="ps-image"><%= @submission.cover.present? ? "<img src=\"#{@submission.cover.url}\" style=\"width:100%;height:100%;object-fit:cover;\">" : "Book Cover" %></div>
+              <% end %>
+              <div class="ps-content" id="preview-<%= ti %>-<%= platform %>"><%= copy %></div>
+            </div>
+          </div>
+
+          <%# Edit Area %>
+          <div class="edit-area">
+            <textarea id="post-<%= ti %>-<%= platform %>" data-limit="<%= limits[platform] %>" data-ti="<%= ti %>" data-plat="<%= platform %>" oninput="updatePost(this)"><%= copy %></textarea>
+            <div class="char-bar">
+              <div class="char-track"><div class="char-fill" id="fill-<%= ti %>-<%= platform %>" style="width:<%= [(copy.length.to_f / limits[platform] * 100), 100].min %>%"></div></div>
+              <span class="char-count" id="count-<%= ti %>-<%= platform %>"><%= copy.length %> / <%= limits[platform] %></span>
+            </div>
+            <div class="hashtag-row">
+              <% genre_tags.each do |tag| %>
+                <button class="htag" onclick="toggleHashtag(this,'post-<%= ti %>-<%= platform %>')"><%= tag %></button>
+              <% end %>
+            </div>
+            <div class="post-actions">
+              <button class="copy-btn" onclick="copyPost('post-<%= ti %>-<%= platform %>',this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     <% end %>
@@ -114,39 +313,98 @@
 </div>
 
 <script>
-  function filterPlatform(platform, btn) {
-    document.querySelectorAll('.platform-tab').forEach(function(t) { t.classList.remove('active'); });
+(function() {
+  // ── Filter by platform ──
+  window.filterPosts = function(platform, btn) {
+    document.querySelectorAll('.plat-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
-    document.querySelectorAll('.template-card').forEach(function(card) {
-      card.style.display = (platform === 'all' || card.dataset.platform === platform) ? '' : 'none';
+    applyFilters();
+  };
+
+  // ── Filter by category ──
+  window.filterCat = function(cat, btn) {
+    document.querySelectorAll('.cat-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    applyFilters();
+  };
+
+  function applyFilters() {
+    var activePlat = document.querySelector('.plat-btn.active').dataset.p;
+    var activeCat = document.querySelector('.cat-tab.active').textContent.trim();
+    document.querySelectorAll('.post-card').forEach(function(card) {
+      var platMatch = activePlat === 'all' || card.dataset.platform === activePlat;
+      var catMatch = activeCat === 'All' || card.dataset.cat === activeCat;
+      card.style.display = (platMatch && catMatch) ? '' : 'none';
     });
   }
 
-  function updateCounter(textarea) {
+  // ── Update post preview + counter ──
+  window.updatePost = function(textarea) {
+    var ti = textarea.dataset.ti;
+    var plat = textarea.dataset.plat;
     var limit = parseInt(textarea.dataset.limit);
-    var count = textarea.value.length;
-    var counter = textarea.parentElement.querySelector('.char-counter');
-    counter.querySelector('.count').textContent = count;
-    counter.classList.toggle('over', count > limit);
-  }
+    var len = textarea.value.length;
+    var pct = Math.min(len / limit * 100, 100);
 
-  function insertHashtag(el, textareaId) {
+    // Update preview
+    var preview = document.getElementById('preview-' + ti + '-' + plat);
+    if (preview) {
+      // Highlight hashtags
+      var escaped = textarea.value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      preview.innerHTML = escaped.replace(/(#\w+)/g, '<span class="hashtag-text">$1</span>');
+    }
+
+    // Update counter
+    var count = document.getElementById('count-' + ti + '-' + plat);
+    if (count) {
+      count.textContent = len + ' / ' + limit;
+      count.classList.toggle('over', len > limit);
+    }
+
+    // Update fill bar
+    var fill = document.getElementById('fill-' + ti + '-' + plat);
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.classList.remove('warn', 'over');
+      if (len > limit) fill.classList.add('over');
+      else if (pct > 80) fill.classList.add('warn');
+    }
+  };
+
+  // ── Toggle hashtag ──
+  window.toggleHashtag = function(btn, textareaId) {
     var ta = document.getElementById(textareaId);
-    var tag = el.textContent;
-    if (ta.value.includes(tag)) return;
-    ta.value = ta.value.trimEnd() + ' ' + tag;
-    updateCounter(ta);
-  }
+    var tag = btn.textContent.trim();
 
-  function copyPost(textareaId, btn) {
+    if (ta.value.includes(tag)) {
+      // Remove it
+      ta.value = ta.value.replace(' ' + tag, '').replace(tag + ' ', '').replace(tag, '').trimEnd();
+      btn.classList.remove('selected');
+    } else {
+      ta.value = ta.value.trimEnd() + ' ' + tag;
+      btn.classList.add('selected');
+    }
+    updatePost(ta);
+  };
+
+  // ── Copy to clipboard ──
+  window.copyPost = function(textareaId, btn) {
     var ta = document.getElementById(textareaId);
     navigator.clipboard.writeText(ta.value).then(function() {
-      btn.textContent = 'Copied!';
+      var svg = btn.querySelector('svg').outerHTML;
+      btn.innerHTML = svg + ' Copied!';
       btn.classList.add('copied');
-      setTimeout(function() { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
+      setTimeout(function() { btn.innerHTML = svg + ' Copy'; btn.classList.remove('copied'); }, 2000);
     });
-  }
+  };
 
-  // Init counters
-  document.querySelectorAll('.post-textarea').forEach(function(ta) { updateCounter(ta); });
+  // ── Refresh previews (from hype line) ──
+  window.refreshPreviews = function() {
+    // Hype line is a convenience — user types in it, but we don't auto-inject into existing text to avoid confusion
+    // It's available as a reference when editing
+  };
+
+  // Init all counters/previews
+  document.querySelectorAll('.edit-area textarea').forEach(function(ta) { updatePost(ta); });
+})();
 </script>

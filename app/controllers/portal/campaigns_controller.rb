@@ -9,6 +9,12 @@ module Portal
       @incomplete_items = @campaign.checklist_items.incomplete.order(:position).limit(5)
       @assets_count = @campaign.campaign_assets.count
       @pending_assets = @campaign.campaign_assets.pending.count
+      @landing_page = @campaign.landing_page
+      @submission_count = @landing_page&.page_submissions&.count || 0
+      @current_live_event = @campaign.current_live_event
+      @next_event = @campaign.next_scheduled_event
+      @upcoming_events = @campaign.live_events.upcoming.limit(3)
+      @submission = @campaign.submission
     end
 
     def links
