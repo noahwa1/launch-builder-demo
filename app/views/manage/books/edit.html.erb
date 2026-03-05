@@ -1,0 +1,46 @@
+<% content_for :page_title, "Edit #{@book.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'View Book', manage_book_path(@book), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:640px;">
+  <%= form_with model: @book, url: manage_book_path(@book), method: :patch, multipart: true do |f| %>
+    <div class="form-group">
+      <%= f.label :title %>
+      <%= f.text_field :title, placeholder: 'Book title' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :isbn, 'ISBN' %>
+      <%= f.text_field :isbn, placeholder: '978-...' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :description %>
+      <%= f.text_area :description, placeholder: 'Book description...' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :cover, 'Cover Image' %>
+      <% if @book.cover.present? %>
+        <div style="margin-bottom:8px;">
+          <img src="<%= @book.cover.url %>" style="max-width:120px;border-radius:6px;" alt="">
+        </div>
+      <% end %>
+      <%= f.file_field :cover %>
+    </div>
+    <div class="form-group">
+      <%= f.label :release_date %>
+      <%= f.date_field :release_date %>
+    </div>
+    <div class="form-group">
+      <%= f.label :author_id, 'Author' %>
+      <%= f.select :author_id, @authors.map { |a| [a.full_name, a.id] }, { include_blank: 'Select author...' }, {} %>
+    </div>
+    <div class="form-group">
+      <%= f.label :publisher_id, 'Publisher' %>
+      <%= f.select :publisher_id, @publishers.map { |p| [p.name, p.id] }, { include_blank: 'None' }, {} %>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <%= f.submit 'Update Book', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', manage_book_path(@book), class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

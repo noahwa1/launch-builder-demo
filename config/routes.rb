@@ -5,7 +5,7 @@ Rails.application.routes.draw do
 
   # Root — redirect based on role
   authenticated :user, ->(u) { u.admin? } do
-    root to: 'manage/campaigns#index', as: :admin_root
+    root to: 'manage/dashboard#index', as: :admin_root
   end
   authenticated :user, ->(u) { u.creator? } do
     root to: 'portal/dashboard#index', as: :creator_root
@@ -63,7 +63,24 @@ Rails.application.routes.draw do
 
   # Admin Panel
   namespace :manage do
-    root to: 'campaigns#index'
+    root to: 'dashboard#index'
+    get 'dashboard', to: 'dashboard#index'
+
+    resources :authors do
+      member { patch :toggle_status }
+    end
+    resources :books
+    resources :users do
+      member { patch :toggle_active }
+    end
+    resources :pages do
+      member do
+        get :builder
+        patch :toggle_publish
+      end
+    end
+    get 'settings', to: 'settings#index'
+
     resources :submissions, only: [:index, :show] do
       member do
         patch :approve

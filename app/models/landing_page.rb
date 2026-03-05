@@ -1,5 +1,6 @@
 class LandingPage < ApplicationRecord
-  belongs_to :campaign
+  belongs_to :campaign, optional: true
+  belongs_to :author, optional: true
   has_many :page_submissions, dependent: :destroy
 
   validates :slug, uniqueness: true, allow_nil: true
@@ -10,7 +11,7 @@ class LandingPage < ApplicationRecord
 
   def publish!
     update!(published: true, published_at: Time.current)
-    campaign.checklist_items.find_by(key: 'landing_page_built')&.mark_complete!
+    campaign&.checklist_items&.find_by(key: 'landing_page_built')&.mark_complete!
   end
 
   def unpublish!

@@ -1,0 +1,33 @@
+<% content_for :page_title, "Edit #{@author.full_name}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'View Author', manage_author_path(@author), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:640px;">
+  <%= form_with model: @author, url: manage_author_path(@author), method: :patch do |f| %>
+    <div class="form-group">
+      <%= f.label :first_name %>
+      <%= f.text_field :first_name, placeholder: 'First name' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :last_name %>
+      <%= f.text_field :last_name, placeholder: 'Last name' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :description, 'Bio' %>
+      <%= f.text_area :description, placeholder: 'Author biography...' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :image, 'Image URL' %>
+      <%= f.text_field :image, placeholder: 'https://...' %>
+    </div>
+    <div class="form-group">
+      <%= f.label :status %>
+      <%= f.select :status, Author.statuses.keys.map { |s| [s.titleize, s] }, {}, {} %>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <%= f.submit 'Update Author', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', manage_author_path(@author), class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

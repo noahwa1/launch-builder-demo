@@ -7,6 +7,16 @@ class User < ApplicationRecord
 
   after_create :create_author_profile!, if: :creator?
 
+  scope :active_users, -> { where(active: true) }
+
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    active? ? super : :account_disabled
+  end
+
   private
 
   def create_author_profile!

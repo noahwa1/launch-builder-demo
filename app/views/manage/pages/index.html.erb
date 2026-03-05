@@ -1,0 +1,50 @@
+<% content_for :page_title, 'Pages' %>
+<% content_for :page_actions do %>
+  <%= link_to 'New Page', new_manage_page_path, class: 'btn btn-primary' %>
+<% end %>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Author</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @pages.each do |page| %>
+          <tr>
+            <td style="font-weight:500;"><%= page.title || 'Untitled' %></td>
+            <td class="text-muted"><%= page.slug ? "/pages/#{page.slug}" : '—' %></td>
+            <td class="text-muted"><%= page.author&.full_name || '—' %></td>
+            <td>
+              <% if page.published? %>
+                <span class="status-badge status-live">Published</span>
+              <% else %>
+                <span class="status-badge status-draft">Draft</span>
+              <% end %>
+            </td>
+            <td class="text-muted"><%= page.created_at.strftime('%b %d, %Y') %></td>
+            <td style="white-space:nowrap;">
+              <%= link_to 'Builder', builder_manage_page_path(page), class: 'btn btn-primary btn-sm' %>
+              <%= button_to (page.published? ? 'Unpublish' : 'Publish'), toggle_publish_manage_page_path(page), method: :patch, class: "btn #{page.published? ? 'btn-secondary' : 'btn-success'} btn-sm", form: { style: 'display:inline' } %>
+              <%= button_to 'Delete', manage_page_path(page), method: :delete, class: 'btn btn-danger btn-sm', form: { style: 'display:inline', data: { turbo_confirm: 'Delete this page?' } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <%= paginate @pages %>
+</div>
+
+<% if @pages.empty? %>
+  <div class="card">
+    <p class="text-muted" style="text-align:center;padding:24px;">No standalone pages yet. These are landing pages not tied to any campaign.</p>
+  </div>
+<% end %>

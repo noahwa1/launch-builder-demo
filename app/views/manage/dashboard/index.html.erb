@@ -1,0 +1,97 @@
+<% content_for :page_title, 'Dashboard' %>
+<% content_for :page_actions do %>
+  <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary' %>
+<% end %>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Total Campaigns</div>
+    <div class="value"><%= @total_campaigns %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Active Campaigns</div>
+    <div class="value"><%= @active_campaigns %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Active Authors</div>
+    <div class="value"><%= @active_authors %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Pending Assets</div>
+    <div class="value"><%= @pending_assets %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Unread Messages</div>
+    <div class="value"><%= @unread_messages %></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Total Paid Revenue</div>
+    <div class="value">$<%= number_with_delimiter(@total_paid.to_i) %></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Recent Campaigns -->
+  <div class="card">
+    <h3>Recent Campaigns</h3>
+    <% if @recent_campaigns.any? %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Author</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_campaigns.each do |campaign| %>
+              <tr>
+                <td style="font-weight:500;"><%= campaign.title %></td>
+                <td class="text-secondary"><%= campaign.author.full_name %></td>
+                <td><span class="status-badge status-<%= campaign.status %>"><%= campaign.status.titleize %></span></td>
+                <td class="text-muted"><%= campaign.created_at.strftime('%b %d') %></td>
+                <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="text-muted" style="text-align:center;padding:24px;">No campaigns yet.</p>
+    <% end %>
+  </div>
+
+  <!-- Recent Asset Uploads -->
+  <div>
+    <div class="card">
+      <h3>Recent Asset Uploads</h3>
+      <% if @recent_assets.any? %>
+        <% @recent_assets.each do |asset| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:500;"><%= asset.original_filename || asset.asset_type.titleize %></div>
+              <div class="text-muted" style="font-size:12px;"><%= asset.campaign&.title %> — <%= time_ago_in_words(asset.created_at) %> ago</div>
+            </div>
+            <span class="status-badge status-<%= asset.status %>"><%= asset.status.titleize %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:24px;">No assets yet.</p>
+      <% end %>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary' %>
+        <%= link_to 'View Messages', manage_portal_messages_path, class: 'btn btn-secondary' %>
+        <%= link_to 'New Payment', new_manage_royalty_path, class: 'btn btn-secondary' %>
+      </div>
+    </div>
+  </div>
+</div>
