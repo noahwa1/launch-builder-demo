@@ -115,7 +115,7 @@
             data-isbn="<%= book.isbn %>"
             data-description="<%= book.description&.truncate(2000) %>"
             data-release-date="<%= book.release_date&.strftime('%Y-%m-%d') %>"
-            data-genre="<%= book.genre %>"
+            data-genre="<%= book.try(:genre) %>"
           ><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
         <% end %>
       </select>
