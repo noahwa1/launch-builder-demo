@@ -40,7 +40,7 @@
           <tbody>
             <% @submissions.each do |sub| %>
               <tr>
-                <td><%= link_to sub.title, portal_submission_path(sub), style: 'color: #0071e3; text-decoration: none; font-weight: 500;' %></td>
+                <td style="font-weight: 500;"><%= sub.title %></td>
                 <td><span class="status-badge status-<%= sub.status %>"><%= sub.status.titleize %></span></td>
                 <td style="color: #86868b; font-size: 13px;"><%= sub.created_at.strftime('%b %d, %Y') %></td>
               </tr>
@@ -51,7 +51,6 @@
     <% else %>
       <div class="empty-state">
         <p>No submissions yet.</p>
-        <%= link_to 'Submit your first title', new_portal_submission_path, class: 'btn btn-primary' %>
       </div>
     <% end %>
   </div>
