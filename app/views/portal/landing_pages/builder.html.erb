@@ -373,7 +373,7 @@
 <div class="top-bar">
   <div class="top-bar-left">
     <div class="logo">LAUNCH <span>BUILDER</span></div>
-    <a href="<%= @standalone_mode ? manage_pages_path : portal_campaign_landing_page_path(@campaign) %>" class="back-link"><i class="fas fa-arrow-left"></i> <%= @standalone_mode ? 'Back to Pages' : 'Back to Landing Page' %></a>
+    <a href="<%= @standalone_mode ? manage_pages_path : (@admin_mode ? manage_campaign_path(@campaign) : portal_campaign_landing_page_path(@campaign)) %>" class="back-link"><i class="fas fa-arrow-left"></i> <%= @standalone_mode ? 'Back to Pages' : (@admin_mode ? 'Back to Campaign' : 'Back to Landing Page') %></a>
   </div>
 
   <div class="toolbar">
