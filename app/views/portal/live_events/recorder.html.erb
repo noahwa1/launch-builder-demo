@@ -187,6 +187,43 @@
   .sb-row > * { flex: 1; }
   .sb-range { width: 100%; accent-color: var(--accent); }
 
+  /* ── Countdown Overlay ── */
+  .countdown-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    z-index: 6; pointer-events: none;
+  }
+  .countdown-overlay .countdown-num {
+    font-size: 200px; font-weight: 900; color: #fff;
+    text-shadow: 0 0 60px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5);
+    animation: countPop 0.6s ease-out;
+  }
+  @keyframes countPop { 0%{transform:scale(1.6);opacity:0.3} 100%{transform:scale(1);opacity:1} }
+
+  /* ── Trim Time Labels ── */
+  .trim-time-label {
+    font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+  }
+  .trim-active .trim-handle { background: rgba(233,69,96,0.4); }
+  .trim-active .trim-handle:hover { background: rgba(233,69,96,0.6); }
+  .ctrl-btn.trim-on { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Time Remaining ── */
+  .time-remaining { font-variant-numeric: tabular-nums; }
+  .time-remaining.warning { color: #F59E0B; }
+  .time-remaining.critical { color: var(--danger); animation: blink 0.8s ease-in-out infinite; }
+
+  /* ── Teleprompter ── */
+  #teleprompter {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 4;
+  }
+  #prompterText {
+    position: absolute; bottom: 0; left: 10%; right: 10%;
+    font-size: 28px; line-height: 1.6; color: rgba(255,255,255,0.85);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8); text-align: center;
+  }
+  #teleprompter.mirrored { transform: scaleX(-1); }
+
   .overlay-item {
     display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px;
     background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);
@@ -241,6 +278,9 @@
       <canvas id="recorderCanvas" width="1920" height="1080"></canvas>
       <div class="canvas-badge" id="badge"></div>
       <div class="canvas-time" id="canvasTime">00:00</div>
+      <div id="teleprompter" style="display:none;">
+        <div id="prompterText"></div>
+      </div>
     </div>
 
     <!-- Controls -->
@@ -264,6 +304,9 @@
       <div class="ctrl-sep"></div>
       <button class="ctrl-btn" id="btnPlay" onclick="R.togglePlayback()" title="Play">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btnTrim" onclick="R.toggleTrim()" title="Trim">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
       </button>
     </div>
 
@@ -302,6 +345,8 @@
       <div class="sidebar-tab active" onclick="R.switchTab('text')">Text</div>
       <div class="sidebar-tab" onclick="R.switchTab('image')">Image</div>
       <div class="sidebar-tab" onclick="R.switchTab('music')">Music</div>
+      <div class="sidebar-tab" onclick="R.switchTab('prompter')">Prompter</div>
+      <div class="sidebar-tab" onclick="R.switchTab('settings')">Settings</div>
     </div>
 
     <!-- Text Panel -->
@@ -426,6 +471,106 @@
         </div>
       </div>
     </div>
+
+    <!-- Prompter Panel -->
+    <div class="sidebar-panel" id="panelPrompter">
+      <div class="sb-group">
+        <label class="sb-label">Script</label>
+        <textarea class="sb-input" id="prompterScript" rows="12" placeholder="Paste or type your script here..." style="resize:vertical;"></textarea>
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Font Size: <span id="prompterSizeLabel">28px</span></label>
+        <input type="range" class="sb-range" id="prompterSize" min="16" max="60" value="28" oninput="R.setPrompterSize(this.value)">
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Scroll Speed: <span id="prompterSpeedLabel">3</span></label>
+        <input type="range" class="sb-range" id="prompterSpeed" min="1" max="10" value="3" oninput="R.setPrompterSpeed(this.value)">
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Opacity: <span id="prompterOpacityLabel">85%</span></label>
+        <input type="range" class="sb-range" id="prompterOpacity" min="10" max="100" value="85" oninput="R.setPrompterOpacity(this.value)">
+      </div>
+      <div class="sb-group">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="prompterMirror" onchange="R.togglePrompterMirror()"> Mirror text
+        </label>
+      </div>
+      <button class="sb-btn primary" id="btnPrompter" onclick="R.togglePrompter()">Start Prompter</button>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="sidebar-panel" id="panelSettings">
+      <div class="sb-group">
+        <label class="sb-label">Resolution</label>
+        <select class="sb-select" id="resSel" onchange="R.changeResolution(this.value)">
+          <option value="1280x720">720p (1280×720)</option>
+          <option value="1920x1080" selected>1080p (1920×1080)</option>
+          <option value="3840x2160">4K (3840×2160)</option>
+        </select>
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Frame Rate</label>
+        <select class="sb-select" id="fpsSel" onchange="R.changeFps(this.value)">
+          <option value="24">24 FPS</option>
+          <option value="30" selected>30 FPS</option>
+          <option value="60">60 FPS</option>
+        </select>
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Quality</label>
+        <select class="sb-select" id="qualSel" onchange="R.changeBitrate(this.value)">
+          <option value="2000000">Standard (2 Mbps)</option>
+          <option value="4000000" selected>High (4 Mbps)</option>
+          <option value="8000000">Ultra (8 Mbps)</option>
+        </select>
+      </div>
+      <div class="sb-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+        <label class="sb-label">Camera</label>
+        <select class="sb-select" id="cameraSel" onchange="R.switchDevice()">
+          <option value="">Default Camera</option>
+        </select>
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Microphone</label>
+        <select class="sb-select" id="micSel" onchange="R.switchDevice()">
+          <option value="">Default Microphone</option>
+        </select>
+      </div>
+      <div class="sb-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+        <label class="sb-label">Layout</label>
+        <select class="sb-select" id="layoutSel" onchange="R.setLayout(this.value)">
+          <option value="full">Full (Camera fills canvas)</option>
+          <option value="pip">PiP (Camera bottom-right)</option>
+          <option value="split">Split Screen (50/50)</option>
+          <option value="cover">Camera + Cover (60/40)</option>
+        </select>
+      </div>
+      <div class="sb-group">
+        <label class="sb-label">Cover Image (for PiP / Split / Cover)</label>
+        <label class="sb-btn" style="cursor:pointer;text-align:center;display:block;">
+          Choose Cover Image
+          <input type="file" accept="image/*" style="display:none;" onchange="R.loadCoverImage(this)">
+        </label>
+        <div id="coverInfo" style="display:none;margin-top:6px;">
+          <div class="overlay-item">
+            <span class="name" id="coverName"></span>
+            <button class="del" onclick="R.removeCoverImage()">&times;</button>
+          </div>
+        </div>
+      </div>
+      <div class="sb-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+        <label class="sb-label">Recording Time Limit</label>
+        <select class="sb-select" id="timeLimitSel" onchange="R.setTimeLimit(this.value)">
+          <option value="0">None</option>
+          <option value="60">1 minute</option>
+          <option value="120">2 minutes</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1800">30 minutes</option>
+          <option value="3600">60 minutes</option>
+        </select>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -484,11 +629,45 @@ var R = (function() {
   var timelineDuration = 0;
   var animFrame = null;
 
+  // ── Settings / Quality ──
+  var resolution = { w: 1920, h: 1080, label: '1080p' };
+  var targetFps = 30;
+  var targetBitrate = 4000000;
+
+  // ── Layout ──
+  var layout = 'full';
+  var coverImage = null;
+
+  // ── Countdown ──
+  var countdownValue = 0;
+
+  // ── Time Limit ──
+  var timeLimit = 0;
+  var timeLimitTimer = null;
+  var timeLimitRemaining = 0;
+
+  // ── Teleprompter ──
+  var prompterActive = false;
+  var prompterAnimFrame = null;
+  var prompterScrollPos = 0;
+
+  // ── Trim ──
+  var trimIn = 0;
+  var trimOut = 0;
+  var trimActive = false;
+
   // ── Camera ──
   function launchRecorder() {
+    var videoConstraints = { width: { ideal: resolution.w }, height: { ideal: resolution.h } };
+    var audioConstraints = true;
+    var selCam = document.getElementById('cameraSel').value;
+    var selMic = document.getElementById('micSel').value;
+    if (selCam) videoConstraints.deviceId = { exact: selCam };
+    if (selMic) audioConstraints = { deviceId: { exact: selMic } };
+
     navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: true
+      video: videoConstraints,
+      audio: audioConstraints
     }).then(function(stream) {
       cameraStream = stream;
       cameraVideo = document.createElement('video');
@@ -503,6 +682,7 @@ var R = (function() {
       document.getElementById('btnLaunchRecorder').textContent = 'Recorder Active';
       document.getElementById('btnLaunchRecorder').disabled = true;
       setupAudio(stream);
+      enumerateDeviceLists();
       startCompositor();
     }).catch(function(err) {
       alert('Camera/mic access denied: ' + err.message);
@@ -549,17 +729,30 @@ var R = (function() {
   function startCompositor() {
     function draw() {
       animFrame = requestAnimationFrame(draw);
+      var cw = canvas.width;
+      var ch = canvas.height;
       ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, 1920, 1080);
+      ctx.fillRect(0, 0, cw, ch);
 
-      // Draw camera
+      // Draw camera with layout
       if (cameraOn && cameraVideo && cameraVideo.readyState >= 2) {
-        var vw = cameraVideo.videoWidth;
-        var vh = cameraVideo.videoHeight;
-        var scale = Math.max(1920 / vw, 1080 / vh);
-        var sw = vw * scale;
-        var sh = vh * scale;
-        ctx.drawImage(cameraVideo, (1920 - sw) / 2, (1080 - sh) / 2, sw, sh);
+        drawLayout(ctx, cameraVideo, cw, ch);
+      } else if (coverImage && layout !== 'full') {
+        drawCoverFull(ctx, coverImage, cw, ch);
+      }
+
+      // Draw countdown number on canvas
+      if (countdownValue > 0) {
+        ctx.save();
+        ctx.font = 'bold 200px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 8;
+        ctx.strokeText(countdownValue, cw / 2, ch / 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(countdownValue, cw / 2, ch / 2);
+        ctx.restore();
       }
 
       // Current time relative to recording
@@ -633,7 +826,17 @@ var R = (function() {
     var m = Math.floor(seconds / 60);
     var s = Math.floor(seconds % 60);
     var str = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-    document.getElementById('canvasTime').textContent = str;
+    var el = document.getElementById('canvasTime');
+    if (timeLimit > 0 && isRecording) {
+      var remaining = timeLimit - seconds;
+      var rm = Math.floor(Math.max(0, remaining) / 60);
+      var rs = Math.floor(Math.max(0, remaining) % 60);
+      str += ' / -' + String(rm).padStart(2, '0') + ':' + String(rs).padStart(2, '0');
+      el.className = 'canvas-time time-remaining' + (remaining < 10 ? ' critical' : remaining < 30 ? ' warning' : '');
+    } else {
+      el.className = 'canvas-time';
+    }
+    el.textContent = str;
   }
 
   // ── Recording ──
@@ -646,7 +849,7 @@ var R = (function() {
       alert('Launch the recorder first (camera + mic access required).');
       return;
     }
-    startRecording();
+    startCountdown();
   }
 
   function startRecording() {
@@ -655,7 +858,7 @@ var R = (function() {
     if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
 
     // Canvas stream + mixed audio
-    var canvasStream = canvas.captureStream(30);
+    var canvasStream = canvas.captureStream(targetFps);
     var combined = new MediaStream();
     canvasStream.getVideoTracks().forEach(function(t) { combined.addTrack(t); });
     audioDest.stream.getAudioTracks().forEach(function(t) { combined.addTrack(t); });
@@ -667,7 +870,7 @@ var R = (function() {
       if (MediaRecorder.isTypeSupported(codecs[i])) { mimeType = codecs[i]; break; }
     }
 
-    var options = { videoBitsPerSecond: 4000000 };
+    var options = { videoBitsPerSecond: targetBitrate };
     if (mimeType) options.mimeType = mimeType;
 
     mediaRecorder = new MediaRecorder(combined, options);
@@ -703,6 +906,15 @@ var R = (function() {
     var badge = document.getElementById('badge');
     badge.className = 'canvas-badge recording';
     badge.innerHTML = '<span class="dot"></span> REC';
+
+    // Disable settings while recording
+    setSettingsDisabled(true);
+
+    // Start time limit timer
+    if (timeLimit > 0) {
+      timeLimitRemaining = timeLimit;
+      timeLimitTimer = setTimeout(function() { stopRecord(); }, timeLimit * 1000);
+    }
   }
 
   function togglePause() {
@@ -714,6 +926,14 @@ var R = (function() {
       if (musicAudioEl) musicAudioEl.play();
       document.getElementById('badge').className = 'canvas-badge recording';
       document.getElementById('badge').innerHTML = '<span class="dot"></span> REC';
+      // Resume time limit timer
+      if (timeLimit > 0 && timeLimitRemaining > 0) {
+        var elapsed = getCurrentTime();
+        var remaining = timeLimit - elapsed;
+        if (remaining > 0) {
+          timeLimitTimer = setTimeout(function() { stopRecord(); }, remaining * 1000);
+        }
+      }
     } else {
       pauseStart = performance.now();
       mediaRecorder.pause();
@@ -721,6 +941,8 @@ var R = (function() {
       if (musicAudioEl) musicAudioEl.pause();
       document.getElementById('badge').className = 'canvas-badge paused';
       document.getElementById('badge').textContent = 'PAUSED';
+      // Pause time limit timer
+      if (timeLimitTimer) { clearTimeout(timeLimitTimer); timeLimitTimer = null; }
     }
   }
 
@@ -731,6 +953,16 @@ var R = (function() {
     isPaused = false;
     mediaRecorder.stop();
     if (musicAudioEl) { musicAudioEl.pause(); musicAudioEl.currentTime = 0; }
+
+    // Clear time limit timer
+    if (timeLimitTimer) { clearTimeout(timeLimitTimer); timeLimitTimer = null; }
+
+    // Re-enable settings
+    setSettingsDisabled(false);
+
+    // Reset trim points
+    trimIn = 0;
+    trimOut = 0;
 
     // UI
     document.getElementById('btnRec').classList.remove('active');
@@ -771,6 +1003,8 @@ var R = (function() {
       if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
       cameraOn = false;
       document.getElementById('btnCamera').classList.remove('active');
+      // Respect trim in point
+      if (trimIn > 0) playbackVideo.currentTime = trimIn;
       playbackVideo.play();
       if (musicAudioEl) { musicAudioEl.currentTime = playbackVideo.currentTime; musicAudioEl.play(); }
       isPlaying = true;
@@ -783,14 +1017,27 @@ var R = (function() {
     if (!isPlaying) return;
     animFrame = requestAnimationFrame(drawPlayback);
 
+    // Check trim out point
+    var effectiveTrimOut = trimOut > 0 ? trimOut : timelineDuration;
+    if (trimOut > 0 && playbackVideo.currentTime >= trimOut) {
+      playbackVideo.pause();
+      if (musicAudioEl) musicAudioEl.pause();
+      isPlaying = false;
+      document.getElementById('btnPlay').classList.remove('active');
+      if (cameraStream) { cameraOn = true; document.getElementById('btnCamera').classList.add('active'); startCompositor(); }
+      return;
+    }
+
+    var cw = canvas.width;
+    var ch = canvas.height;
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, 1920, 1080);
+    ctx.fillRect(0, 0, cw, ch);
 
     if (playbackVideo.readyState >= 2) {
-      var vw = playbackVideo.videoWidth || 1920;
-      var vh = playbackVideo.videoHeight || 1080;
-      var scale = Math.max(1920 / vw, 1080 / vh);
-      ctx.drawImage(playbackVideo, (1920 - vw * scale) / 2, (1080 - vh * scale) / 2, vw * scale, vh * scale);
+      var vw = playbackVideo.videoWidth || cw;
+      var vh = playbackVideo.videoHeight || ch;
+      var scale = Math.max(cw / vw, ch / vh);
+      ctx.drawImage(playbackVideo, (cw - vw * scale) / 2, (ch - vh * scale) / 2, vw * scale, vh * scale);
     }
 
     // Draw overlays during playback
@@ -970,7 +1217,18 @@ var R = (function() {
     var trackVideo = document.getElementById('trackVideo');
     trackVideo.innerHTML = '';
     if (timelineDuration > 0) {
-      trackVideo.innerHTML = '<div class="track-clip video" style="left:0;width:100%;">Recording</div>';
+      var clipHtml = '<div class="track-clip video' + (trimActive ? ' trim-active' : '') + '" style="left:0;width:100%;">Recording';
+      clipHtml += '<div class="trim-handle left" data-trim="in"></div>';
+      clipHtml += '<div class="trim-handle right" data-trim="out"></div>';
+      clipHtml += '</div>';
+      trackVideo.innerHTML = clipHtml;
+      // Show trim labels
+      if (trimIn > 0 || trimOut > 0) {
+        var labelHtml = '<span class="trim-time-label" style="position:absolute;bottom:-14px;left:0;font-size:9px;">In: ' + formatTime(trimIn) + '</span>';
+        if (trimOut > 0) labelHtml += '<span class="trim-time-label" style="position:absolute;bottom:-14px;right:0;font-size:9px;">Out: ' + formatTime(trimOut) + '</span>';
+        trackVideo.innerHTML += labelHtml;
+      }
+      setupTrimHandles();
     }
 
     // Text track
@@ -1036,7 +1294,12 @@ var R = (function() {
     var ruler = document.getElementById('timelineRuler');
     var rect = ruler.getBoundingClientRect();
     var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    playbackVideo.currentTime = pct * timelineDuration;
+    var seekTime = pct * timelineDuration;
+    // Clamp to trim range
+    var lo = trimIn;
+    var hi = trimOut > 0 ? trimOut : timelineDuration;
+    seekTime = Math.max(lo, Math.min(hi, seekTime));
+    playbackVideo.currentTime = seekTime;
     if (musicAudioEl) musicAudioEl.currentTime = playbackVideo.currentTime;
   }
 
@@ -1044,7 +1307,8 @@ var R = (function() {
   function switchTab(tab) {
     document.querySelectorAll('.sidebar-tab').forEach(function(t) { t.classList.remove('active'); });
     document.querySelectorAll('.sidebar-panel').forEach(function(p) { p.classList.remove('active'); });
-    document.querySelector('.sidebar-tab:nth-child(' + ({text:1,image:2,music:3}[tab]) + ')').classList.add('active');
+    var idx = {text:1,image:2,music:3,prompter:4,settings:5}[tab];
+    document.querySelector('.sidebar-tab:nth-child(' + idx + ')').classList.add('active');
     document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   }
 
@@ -1083,13 +1347,18 @@ var R = (function() {
 
       await ffmpeg.writeFile('input.webm', await fetchFile(recordedBlob));
 
+      // Build trim args
+      var trimArgs = [];
+      if (trimIn > 0) trimArgs.push('-ss', trimIn.toFixed(2));
+      if (trimOut > 0) trimArgs.push('-to', trimOut.toFixed(2));
+
       if (musicFile) {
         document.getElementById('exportStatus').textContent = 'Writing audio data...';
         await ffmpeg.writeFile('music.mp3', await fetchFile(musicFile));
 
         // Mix music into video
         var vol = (parseInt(document.getElementById('musicVolume').value) || 50) / 100;
-        await ffmpeg.exec([
+        var args = trimArgs.concat([
           '-i', 'input.webm',
           '-i', 'music.mp3',
           '-filter_complex', '[0:a]volume=1[mic];[1:a]volume=' + vol + '[music];[mic][music]amix=inputs=2:duration=shortest[aout]',
@@ -1103,8 +1372,9 @@ var R = (function() {
           '-movflags', '+faststart',
           'output.mp4'
         ]);
+        await ffmpeg.exec(args);
       } else {
-        await ffmpeg.exec([
+        var args = trimArgs.concat([
           '-i', 'input.webm',
           '-c:v', 'libx264',
           '-preset', 'fast',
@@ -1114,6 +1384,7 @@ var R = (function() {
           '-movflags', '+faststart',
           'output.mp4'
         ]);
+        await ffmpeg.exec(args);
       }
 
       document.getElementById('exportStatus').textContent = 'Reading output...';
@@ -1200,6 +1471,344 @@ var R = (function() {
     return div.innerHTML;
   }
 
+  // ── Settings / Quality ──
+  function changeResolution(val) {
+    var parts = val.split('x');
+    resolution.w = parseInt(parts[0]);
+    resolution.h = parseInt(parts[1]);
+    canvas.width = resolution.w;
+    canvas.height = resolution.h;
+    if (cameraStream && cameraOn) {
+      var track = cameraStream.getVideoTracks()[0];
+      if (track) track.applyConstraints({ width: { ideal: resolution.w }, height: { ideal: resolution.h } });
+    }
+  }
+
+  function changeFps(val) {
+    targetFps = parseInt(val);
+  }
+
+  function changeBitrate(val) {
+    targetBitrate = parseInt(val);
+  }
+
+  function setSettingsDisabled(disabled) {
+    ['resSel', 'fpsSel', 'qualSel', 'cameraSel', 'micSel'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.disabled = disabled;
+    });
+  }
+
+  // ── Device Picker ──
+  function enumerateDeviceLists() {
+    navigator.mediaDevices.enumerateDevices().then(function(devices) {
+      var cameraSel = document.getElementById('cameraSel');
+      var micSel = document.getElementById('micSel');
+      var curCam = cameraSel.value;
+      var curMic = micSel.value;
+      cameraSel.innerHTML = '<option value="">Default Camera</option>';
+      micSel.innerHTML = '<option value="">Default Microphone</option>';
+      devices.forEach(function(d) {
+        if (d.kind === 'videoinput') {
+          var opt = document.createElement('option');
+          opt.value = d.deviceId;
+          opt.textContent = d.label || ('Camera ' + (cameraSel.options.length));
+          cameraSel.appendChild(opt);
+        } else if (d.kind === 'audioinput') {
+          var opt = document.createElement('option');
+          opt.value = d.deviceId;
+          opt.textContent = d.label || ('Mic ' + (micSel.options.length));
+          micSel.appendChild(opt);
+        }
+      });
+      if (curCam) cameraSel.value = curCam;
+      if (curMic) micSel.value = curMic;
+    });
+  }
+
+  function switchDevice() {
+    if (!cameraStream) return;
+    // Stop existing tracks
+    cameraStream.getTracks().forEach(function(t) { t.stop(); });
+    if (musicSource) { try { musicSource.disconnect(); } catch(e) {} musicSource = null; }
+    if (micSource) { try { micSource.disconnect(); } catch(e) {} micSource = null; }
+    // Re-launch with new device
+    launchRecorder();
+  }
+
+  // ── Countdown ──
+  function startCountdown() {
+    countdownValue = 3;
+    var badge = document.getElementById('badge');
+    badge.className = 'canvas-badge recording';
+    badge.style.display = 'flex';
+    badge.textContent = '3';
+
+    function tick() {
+      if (countdownValue > 0) {
+        badge.textContent = countdownValue;
+        countdownValue--;
+        setTimeout(tick, 1000);
+      } else {
+        badge.textContent = '';
+        countdownValue = 0;
+        startRecording();
+      }
+    }
+    tick();
+  }
+
+  // ── Time Limit ──
+  function setTimeLimit(val) {
+    timeLimit = parseInt(val) || 0;
+  }
+
+  // ── Layout ──
+  function drawLayout(ctx, video, cw, ch) {
+    var vw = video.videoWidth;
+    var vh = video.videoHeight;
+    if (!vw || !vh) return;
+
+    switch (layout) {
+      case 'pip':
+        // Draw cover or black background
+        if (coverImage) {
+          drawCoverFull(ctx, coverImage, cw, ch);
+        }
+        // Camera in small rounded rect bottom-right
+        var pipW = Math.round(cw * 0.2);
+        var pipH = Math.round(ch * 0.2);
+        var pipX = cw - pipW - 20;
+        var pipY = ch - pipH - 20;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(pipX, pipY, pipW, pipH, 12);
+        ctx.clip();
+        var pipScale = Math.max(pipW / vw, pipH / vh);
+        ctx.drawImage(video, pipX + (pipW - vw * pipScale) / 2, pipY + (pipH - vh * pipScale) / 2, vw * pipScale, vh * pipScale);
+        ctx.restore();
+        // PiP border
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(pipX, pipY, pipW, pipH, 12);
+        ctx.stroke();
+        break;
+
+      case 'split':
+        // Left half: camera
+        var halfW = Math.round(cw / 2);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, halfW, ch);
+        ctx.clip();
+        var splitScale = Math.max(halfW / vw, ch / vh);
+        ctx.drawImage(video, (halfW - vw * splitScale) / 2, (ch - vh * splitScale) / 2, vw * splitScale, vh * splitScale);
+        ctx.restore();
+        // Right half: cover or gradient
+        if (coverImage) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(halfW, 0, cw - halfW, ch);
+          ctx.clip();
+          drawCoverFit(ctx, coverImage, halfW, 0, cw - halfW, ch);
+          ctx.restore();
+        } else {
+          var grad = ctx.createLinearGradient(halfW, 0, cw, ch);
+          grad.addColorStop(0, '#1a1a2e');
+          grad.addColorStop(1, '#16213e');
+          ctx.fillStyle = grad;
+          ctx.fillRect(halfW, 0, cw - halfW, ch);
+        }
+        // Divider line
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(halfW, 0);
+        ctx.lineTo(halfW, ch);
+        ctx.stroke();
+        break;
+
+      case 'cover':
+        // Left 60%: camera
+        var camW = Math.round(cw * 0.6);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, camW, ch);
+        ctx.clip();
+        var coverScale = Math.max(camW / vw, ch / vh);
+        ctx.drawImage(video, (camW - vw * coverScale) / 2, (ch - vh * coverScale) / 2, vw * coverScale, vh * coverScale);
+        ctx.restore();
+        // Right 40%: cover image
+        var rightW = cw - camW;
+        if (coverImage) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(camW, 0, rightW, ch);
+          ctx.clip();
+          drawCoverFit(ctx, coverImage, camW, 0, rightW, ch);
+          ctx.restore();
+        } else {
+          var grad = ctx.createLinearGradient(camW, 0, cw, ch);
+          grad.addColorStop(0, '#1a1a2e');
+          grad.addColorStop(1, '#16213e');
+          ctx.fillStyle = grad;
+          ctx.fillRect(camW, 0, rightW, ch);
+        }
+        break;
+
+      default: // 'full'
+        var fullScale = Math.max(cw / vw, ch / vh);
+        var sw = vw * fullScale;
+        var sh = vh * fullScale;
+        ctx.drawImage(video, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+        break;
+    }
+  }
+
+  function drawCoverFull(ctx, img, cw, ch) {
+    var scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    var w = img.naturalWidth * scale;
+    var h = img.naturalHeight * scale;
+    ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+  }
+
+  function drawCoverFit(ctx, img, x, y, w, h) {
+    var scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+    var iw = img.naturalWidth * scale;
+    var ih = img.naturalHeight * scale;
+    ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+  }
+
+  function setLayout(val) {
+    layout = val;
+  }
+
+  function loadCoverImage(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var img = new Image();
+    img.onload = function() {
+      coverImage = img;
+      document.getElementById('coverName').textContent = file.name;
+      document.getElementById('coverInfo').style.display = '';
+    };
+    img.src = URL.createObjectURL(file);
+    input.value = '';
+  }
+
+  function removeCoverImage() {
+    coverImage = null;
+    document.getElementById('coverInfo').style.display = 'none';
+  }
+
+  // ── Teleprompter ──
+  function togglePrompter() {
+    var el = document.getElementById('teleprompter');
+    var btn = document.getElementById('btnPrompter');
+    if (prompterActive) {
+      prompterActive = false;
+      el.style.display = 'none';
+      if (prompterAnimFrame) { cancelAnimationFrame(prompterAnimFrame); prompterAnimFrame = null; }
+      btn.textContent = 'Start Prompter';
+      btn.classList.remove('primary');
+      return;
+    }
+    var script = document.getElementById('prompterScript').value.trim();
+    if (!script) { alert('Enter a script first.'); return; }
+    var textEl = document.getElementById('prompterText');
+    textEl.innerHTML = script.replace(/\n/g, '<br>');
+    prompterScrollPos = 0;
+    textEl.style.transform = 'translateY(0px)';
+    el.style.display = '';
+    prompterActive = true;
+    btn.textContent = 'Stop Prompter';
+    btn.classList.add('primary');
+    scrollPrompter();
+  }
+
+  function scrollPrompter() {
+    if (!prompterActive) return;
+    prompterAnimFrame = requestAnimationFrame(scrollPrompter);
+    var speed = parseInt(document.getElementById('prompterSpeed').value) || 3;
+    prompterScrollPos += speed * 0.5;
+    var textEl = document.getElementById('prompterText');
+    textEl.style.transform = 'translateY(-' + prompterScrollPos + 'px)';
+    // Stop when fully scrolled past
+    var container = document.getElementById('teleprompter');
+    if (prompterScrollPos > textEl.offsetHeight + container.offsetHeight) {
+      prompterActive = false;
+      container.style.display = 'none';
+      if (prompterAnimFrame) { cancelAnimationFrame(prompterAnimFrame); prompterAnimFrame = null; }
+      document.getElementById('btnPrompter').textContent = 'Start Prompter';
+      document.getElementById('btnPrompter').classList.remove('primary');
+    }
+  }
+
+  function setPrompterSize(val) {
+    document.getElementById('prompterSizeLabel').textContent = val + 'px';
+    document.getElementById('prompterText').style.fontSize = val + 'px';
+  }
+
+  function setPrompterSpeed(val) {
+    document.getElementById('prompterSpeedLabel').textContent = val;
+  }
+
+  function setPrompterOpacity(val) {
+    document.getElementById('prompterOpacityLabel').textContent = val + '%';
+    document.getElementById('prompterText').style.color = 'rgba(255,255,255,' + (val / 100) + ')';
+  }
+
+  function togglePrompterMirror() {
+    var el = document.getElementById('teleprompter');
+    el.classList.toggle('mirrored', document.getElementById('prompterMirror').checked);
+  }
+
+  // ── Trim ──
+  function toggleTrim() {
+    trimActive = !trimActive;
+    document.getElementById('btnTrim').classList.toggle('trim-on', trimActive);
+    updateTimeline();
+  }
+
+  function setupTrimHandles() {
+    var handles = document.querySelectorAll('#trackVideo .trim-handle');
+    handles.forEach(function(handle) {
+      handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var which = handle.getAttribute('data-trim');
+        var tracks = document.getElementById('timelineTracks');
+        var lane = document.getElementById('trackVideo');
+        var laneRect = lane.getBoundingClientRect();
+
+        function onMove(ev) {
+          var pct = Math.max(0, Math.min(1, (ev.clientX - laneRect.left) / laneRect.width));
+          var time = pct * timelineDuration;
+          if (which === 'in') {
+            trimIn = Math.max(0, Math.min(time, (trimOut > 0 ? trimOut : timelineDuration) - 0.1));
+          } else {
+            trimOut = Math.max(trimIn + 0.1, Math.min(time, timelineDuration));
+          }
+          updateTimeline();
+        }
+
+        function onUp() {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+
+  // ── Enumerate devices on load ──
+  if (navigator.mediaDevices) {
+    enumerateDeviceLists();
+  }
+
   // ── Public API ──
   return {
     launchRecorder: launchRecorder,
@@ -1220,7 +1829,21 @@ var R = (function() {
     startExport: startExport,
     closeExportModal: closeExportModal,
     downloadRaw: downloadRaw,
-    scrub: scrub
+    scrub: scrub,
+    changeResolution: changeResolution,
+    changeFps: changeFps,
+    changeBitrate: changeBitrate,
+    setLayout: setLayout,
+    loadCoverImage: loadCoverImage,
+    removeCoverImage: removeCoverImage,
+    togglePrompter: togglePrompter,
+    setPrompterSize: setPrompterSize,
+    setPrompterSpeed: setPrompterSpeed,
+    setPrompterOpacity: setPrompterOpacity,
+    togglePrompterMirror: togglePrompterMirror,
+    switchDevice: switchDevice,
+    setTimeLimit: setTimeLimit,
+    toggleTrim: toggleTrim
   };
 })();
 </script>
