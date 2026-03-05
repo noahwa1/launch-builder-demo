@@ -937,9 +937,7 @@ editor.on('load', function() {
     setTimeout(function() { injectCSS(); markUploadPlaceholders(); }, 150);
   }
 
-  if (!loaded && editor.DomComponents.getComponents().length === 0) {
-    openTemplates();
-  }
+  // No longer auto-open templates — user can click "Templates" button when ready
 });
 
 var markTimeout;
@@ -1975,8 +1973,19 @@ document.addEventListener('keydown', function(e) {
   if (mod && e.key === 's') { e.preventDefault(); saveToServer(); }
   if (mod && e.key === 'd') { e.preventDefault(); tbDuplicate(); }
   if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
-    // Only delete if no contenteditable or input is focused
+    // Don't delete component if user is editing text (contenteditable in iframe or outer doc)
     if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+    // Check if GrapesJS RTE (rich text editor) is active inside the canvas iframe
+    var rte = editor.RichTextEditor;
+    if (rte && rte.getToolbarEl && rte.getToolbarEl() && rte.getToolbarEl().style.display !== 'none') return;
+    // Also check if an editable element is focused inside the canvas iframe
+    try {
+      var iframeDoc = editor.Canvas.getDocument();
+      var activeEl = iframeDoc && iframeDoc.activeElement;
+      if (activeEl && (activeEl.getAttribute('contenteditable') || activeEl.isContentEditable)) return;
+      var iframeTag = (activeEl && activeEl.tagName || '').toLowerCase();
+      if (iframeTag === 'input' || iframeTag === 'textarea') return;
+    } catch(ex) {}
     var sel = editor.getSelected();
     if (sel) { e.preventDefault(); sel.remove(); }
   }
