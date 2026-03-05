@@ -1,0 +1,30 @@
+<% content_for :page_title, "Edit: #{@page.title}" %>
+<% content_for :page_actions do %>
+  <%= link_to 'All Pages', manage_pages_path, class: 'btn btn-secondary btn-sm' %>
+  <%= link_to 'Builder', builder_manage_page_path(@page), class: 'btn btn-primary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:640px;">
+  <%= form_with model: @page, url: manage_page_path(@page), method: :patch, scope: :landing_page do |f| %>
+    <div class="form-group">
+      <label for="landing_page_title">Title</label>
+      <%= f.text_field :title, placeholder: 'Page title', required: true %>
+    </div>
+    <div class="form-group">
+      <label for="landing_page_slug">Slug</label>
+      <%= f.text_field :slug, placeholder: 'my-page-slug' %>
+      <% if @page.slug.present? %>
+        <div class="text-muted" style="font-size:12px;margin-top:4px;">Current URL: /pages/<%= @page.slug %></div>
+      <% end %>
+    </div>
+    <div class="form-group">
+      <label for="landing_page_author_id">Author</label>
+      <%= f.select :author_id, options_from_collection_for_select(@authors, :id, :full_name, @page.author_id), { include_blank: 'None' } %>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <%= f.submit 'Save Changes', class: 'btn btn-primary' %>
+      <%= link_to 'Cancel', manage_pages_path, class: 'btn btn-secondary' %>
+    </div>
+  <% end %>
+</div>

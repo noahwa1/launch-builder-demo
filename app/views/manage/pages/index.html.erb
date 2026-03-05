@@ -31,6 +31,7 @@
             </td>
             <td class="text-muted"><%= page.created_at.strftime('%b %d, %Y') %></td>
             <td style="white-space:nowrap;position:relative;">
+              <%= link_to 'Edit', edit_manage_page_path(page), class: 'btn btn-secondary btn-sm' %>
               <%= link_to 'Builder', builder_manage_page_path(page), class: 'btn btn-primary btn-sm' %>
               <button type="button" class="btn btn-secondary btn-sm" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">Generate</button>
               <div style="display:none;position:absolute;right:0;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;min-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
