@@ -224,6 +224,30 @@
   }
   #teleprompter.mirrored { transform: scaleX(-1); }
 
+  /* ── Canvas Drag Handles ── */
+  .canvas-wrap { cursor: default; }
+  .canvas-wrap.dragging { cursor: grabbing; }
+  .overlay-handle {
+    position: absolute; border: 2px dashed rgba(255,255,255,0.6); border-radius: 4px;
+    cursor: grab; z-index: 3; pointer-events: auto;
+    display: flex; align-items: flex-start; justify-content: flex-end;
+  }
+  .overlay-handle:hover { border-color: var(--accent); }
+  .overlay-handle.selected { border-color: var(--accent); border-style: solid; }
+  .overlay-handle .handle-label {
+    font-size: 9px; background: var(--accent); color: #fff; padding: 1px 5px;
+    border-radius: 0 0 0 4px; pointer-events: none;
+  }
+
+  /* ── Lower Third ── */
+  .lower-third-preview {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);
+    margin-top: 6px;
+  }
+  .lower-third-preview img { height: 32px; border-radius: 3px; }
+  .lower-third-preview .name { flex: 1; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   .overlay-item {
     display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px;
     background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);
@@ -401,7 +425,30 @@
           <input type="number" class="sb-input" id="textFadeOut" value="0.5" min="0" max="5" step="0.1">
         </div>
       </div>
+      <div class="sb-group">
+        <label class="sb-label">Position</label>
+        <select class="sb-select" id="textPosition" onchange="R.setTextPositionPreset(this.value)">
+          <option value="center">Center</option>
+          <option value="top">Top Center</option>
+          <option value="bottom">Bottom Center</option>
+          <option value="lower-third">Lower Third</option>
+          <option value="top-left">Top Left</option>
+          <option value="top-right">Top Right</option>
+          <option value="custom">Custom (drag on canvas)</option>
+        </select>
+      </div>
+      <div class="sb-group sb-row" id="textCustomPos" style="display:none;">
+        <div>
+          <label class="sb-label">X</label>
+          <input type="number" class="sb-input" id="textPosX" value="960" min="0" max="3840">
+        </div>
+        <div>
+          <label class="sb-label">Y</label>
+          <input type="number" class="sb-input" id="textPosY" value="540" min="0" max="2160">
+        </div>
+      </div>
       <button class="sb-btn primary" onclick="R.addTextOverlay()">Add Text</button>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-muted);">Tip: After adding, drag text directly on the canvas to reposition.</div>
       <div id="textOverlaysList" style="margin-top:12px;"></div>
     </div>
 
@@ -449,6 +496,32 @@
         </div>
       </div>
       <div id="imageOverlaysList" style="margin-top:12px;"></div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+        <div class="sb-group">
+          <label class="sb-label">Lower Third Bar</label>
+          <label class="sb-btn" style="cursor:pointer;text-align:center;display:block;">
+            Upload Lower Third
+            <input type="file" accept="image/*" style="display:none;" onchange="R.addLowerThird(this)">
+          </label>
+          <div style="margin-top:4px;font-size:10px;color:var(--text-muted);">PNG with transparency recommended. Auto-positioned at bottom of canvas.</div>
+        </div>
+        <div class="sb-group sb-row">
+          <div>
+            <label class="sb-label">Start (s)</label>
+            <input type="number" class="sb-input" id="ltStart" value="0" min="0" step="0.5">
+          </div>
+          <div>
+            <label class="sb-label">Duration (s)</label>
+            <input type="number" class="sb-input" id="ltDuration" value="10" min="0.5" step="0.5">
+          </div>
+        </div>
+        <div class="sb-group">
+          <label class="sb-label">Scale: <span id="ltScaleLabel">100%</span></label>
+          <input type="range" class="sb-range" id="ltScale" min="20" max="100" value="100" oninput="document.getElementById('ltScaleLabel').textContent=this.value+'%'">
+        </div>
+        <div id="lowerThirdsList" style="margin-top:8px;"></div>
+      </div>
     </div>
 
     <!-- Music Panel -->
@@ -656,6 +729,18 @@ var R = (function() {
   var trimOut = 0;
   var trimActive = false;
 
+  // ── Canvas Drag ──
+  var dragTarget = null;  // overlay being dragged
+  var dragOffsetX = 0;
+  var dragOffsetY = 0;
+  var selectedOverlay = null;
+
+  // ── Lower Thirds ──
+  var lowerThirds = [];
+
+  // ── Preview Mode ──
+  var previewTime = 0; // virtual time for previewing overlays before recording
+
   // ── Camera ──
   function launchRecorder() {
     var videoConstraints = { width: { ideal: resolution.w }, height: { ideal: resolution.h } };
@@ -789,6 +874,18 @@ var R = (function() {
         ctx.globalAlpha = 1;
       }
 
+      // Draw lower thirds
+      for (var k = 0; k < lowerThirds.length; k++) {
+        var lt = lowerThirds[k];
+        var ltOpacity = getOverlayOpacity(lt, now);
+        if (ltOpacity <= 0) continue;
+        ctx.globalAlpha = ltOpacity;
+        var ltW = lt.img.naturalWidth * (lt.scale / 100);
+        var ltH = lt.img.naturalHeight * (lt.scale / 100);
+        ctx.drawImage(lt.img, lt.x, lt.y, ltW, ltH);
+        ctx.globalAlpha = 1;
+      }
+
       // Update timer
       if (isRecording && !isPaused) {
         updateTimerDisplay(now);
@@ -805,7 +902,8 @@ var R = (function() {
       if (isPaused) return (pauseStart - recordStartTime - totalPaused) / 1000;
       return (performance.now() - recordStartTime - totalPaused) / 1000;
     }
-    return 0;
+    // Preview mode: show overlays at previewTime when not recording
+    return previewTime;
   }
 
   function getOverlayOpacity(overlay, time) {
@@ -1070,6 +1168,18 @@ var R = (function() {
       ctx.globalAlpha = 1;
     }
 
+    // Draw lower thirds during playback
+    for (var k = 0; k < lowerThirds.length; k++) {
+      var lt = lowerThirds[k];
+      var ltOpacity = getOverlayOpacity(lt, now);
+      if (ltOpacity <= 0) continue;
+      ctx.globalAlpha = ltOpacity;
+      var ltW = lt.img.naturalWidth * (lt.scale / 100);
+      var ltH = lt.img.naturalHeight * (lt.scale / 100);
+      ctx.drawImage(lt.img, lt.x, lt.y, ltW, ltH);
+      ctx.globalAlpha = 1;
+    }
+
     // Update playhead
     if (timelineDuration > 0) {
       var pct = (playbackVideo.currentTime / timelineDuration) * 100;
@@ -1083,7 +1193,8 @@ var R = (function() {
   function addTextOverlay() {
     var text = document.getElementById('textContent').value.trim();
     if (!text) return;
-    textOverlays.push({
+    var pos = getTextPosition();
+    var overlay = {
       id: Date.now(),
       type: 'text',
       text: text,
@@ -1091,14 +1202,17 @@ var R = (function() {
       size: parseInt(document.getElementById('textSize').value) || 48,
       color: document.getElementById('textColor').value,
       stroke: document.getElementById('textStroke').value,
-      x: 960,
-      y: 540,
+      x: pos.x,
+      y: pos.y,
       start: parseFloat(document.getElementById('textStart').value) || 0,
       duration: parseFloat(document.getElementById('textDuration').value) || 5,
       fadeIn: parseFloat(document.getElementById('textFadeIn').value) || 0.5,
       fadeOut: parseFloat(document.getElementById('textFadeOut').value) || 0.5
-    });
+    };
+    textOverlays.push(overlay);
     document.getElementById('textContent').value = '';
+    // Set preview time so the new overlay is visible
+    previewTime = overlay.start;
     renderTextList();
     updateTimeline();
   }
@@ -1127,7 +1241,7 @@ var R = (function() {
     var file = input.files[0];
     var img = new Image();
     img.onload = function() {
-      imageOverlays.push({
+      var overlay = {
         id: Date.now(),
         type: 'image',
         name: file.name,
@@ -1139,7 +1253,9 @@ var R = (function() {
         duration: parseFloat(document.getElementById('imgDuration').value) || 5,
         fadeIn: parseFloat(document.getElementById('imgFadeIn').value) || 0.5,
         fadeOut: parseFloat(document.getElementById('imgFadeOut').value) || 0.5
-      });
+      };
+      imageOverlays.push(overlay);
+      previewTime = overlay.start;
       renderImageList();
       updateTimeline();
     };
@@ -1268,8 +1384,26 @@ var R = (function() {
       trackAudio.innerHTML = '<div class="track-clip audio" style="left:0;width:100%;">' + escHtml(musicFile.name) + '</div>';
     }
 
+    // Lower third track (share image track lane)
+    for (var li = 0; li < lowerThirds.length; li++) {
+      var lt = lowerThirds[li];
+      var ltLeft = (lt.start / dur) * 100;
+      var ltWidth = (lt.duration / dur) * 100;
+      var ltClip = document.createElement('div');
+      ltClip.className = 'track-clip image';
+      ltClip.style.left = ltLeft + '%';
+      ltClip.style.width = Math.max(ltWidth, 1) + '%';
+      ltClip.style.background = 'rgba(168,85,247,0.5)';
+      ltClip.style.borderColor = 'rgba(168,85,247,0.7)';
+      ltClip.textContent = lt.name;
+      trackImage.appendChild(ltClip);
+    }
+
     // Ruler ticks
     drawRuler(dur);
+
+    // Setup timeline clip dragging
+    setupTimelineClipDrag();
   }
 
   function drawRuler(dur) {
@@ -1804,6 +1938,215 @@ var R = (function() {
     });
   }
 
+  // ── Text Position Presets ──
+  function getTextPosition() {
+    var preset = document.getElementById('textPosition').value;
+    var cw = canvas.width;
+    var ch = canvas.height;
+    switch (preset) {
+      case 'top':         return { x: cw / 2, y: ch * 0.1 };
+      case 'bottom':      return { x: cw / 2, y: ch * 0.9 };
+      case 'lower-third': return { x: cw / 2, y: ch * 0.82 };
+      case 'top-left':    return { x: cw * 0.15, y: ch * 0.1 };
+      case 'top-right':   return { x: cw * 0.85, y: ch * 0.1 };
+      case 'custom':
+        return {
+          x: parseInt(document.getElementById('textPosX').value) || cw / 2,
+          y: parseInt(document.getElementById('textPosY').value) || ch / 2
+        };
+      default: return { x: cw / 2, y: ch / 2 };
+    }
+  }
+
+  function setTextPositionPreset(val) {
+    document.getElementById('textCustomPos').style.display = val === 'custom' ? '' : 'none';
+  }
+
+  // ── Canvas Drag-to-Reposition ──
+  (function initCanvasDrag() {
+    var wrap = document.querySelector('.canvas-wrap');
+
+    wrap.addEventListener('mousedown', function(e) {
+      if (isRecording || isPlaying) return;
+      var canvasRect = canvas.getBoundingClientRect();
+      var scaleX = canvas.width / canvasRect.width;
+      var scaleY = canvas.height / canvasRect.height;
+      var mx = (e.clientX - canvasRect.left) * scaleX;
+      var my = (e.clientY - canvasRect.top) * scaleY;
+
+      // Check text overlays (reverse order = top first)
+      for (var i = textOverlays.length - 1; i >= 0; i--) {
+        var to = textOverlays[i];
+        var tw = to.size * to.text.length * 0.5;
+        var th = to.size;
+        if (mx >= to.x - tw / 2 && mx <= to.x + tw / 2 &&
+            my >= to.y - th / 2 && my <= to.y + th / 2) {
+          dragTarget = to;
+          dragOffsetX = mx - to.x;
+          dragOffsetY = my - to.y;
+          selectedOverlay = to;
+          wrap.classList.add('dragging');
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Check image overlays
+      for (var j = imageOverlays.length - 1; j >= 0; j--) {
+        var io = imageOverlays[j];
+        var iw = io.img.naturalWidth * (io.scale / 100);
+        var ih = io.img.naturalHeight * (io.scale / 100);
+        if (mx >= io.x && mx <= io.x + iw && my >= io.y && my <= io.y + ih) {
+          dragTarget = io;
+          dragOffsetX = mx - io.x;
+          dragOffsetY = my - io.y;
+          selectedOverlay = io;
+          wrap.classList.add('dragging');
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Check lower thirds
+      for (var k = lowerThirds.length - 1; k >= 0; k--) {
+        var lt = lowerThirds[k];
+        var ltw = lt.img.naturalWidth * (lt.scale / 100);
+        var lth = lt.img.naturalHeight * (lt.scale / 100);
+        if (mx >= lt.x && mx <= lt.x + ltw && my >= lt.y && my <= lt.y + lth) {
+          dragTarget = lt;
+          dragOffsetX = mx - lt.x;
+          dragOffsetY = my - lt.y;
+          selectedOverlay = lt;
+          wrap.classList.add('dragging');
+          e.preventDefault();
+          return;
+        }
+      }
+
+      selectedOverlay = null;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!dragTarget) return;
+      var canvasRect = canvas.getBoundingClientRect();
+      var scaleX = canvas.width / canvasRect.width;
+      var scaleY = canvas.height / canvasRect.height;
+      var mx = (e.clientX - canvasRect.left) * scaleX;
+      var my = (e.clientY - canvasRect.top) * scaleY;
+
+      if (dragTarget.type === 'text') {
+        dragTarget.x = mx - dragOffsetX;
+        dragTarget.y = my - dragOffsetY;
+      } else {
+        dragTarget.x = mx - dragOffsetX;
+        dragTarget.y = my - dragOffsetY;
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (dragTarget) {
+        dragTarget = null;
+        document.querySelector('.canvas-wrap').classList.remove('dragging');
+      }
+    });
+  })();
+
+  // ── Lower Thirds ──
+  function addLowerThird(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var img = new Image();
+    img.onload = function() {
+      var scale = parseInt(document.getElementById('ltScale').value) || 100;
+      var ltW = img.naturalWidth * (scale / 100);
+      var ltH = img.naturalHeight * (scale / 100);
+      var lt = {
+        id: Date.now(),
+        type: 'lower-third',
+        name: file.name,
+        img: img,
+        x: (canvas.width - ltW) / 2,
+        y: canvas.height - ltH - 40,
+        scale: scale,
+        start: parseFloat(document.getElementById('ltStart').value) || 0,
+        duration: parseFloat(document.getElementById('ltDuration').value) || 10,
+        fadeIn: 0.5,
+        fadeOut: 0.5
+      };
+      lowerThirds.push(lt);
+      previewTime = lt.start;
+      renderLowerThirdsList();
+      updateTimeline();
+    };
+    img.src = URL.createObjectURL(file);
+    input.value = '';
+  }
+
+  function renderLowerThirdsList() {
+    var el = document.getElementById('lowerThirdsList');
+    el.innerHTML = '';
+    lowerThirds.forEach(function(lt) {
+      var div = document.createElement('div');
+      div.className = 'lower-third-preview';
+      div.innerHTML = '<img src="' + lt.img.src + '">' +
+        '<span class="name">' + escHtml(lt.name) + '</span>' +
+        '<button class="del" onclick="R.removeLowerThird(' + lt.id + ')">&times;</button>';
+      el.appendChild(div);
+    });
+  }
+
+  function removeLowerThird(id) {
+    lowerThirds = lowerThirds.filter(function(lt) { return lt.id !== id; });
+    renderLowerThirdsList();
+    updateTimeline();
+  }
+
+  // ── Timeline Clip Dragging ──
+  function setupTimelineClipDrag() {
+    var tracks = document.getElementById('timelineTracks');
+    var clips = tracks.querySelectorAll('.track-clip.text, .track-clip.image');
+    clips.forEach(function(clip, idx) {
+      clip.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('trim-handle')) return;
+        e.preventDefault();
+        var lane = clip.parentElement;
+        var laneRect = lane.getBoundingClientRect();
+        var dur = timelineDuration || 30;
+        var startPct = parseFloat(clip.style.left) / 100;
+        var startX = e.clientX;
+
+        // Determine which overlay array and index
+        var isText = clip.classList.contains('text');
+        var overlayArr = isText ? textOverlays : imageOverlays;
+        var overlayIdx = 0;
+        // Find the matching overlay index by counting same-type clips before this one
+        var sameSiblings = lane.querySelectorAll('.track-clip');
+        for (var s = 0; s < sameSiblings.length; s++) {
+          if (sameSiblings[s] === clip) { overlayIdx = s; break; }
+        }
+        if (!overlayArr[overlayIdx]) return;
+
+        function onDrag(ev) {
+          var dx = ev.clientX - startX;
+          var dPct = dx / laneRect.width;
+          var newPct = Math.max(0, Math.min(1, startPct + dPct));
+          clip.style.left = (newPct * 100) + '%';
+          overlayArr[overlayIdx].start = newPct * dur;
+        }
+
+        function onUp() {
+          document.removeEventListener('mousemove', onDrag);
+          document.removeEventListener('mouseup', onUp);
+          previewTime = overlayArr[overlayIdx].start;
+          updateTimeline();
+        }
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+
   // ── Enumerate devices on load ──
   if (navigator.mediaDevices) {
     enumerateDeviceLists();
@@ -1843,7 +2186,10 @@ var R = (function() {
     togglePrompterMirror: togglePrompterMirror,
     switchDevice: switchDevice,
     setTimeLimit: setTimeLimit,
-    toggleTrim: toggleTrim
+    toggleTrim: toggleTrim,
+    setTextPositionPreset: setTextPositionPreset,
+    addLowerThird: addLowerThird,
+    removeLowerThird: removeLowerThird
   };
 })();
 </script>
