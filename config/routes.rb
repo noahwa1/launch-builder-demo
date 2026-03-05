@@ -38,7 +38,11 @@ Rails.application.routes.draw do
         patch :update_logistics
         patch :complete_onboarding
       end
-      resources :campaign_assets, only: [:index, :create, :destroy]
+      resources :campaign_assets, only: [:index, :create, :destroy] do
+        member do
+          post :send_video
+        end
+      end
       resources :social_posts, only: [:index]
       resources :live_events, except: [:index, :show] do
         collection do

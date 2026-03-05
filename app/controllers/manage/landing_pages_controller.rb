@@ -9,7 +9,7 @@ module Manage
     end
 
     def generate
-      result = LandingPageGenerator.new(@campaign).generate
+      result = LandingPageGenerator.new(@campaign, template: params[:template] || 'standard').generate
       @landing_page.update!(html_content: result[:html], css_content: result[:css])
       redirect_to builder_manage_campaign_landing_page_path(@campaign), notice: 'Page generated! Customize it in the builder.'
     end

@@ -110,10 +110,17 @@
       <select name="book_id" id="book_id">
         <option value="">None — create from details above</option>
         <% @books.each do |book| %>
-          <option value="<%= book.id %>"><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
+          <option value="<%= book.id %>"
+            data-title="<%= book.title %>"
+            data-isbn="<%= book.isbn %>"
+            data-description="<%= book.description&.truncate(2000) %>"
+            data-release-date="<%= book.release_date&.strftime('%Y-%m-%d') %>"
+            data-genre="<%= book.genre %>"
+          ><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
         <% end %>
       </select>
       <p class="text-muted" style="font-size:12px;margin-top:4px;">Optionally link this campaign to an existing book from the catalog.</p>
+      <p id="book-autofill-note" style="display:none;font-size:12px;color:#16A34A;margin-top:6px;font-weight:500;"></p>
     </div>
   </div>
 
@@ -177,4 +184,32 @@
       loginCard.style.display = '';
     }
   }
+
+  // Book auto-fill: populate Book Details when an existing book is selected
+  document.getElementById('book_id').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var note = document.getElementById('book-autofill-note');
+
+    if (this.value && selected.dataset.title) {
+      document.getElementById('title').value = selected.dataset.title || '';
+      document.getElementById('isbn').value = selected.dataset.isbn || '';
+      document.getElementById('book_description').value = selected.dataset.description || '';
+      document.getElementById('release_date').value = selected.dataset.releaseDate || '';
+      var genreSelect = document.getElementById('genre');
+      var genreVal = selected.dataset.genre || '';
+      for (var i = 0; i < genreSelect.options.length; i++) {
+        if (genreSelect.options[i].value === genreVal) { genreSelect.selectedIndex = i; break; }
+      }
+      note.textContent = 'Auto-filled from "' + selected.dataset.title + '"';
+      note.style.display = '';
+    } else {
+      // Clear auto-filled fields when "None" is selected
+      document.getElementById('title').value = '';
+      document.getElementById('isbn').value = '';
+      document.getElementById('book_description').value = '';
+      document.getElementById('release_date').value = '';
+      document.getElementById('genre').selectedIndex = 0;
+      note.style.display = 'none';
+    }
+  });
 </script>

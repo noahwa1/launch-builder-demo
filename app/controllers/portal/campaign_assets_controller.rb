@@ -28,6 +28,23 @@ module Portal
       redirect_to portal_campaign_campaign_assets_path(@campaign), notice: 'Asset removed.'
     end
 
+    def send_video
+      @asset = @campaign.campaign_assets.find(params[:id])
+      unless @asset.asset_type.to_s.start_with?('video')
+        redirect_to portal_campaign_campaign_assets_path(@campaign), alert: 'Only video assets can be sent.'
+        return
+      end
+
+      email = params[:recipient_email].to_s.strip
+      unless email.match?(/\A[^@\s]+@[^@\s]+\z/)
+        redirect_to portal_campaign_campaign_assets_path(@campaign), alert: 'Please enter a valid email address.'
+        return
+      end
+
+      PortalMailer.video_message(@asset, email, params[:message].to_s).deliver_later
+      redirect_to portal_campaign_campaign_assets_path(@campaign), notice: "Video message sent to #{email}."
+    end
+
     private
 
     def set_campaign

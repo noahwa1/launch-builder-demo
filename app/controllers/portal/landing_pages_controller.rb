@@ -46,7 +46,7 @@ module Portal
     end
 
     def generate
-      result = LandingPageGenerator.new(@campaign).generate
+      result = LandingPageGenerator.new(@campaign, template: params[:template] || 'standard').generate
       @landing_page.update!(
         html_content: result[:html],
         css_content: result[:css],
