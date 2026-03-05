@@ -52,6 +52,25 @@
   <% end %>
 </div>
 
+<%# ── Personal Videos Toggle ── %>
+<div class="card" style="margin-bottom:20px;">
+  <h3>Personal Videos</h3>
+  <p class="text-secondary" style="font-size:13px;margin-bottom:12px;">When enabled, creators can record rapid-fire personalized videos for each buyer from the recorder Queue mode.</p>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, style: 'display:inline;' do |f| %>
+      <%= f.hidden_field :personal_videos_enabled, value: !@campaign.personal_videos_enabled? %>
+      <button type="submit" class="btn <%= @campaign.personal_videos_enabled? ? 'btn-success' : 'btn-secondary' %> btn-sm">
+        Personal Videos: <%= @campaign.personal_videos_enabled? ? 'ON' : 'OFF' %>
+      </button>
+    <% end %>
+    <% if @campaign.personal_videos_enabled? %>
+      <% pv_total = @campaign.landing_page&.page_submissions&.count || 0 %>
+      <% pv_done = @campaign.personal_videos.count %>
+      <span class="text-muted" style="font-size:12px;"><%= pv_done %>/<%= pv_total %> videos recorded</span>
+    <% end %>
+  </div>
+</div>
+
 <div class="two-col">
   <!-- Checklist -->
   <div class="card">

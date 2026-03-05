@@ -1,0 +1,30 @@
+<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="background:#003262;padding:24px 32px;border-radius:12px 12px 0 0;">
+    <h1 style="color:#C5A44E;font-size:20px;margin:0;">A Personal Video Just for You</h1>
+    <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:6px 0 0;">from <%= @author.full_name %></p>
+  </div>
+
+  <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;">
+    <p style="font-size:15px;color:#333;line-height:1.6;">
+      Hi <%= @buyer_name %>, <strong><%= @author.full_name %></strong> recorded a personal video just for you<% if @campaign.title.present? %> about <em><%= @campaign.title %></em><% end %>!
+    </p>
+
+    <% if @video_url.present? %>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="<%= @video_url %>" style="display:inline-block;background:#003262;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+          Watch Your Video
+        </a>
+      </div>
+    <% end %>
+
+    <p style="font-size:13px;color:#999;margin-top:24px;">
+      Sent via <span style="color:#C5A44E;">Premiere Collectibles</span>
+    </p>
+  </div>
+
+  <div style="background:#f8f9fa;padding:16px 32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb;border-top:none;">
+    <p style="font-size:11px;color:#aaa;margin:0;text-align:center;">
+      &copy; <%= Time.current.year %> Premiere Collectibles. All rights reserved.
+    </p>
+  </div>
+</div>

@@ -44,6 +44,9 @@ Rails.application.routes.draw do
         end
       end
       resources :social_posts, only: [:index]
+      resources :personal_videos, only: [:create] do
+        collection { get :queue_data }
+      end
       resources :live_events, except: [:index, :show] do
         collection do
           get :studio

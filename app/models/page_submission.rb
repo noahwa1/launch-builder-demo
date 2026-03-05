@@ -1,5 +1,6 @@
 class PageSubmission < ApplicationRecord
   belongs_to :landing_page
+  has_one :personal_video
 
   enum status: { new_submission: 0, reviewed: 1, actioned: 2 }
 

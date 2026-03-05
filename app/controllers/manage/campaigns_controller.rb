@@ -113,7 +113,7 @@ module Manage
     end
 
     def update_settings
-      @campaign.update!(params.require(:campaign).permit(:example_category))
+      @campaign.update!(params.require(:campaign).permit(:example_category, :personal_videos_enabled))
       redirect_to manage_campaign_path(@campaign), notice: 'Campaign settings updated.'
     end
 
