@@ -27,51 +27,51 @@
   <!-- Main Column -->
   <div>
     <div class="card">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+      <div class="d-flex justify-between mb-16" style="align-items:flex-start;">
         <div>
-          <span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(0,0,0,0.04);color:var(--text-muted);text-transform:uppercase;"><%= @deliverable.category_label %></span>
+          <span class="fw-600 text-muted text-upper" style="padding:2px 8px;border-radius:4px;font-size:10px;background:rgba(0,0,0,0.04);"><%= @deliverable.category_label %></span>
           <% if @deliverable.revision_count > 0 %>
-            <span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(99,102,241,0.08);color:#6366F1;margin-left:4px;">v<%= @deliverable.revision_count + 1 %></span>
+            <span class="fw-600" style="padding:2px 8px;border-radius:4px;font-size:10px;background:rgba(99,102,241,0.08);color:#6366F1;margin-left:4px;">v<%= @deliverable.revision_count + 1 %></span>
           <% end %>
         </div>
-        <span style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;color:<%= @deliverable.status_color %>;background:rgba(0,0,0,0.04);">
+        <span class="rounded text-xs fw-700 text-upper" style="padding:4px 12px;color:<%= @deliverable.status_color %>;background:rgba(0,0,0,0.04);">
           <%= @deliverable.status.titleize %>
         </span>
       </div>
 
-      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;"><%= @deliverable.title %></h2>
+      <h2 class="fw-700 mb-8" style="font-size:20px;"><%= @deliverable.title %></h2>
 
       <% if @deliverable.description.present? %>
-        <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;margin-bottom:16px;"><%= @deliverable.description %></div>
+        <div class="text-base text-secondary mb-16" style="line-height:1.7;white-space:pre-wrap;"><%= @deliverable.description %></div>
       <% end %>
 
       <% if @deliverable.file.present? %>
-        <div style="padding:16px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:16px;">
-          <div style="display:flex;align-items:center;gap:10px;">
+        <div class="p-16 border mb-16" style="background:var(--page-bg);border-radius:var(--radius-sm);">
+          <div class="d-flex items-center" style="gap:10px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--accent);flex-shrink:0;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:600;"><%= File.basename(@deliverable.file.url) rescue 'Attached file' %></div>
+            <div class="flex-1">
+              <div class="text-md fw-600"><%= File.basename(@deliverable.file.url) rescue 'Attached file' %></div>
             </div>
             <a href="<%= @deliverable.file.url %>" target="_blank" class="btn btn-secondary btn-sm">Download</a>
           </div>
           <% ext = File.extname(@deliverable.file.url).downcase rescue '' %>
           <% if %w[.jpg .jpeg .png .gif .webp].include?(ext) %>
-            <img src="<%= @deliverable.file.url %>" style="max-width:100%;border-radius:8px;margin-top:12px;">
+            <img src="<%= @deliverable.file.url %>" class="w-full rounded-md mt-12" style="max-width:100%;">
           <% end %>
         </div>
       <% end %>
 
       <% if @deliverable.creator_notes.present? %>
-        <div style="padding:12px;background:rgba(239,68,68,0.04);border-left:3px solid #EF4444;border-radius:0 8px 8px 0;margin-bottom:16px;">
-          <div style="font-size:11px;font-weight:600;color:#EF4444;text-transform:uppercase;margin-bottom:4px;">Creator's Revision Notes</div>
-          <div style="font-size:13px;white-space:pre-wrap;"><%= @deliverable.creator_notes %></div>
+        <div class="p-12 mb-16" style="background:rgba(239,68,68,0.04);border-left:3px solid #EF4444;border-radius:0 8px 8px 0;">
+          <div class="text-xs fw-600 text-upper" style="color:#EF4444;margin-bottom:4px;">Creator's Revision Notes</div>
+          <div class="text-md" style="white-space:pre-wrap;"><%= @deliverable.creator_notes %></div>
         </div>
       <% end %>
     </div>
 
     <!-- Notes Thread -->
     <div class="card note-thread">
-      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Notes & Conversation</h3>
+      <h3 class="subheading">Notes & Conversation</h3>
       <% if @notes.any? %>
         <% @notes.each do |note| %>
           <div class="note-item">
@@ -83,12 +83,12 @@
           </div>
         <% end %>
       <% else %>
-        <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px;">No notes yet.</p>
+        <p class="text-md text-muted text-center p-16">No notes yet.</p>
       <% end %>
 
       <!-- Add Note -->
-      <%= form_tag add_note_manage_campaign_admin_deliverable_path(@campaign, @deliverable), style: 'margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;' do %>
-        <input type="text" name="body" placeholder="Add a note..." required style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+      <%= form_tag add_note_manage_campaign_admin_deliverable_path(@campaign, @deliverable), style: 'padding-top:16px;border-top:1px solid var(--border);', class: 'd-flex gap-8 mt-16' do %>
+        <input type="text" name="body" placeholder="Add a note..." required class="flex-1 text-md rounded-md border" style="padding:8px 12px;font-family:inherit;">
         <button type="submit" class="btn btn-secondary btn-sm">Send</button>
       <% end %>
     </div>
@@ -98,24 +98,24 @@
   <div>
     <!-- Info -->
     <div class="card">
-      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;">Details</h4>
-      <div style="font-size:13px;display:flex;flex-direction:column;gap:10px;">
+      <h4 class="text-md fw-700 mb-12">Details</h4>
+      <div class="text-md" style="display:flex;flex-direction:column;gap:10px;">
         <div>
-          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Created by</div>
+          <div class="detail-label">Created by</div>
           <div><%= @deliverable.creator&.full_name %></div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Created</div>
+          <div class="detail-label">Created</div>
           <div><%= @deliverable.created_at.strftime('%b %d, %Y at %I:%M %p') %></div>
         </div>
         <% if @deliverable.due_date.present? %>
           <div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Due date</div>
-            <div style="color:<%= @deliverable.due_date < Date.today ? '#EF4444' : 'var(--text-primary)' %>;font-weight:600;"><%= @deliverable.due_date.strftime('%b %d, %Y') %></div>
+            <div class="detail-label">Due date</div>
+            <div class="fw-600" style="color:<%= @deliverable.due_date < Date.today ? '#EF4444' : 'var(--text-primary)' %>;"><%= @deliverable.due_date.strftime('%b %d, %Y') %></div>
           </div>
         <% end %>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Revisions</div>
+          <div class="detail-label">Revisions</div>
           <div><%= @deliverable.revision_count %></div>
         </div>
       </div>
@@ -123,24 +123,24 @@
 
     <!-- Upload Revision -->
     <% if @deliverable.revision_requested? %>
-      <div class="card" style="margin-top:4px;border:1px solid rgba(239,68,68,0.2);">
-        <h4 style="font-size:13px;font-weight:700;color:#EF4444;margin-bottom:12px;">Revision Requested</h4>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Upload a revised version to send back for review.</p>
+      <div class="card mt-4" style="border:1px solid rgba(239,68,68,0.2);">
+        <h4 class="text-md fw-700 mb-12" style="color:#EF4444;">Revision Requested</h4>
+        <p class="text-md text-secondary mb-12">Upload a revised version to send back for review.</p>
         <%= form_tag revise_manage_campaign_admin_deliverable_path(@campaign, @deliverable), method: :patch, multipart: true do %>
           <div style="margin-bottom:10px;">
-            <input type="file" name="file" style="font-size:13px;">
+            <input type="file" name="file" class="text-md">
           </div>
           <div style="margin-bottom:10px;">
-            <input type="text" name="note" placeholder="Note about what changed..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+            <input type="text" name="note" placeholder="Note about what changed..." class="w-full text-md rounded-md border" style="padding:8px 12px;font-family:inherit;">
           </div>
-          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Upload Revision</button>
+          <button type="submit" class="btn btn-primary btn-sm w-full">Upload Revision</button>
         <% end %>
       </div>
     <% end %>
 
     <!-- Danger Zone -->
-    <div class="card" style="margin-top:4px;">
-      <%= link_to 'Delete Deliverable', manage_campaign_admin_deliverable_path(@campaign, @deliverable), method: :delete, data: { confirm: 'Delete this deliverable?' }, style: 'font-size:12px;color:#EF4444;' %>
+    <div class="card mt-4">
+      <%= link_to 'Delete Deliverable', manage_campaign_admin_deliverable_path(@campaign, @deliverable), method: :delete, data: { confirm: 'Delete this deliverable?' }, class: 'text-sm text-danger' %>
     </div>
   </div>
 </div>

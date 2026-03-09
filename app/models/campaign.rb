@@ -33,12 +33,12 @@ class Campaign < ApplicationRecord
     { category: 'ad_access', key: 'facebook_access',                title: 'Facebook page access granted',             optional: false, position: 0 },
     { category: 'ad_access', key: 'instagram_access',               title: 'Instagram page access granted',            optional: false, position: 1 },
     { category: 'ad_access', key: 'tiktok_access',                  title: 'TikTok access granted',                    optional: true,  position: 2 },
-    { category: 'content',   key: 'headshots_uploaded',             title: 'High-res headshots uploaded',              optional: false, position: 0 },
-    { category: 'content',   key: 'candid_photos_uploaded',         title: 'Casual/candid photos uploaded',            optional: false, position: 1 },
-    { category: 'content',   key: 'promo_video_uploaded',           title: 'Promo video uploaded (30-60 sec)',         optional: false, position: 2 },
-    { category: 'content',   key: 'excerpt_clips_uploaded',         title: 'Book excerpt clips uploaded',              optional: false, position: 3 },
-    { category: 'content',   key: 'signing_clips_uploaded',         title: 'Signing clips uploaded',                   optional: false, position: 4 },
-    { category: 'content',   key: 'hook_clips_uploaded',            title: 'Short hook clips uploaded',                optional: false, position: 5 },
+    { category: 'content',   key: 'headshots_uploaded',             title: 'High-res headshots',                       optional: true, position: 0 },
+    { category: 'content',   key: 'candid_photos_uploaded',         title: 'Casual/candid photos',                    optional: true, position: 1 },
+    { category: 'content',   key: 'promo_video_uploaded',           title: 'Promo video (30-60 sec)',                  optional: true, position: 2 },
+    { category: 'content',   key: 'excerpt_clips_uploaded',         title: 'Book excerpt clips',                      optional: true, position: 3 },
+    { category: 'content',   key: 'signing_clips_uploaded',         title: 'Signing clips',                           optional: true, position: 4 },
+    { category: 'content',   key: 'hook_clips_uploaded',            title: 'Short hook clips',                        optional: true, position: 5 },
     { category: 'logistics', key: 'shipping_address_confirmed',     title: 'Bookplate shipping address confirmed',     optional: false, position: 0 },
     { category: 'logistics', key: 'bookplate_design_uploaded',      title: 'Bookplate design file uploaded',           optional: false, position: 1 },
     { category: 'logistics', key: 'management_contacts_confirmed',  title: 'Management contact emails confirmed',      optional: false, position: 2 },
@@ -62,6 +62,7 @@ class Campaign < ApplicationRecord
         live_events_enabled: false,
         personal_videos_enabled: false,
         social_tools_enabled: false,
+        fan_crm_enabled: false,
         royalties_enabled: true
       }
     },
@@ -75,6 +76,7 @@ class Campaign < ApplicationRecord
         live_events_enabled: false,
         personal_videos_enabled: false,
         social_tools_enabled: true,
+        fan_crm_enabled: true,
         royalties_enabled: true
       }
     },
@@ -88,6 +90,7 @@ class Campaign < ApplicationRecord
         live_events_enabled: true,
         personal_videos_enabled: true,
         social_tools_enabled: true,
+        fan_crm_enabled: true,
         royalties_enabled: true
       }
     }
@@ -95,7 +98,7 @@ class Campaign < ApplicationRecord
 
   FEATURE_FLAGS = %w[
     landing_page asset_uploads deliverables
-    live_events personal_videos social_tools royalties
+    live_events personal_videos social_tools fan_crm royalties
   ].freeze
 
   def apply_campaign_type!(type_key)
@@ -159,10 +162,6 @@ class Campaign < ApplicationRecord
 
     when :content
       blockers = []
-      if asset_uploads_enabled?
-        pending_content = checklist_items.where(category: 'content').required.incomplete
-        blockers << "#{pending_content.count} content items incomplete" if pending_content.any?
-      end
       if deliverables_enabled?
         pending_del = admin_deliverables.pending
         blockers << "#{pending_del.count} deliverables awaiting review" if pending_del.any?

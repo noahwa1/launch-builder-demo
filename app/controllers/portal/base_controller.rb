@@ -23,6 +23,14 @@ module Portal
       end
     end
 
+    def require_feature!(flag, campaign = nil)
+      c = campaign || @campaign || current_campaign
+      unless c&.feature_enabled?(flag)
+        target = c ? portal_campaign_path(c) : portal_root_path
+        redirect_to target, alert: "#{flag.to_s.titleize} is not available for this campaign."
+      end
+    end
+
     def unread_message_count
       @unread_message_count ||= PortalMessage.where(thread_owner: current_user)
                                               .where.not(sender: current_user)

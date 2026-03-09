@@ -1,6 +1,7 @@
 module Portal
   class LiveEventsController < BaseController
     before_action :set_campaign
+    before_action :require_live_events_enabled
     before_action :set_live_event, only: [:edit, :update, :destroy, :go_live, :end_stream]
 
     def studio
@@ -61,6 +62,10 @@ module Portal
     end
 
     private
+
+    def require_live_events_enabled
+      require_feature!('live_events')
+    end
 
     def set_campaign
       @campaign = current_author.campaigns.find(params[:campaign_id])

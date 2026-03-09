@@ -135,6 +135,7 @@ module Manage
           live_events_enabled:   params[:live_events_enabled] == '1',
           personal_videos_enabled: params[:personal_videos_enabled] == '1',
           social_tools_enabled:  params[:social_tools_enabled] == '1',
+          fan_crm_enabled:       params[:fan_crm_enabled] == '1',
           royalties_enabled:     params[:royalties_enabled] == '1'
         )
       end
@@ -251,6 +252,7 @@ module Manage
         live_events_enabled: @campaign.live_events_enabled?,
         personal_videos_enabled: @campaign.personal_videos_enabled?,
         social_tools_enabled: @campaign.social_tools_enabled?,
+        fan_crm_enabled: @campaign.fan_crm_enabled?,
         royalties_enabled: @campaign.royalties_enabled?,
         phase: :setup
       )
@@ -268,7 +270,7 @@ module Manage
         :signed_editions_url, :bookplate_address, :management_emails,
         :ad_access_notes, :campaign_type, :landing_page_enabled,
         :asset_uploads_enabled, :deliverables_enabled, :live_events_enabled,
-        :social_tools_enabled, :royalties_enabled
+        :social_tools_enabled, :fan_crm_enabled, :royalties_enabled
       ))
       redirect_to manage_campaign_path(@campaign), notice: 'Campaign settings updated.'
     end
@@ -298,7 +300,7 @@ module Manage
         :bookplate_design, :ad_access_notes, :personal_videos_enabled,
         :campaign_type, :landing_page_enabled, :asset_uploads_enabled,
         :deliverables_enabled, :live_events_enabled, :social_tools_enabled,
-        :royalties_enabled
+        :fan_crm_enabled, :royalties_enabled
       )
     end
   end

@@ -1,6 +1,7 @@
 module Portal
   class PersonalVideosController < BaseController
     before_action :set_campaign
+    before_action :require_personal_videos_enabled
 
     def queue_data
       submissions = @campaign.landing_page&.page_submissions&.recent || []
@@ -53,6 +54,10 @@ module Portal
     end
 
     private
+
+    def require_personal_videos_enabled
+      require_feature!('personal_videos')
+    end
 
     def set_campaign
       @campaign = current_author.campaigns.find(params[:campaign_id])

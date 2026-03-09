@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_10_800001) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_10_900002) do
   create_table "admin_deliverables", force: :cascade do |t|
     t.integer "campaign_id", null: false
     t.integer "created_by", null: false
@@ -117,6 +117,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_10_800001) do
     t.boolean "social_tools_enabled", default: true
     t.boolean "royalties_enabled", default: true
     t.integer "phase", default: 0, null: false
+    t.boolean "fan_crm_enabled", default: true
     t.index ["author_id"], name: "index_campaigns_on_author_id"
     t.index ["book_id"], name: "index_campaigns_on_book_id"
     t.index ["status"], name: "index_campaigns_on_status"

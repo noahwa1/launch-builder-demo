@@ -24,17 +24,17 @@
   .section-divider { height: 1px; background: var(--border); margin: 24px 0; }
 </style>
 
-<%= form_tag manage_campaigns_path, method: :post, multipart: true, style: 'max-width:760px;' do %>
+<%= form_tag manage_campaigns_path, method: :post, multipart: true, class: 'max-w-lg' do %>
 
   <%# ══════ AUTHOR ══════ %>
   <div class="card form-section">
     <h3>Author</h3>
-    <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <div class="d-flex gap-8 mb-16">
       <button type="button" class="btn btn-primary btn-sm" id="btn-new-author" onclick="toggleAuthorMode('new')">New Author</button>
       <button type="button" class="btn btn-secondary btn-sm" id="btn-existing-author" onclick="toggleAuthorMode('existing')">Existing Author</button>
     </div>
     <div id="new-author-fields">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="grid-2 gap-16">
         <div class="form-group">
           <label for="first_name">First Name *</label>
           <input type="text" name="first_name" id="first_name" placeholder="First name">
@@ -53,7 +53,7 @@
         <input type="text" name="image" id="image" placeholder="https://...">
       </div>
     </div>
-    <div id="existing-author-fields" style="display:none;">
+    <div id="existing-author-fields" class="d-none">
       <div class="form-group">
         <label for="existing_author_id">Select Author</label>
         <select name="existing_author_id" id="existing_author_id">
@@ -70,7 +70,7 @@
   <div class="card form-section" id="creator-login-card">
     <h3>Creator Login</h3>
     <p class="section-desc">Creates a login the author can use to access the Creator Portal.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="grid-2 gap-16">
       <div class="form-group">
         <label for="creator_email">Email *</label>
         <input type="email" name="creator_email" id="creator_email" placeholder="author@example.com">
@@ -89,7 +89,7 @@
       <label for="title">Title *</label>
       <input type="text" name="title" id="title" required placeholder="Book title">
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="grid-2 gap-16">
       <div class="form-group">
         <label for="isbn">ISBN</label>
         <input type="text" name="isbn" id="isbn" placeholder="978-...">
@@ -108,7 +108,7 @@
       <label for="book_description">Description</label>
       <textarea name="book_description" id="book_description" rows="4" placeholder="Book description..."></textarea>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="grid-2 gap-16">
       <div class="form-group">
         <label for="release_date">Release Date</label>
         <input type="date" name="release_date" id="release_date">
@@ -132,7 +132,7 @@
           ><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
         <% end %>
       </select>
-      <p id="book-autofill-note" style="display:none;font-size:12px;color:#16A34A;margin-top:6px;font-weight:500;"></p>
+      <p id="book-autofill-note" class="d-none text-sm fw-500" style="color:#16A34A;margin-top:6px;"></p>
     </div>
   </div>
 
@@ -144,7 +144,7 @@
       <label for="brief">Campaign Brief</label>
       <textarea name="brief" id="brief" rows="5" placeholder="Here's what we're doing, the timeline, and what we need from you..."></textarea>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+    <div class="grid-3 gap-16">
       <div class="form-group">
         <label for="launch_date">Launch Date</label>
         <input type="date" name="launch_date" id="launch_date">
@@ -188,11 +188,11 @@
       <label for="bookplate_address">Bookplate Shipping Address</label>
       <textarea name="bookplate_address" id="bookplate_address" rows="3" placeholder="123 Main St&#10;City, State, Zip"></textarea>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="grid-2 gap-16">
       <div class="form-group">
         <label for="management_emails">Management Emails</label>
         <input type="text" name="management_emails" id="management_emails" placeholder="manager@example.com, agent@example.com">
-        <p class="text-muted" style="font-size:11px;margin-top:4px;">Comma-separated email addresses.</p>
+        <p class="text-muted text-xs" style="margin-top:4px;">Comma-separated email addresses.</p>
       </div>
       <div class="form-group">
         <label for="bookplate_design">Bookplate Design</label>
@@ -215,8 +215,8 @@
       </select>
     </div>
 
-    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;display:block;">FEATURE TOGGLES</label>
+    <div class="border-top mt-8" style="padding-top:16px;">
+      <label class="text-sm fw-600 text-muted" style="margin-bottom:10px;display:block;">FEATURE TOGGLES</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
           <input type="hidden" name="landing_page_enabled" value="0">
