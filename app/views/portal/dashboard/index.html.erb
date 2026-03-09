@@ -1,87 +1,155 @@
 <% content_for :page_title, "Dashboard" %>
 
+<%# ── Pending Actions Banner ── %>
+<% if @pending_actions > 0 %>
+  <div style="padding:16px 20px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:12px;margin-bottom:20px;">
+    <div style="font-size:15px;font-weight:600;color:#D97706;margin-bottom:8px;">
+      <%= @pending_actions %> item<%= 's' if @pending_actions != 1 %> need<%= 's' if @pending_actions == 1 %> your attention
+    </div>
+    <% @action_details.each do |action| %>
+      <a href="<%= action[:url] %>" style="display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;color:var(--text-primary);font-size:13px;">
+        <span style="color:#D97706;">&#9679;</span>
+        <span><strong><%= action[:campaign].title %></strong> — <%= action[:text] %></span>
+      </a>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Active Campaigns</div>
+    <div class="value"><%= @campaigns.active.count %></div>
+  </div>
   <div class="stat-card">
     <div class="label">Published Books</div>
     <div class="value"><%= @books_count %></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Total Submissions</div>
-    <div class="value"><%= current_author.submissions.count %></div>
-    <div class="sub">
-      <% @submissions_by_status.each do |status, count| %>
-        <span class="status-badge status-<%= status %>"><%= count %> <%= status %></span>
-      <% end %>
-    </div>
   </div>
   <div class="stat-card">
     <div class="label">Unread Messages</div>
     <div class="value"><%= @unread_messages %></div>
   </div>
   <div class="stat-card">
-    <div class="label">Total Royalties Earned</div>
-    <div class="value">$<%= number_with_delimiter(current_author.royalty_payments.where(status: :paid).sum(:amount), precision: 2) %></div>
+    <div class="label">Total Royalties</div>
+    <div class="value">$<%= number_with_delimiter(current_author.royalty_payments.where(status: :paid).sum(:amount).to_i) %></div>
   </div>
 </div>
 
 <div class="two-col">
-  <div class="card">
-    <h3>Recent Submissions</h3>
-    <% if @submissions.any? %>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @submissions.each do |sub| %>
-              <tr>
-                <td style="font-weight: 500;"><%= sub.title %></td>
-                <td><span class="status-badge status-<%= sub.status %>"><%= sub.status.titleize %></span></td>
-                <td style="color: #86868b; font-size: 13px;"><%= sub.created_at.strftime('%b %d, %Y') %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <div class="empty-state">
-        <p>No submissions yet.</p>
+  <div>
+    <%# ── Upcoming Deadlines ── %>
+    <% if @upcoming_deadlines.any? %>
+      <div class="card">
+        <h3>Upcoming Deadlines</h3>
+        <% @upcoming_deadlines.each do |d| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:13px;font-weight:500;"><%= d[:campaign].title %></div>
+              <div style="font-size:12px;color:var(--text-muted);"><%= d[:label] %></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:<%= d[:days] <= 3 ? '#DC2626' : d[:days] <= 7 ? '#D97706' : 'var(--text-secondary)' %>;">
+              <%= d[:date].strftime('%b %d') %> (<%= d[:days] %>d)
+            </div>
+          </div>
+        <% end %>
       </div>
     <% end %>
+
+    <%# ── Recent Activity ── %>
+    <% if @recent_activities.any? %>
+      <div class="card">
+        <h3>Recent Activity</h3>
+        <% @recent_activities.each do |activity| %>
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;">
+              <%= activity.user_initials %>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:13px;"><%= activity.human_description %></div>
+              <div style="font-size:11px;color:var(--text-muted);"><%= activity.campaign.title %> &middot; <%= activity.created_at.strftime('%-I:%M %p') %></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Recent Submissions -->
+    <div class="card">
+      <h3>Recent Submissions</h3>
+      <% if @submissions.any? %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @submissions.each do |sub| %>
+                <tr>
+                  <td style="font-weight: 500;"><%= sub.title %></td>
+                  <td><span class="status-badge status-<%= sub.status %>"><%= sub.status.titleize %></span></td>
+                  <td style="color: #86868b; font-size: 13px;"><%= sub.created_at.strftime('%b %d, %Y') %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          <p>No submissions yet.</p>
+        </div>
+      <% end %>
+    </div>
   </div>
 
-  <div class="card">
-    <h3>Recent Payments</h3>
-    <% if @recent_payments.any? %>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @recent_payments.each do |payment| %>
-              <tr>
-                <td><%= link_to payment.period_label, portal_royalty_path(payment), style: 'color: #0071e3; text-decoration: none; font-weight: 500;' %></td>
-                <td style="font-weight: 600;">$<%= number_with_precision(payment.amount, precision: 2) %></td>
-                <td><span class="status-badge status-<%= payment.status %>"><%= payment.status.titleize %></span></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <div class="empty-state">
-        <p>No payments yet.</p>
+  <div>
+    <%# ── Campaigns List ── %>
+    <% if @campaigns.any? %>
+      <div class="card">
+        <h3>Your Campaigns</h3>
+        <% @campaigns.each do |c| %>
+          <a href="<%= portal_campaign_path(c) %>" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;">
+            <div>
+              <div style="font-size:14px;font-weight:500;color:var(--text-primary);"><%= c.title %></div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;"><%= c.phase_label %> phase &middot; <%= c.progress_percentage %>% complete</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        <% end %>
       </div>
     <% end %>
+
+    <!-- Recent Payments -->
+    <div class="card">
+      <h3>Recent Payments</h3>
+      <% if @recent_payments.any? %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_payments.each do |payment| %>
+                <tr>
+                  <td><%= link_to payment.period_label, portal_royalty_path(payment), style: 'color: #0071e3; text-decoration: none; font-weight: 500;' %></td>
+                  <td style="font-weight: 600;">$<%= number_with_precision(payment.amount, precision: 2) %></td>
+                  <td><span class="status-badge status-<%= payment.status %>"><%= payment.status.titleize %></span></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          <p>No payments yet.</p>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>

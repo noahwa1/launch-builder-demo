@@ -1,0 +1,203 @@
+<% content_for :page_title, 'Fan CRM' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .crm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .crm-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .crm-stat .label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .crm-stat .value { font-size: 28px; font-weight: 800; color: var(--text-primary); margin-top: 4px; }
+  .crm-stat .sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .crm-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .crm-search {
+    flex: 1; min-width: 200px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; font-family: inherit; background: var(--surface);
+  }
+  .crm-search:focus { outline: none; border-color: var(--accent); }
+  .crm-filter {
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; font-family: inherit; background: var(--surface); cursor: pointer;
+  }
+
+  .contact-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .contact-table th {
+    text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border); background: var(--page-bg);
+  }
+  .contact-table td {
+    padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .contact-table tr:hover td { background: var(--accent-wash); }
+  .contact-table a { color: var(--text-primary); text-decoration: none; font-weight: 600; }
+  .contact-table a:hover { color: var(--accent); }
+
+  .contact-avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .contact-name-cell { display: flex; align-items: center; gap: 10px; }
+
+  .tag-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px;
+    font-weight: 600; color: #fff; margin-right: 4px;
+  }
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
+    border-radius: 6px; font-size: 11px; font-weight: 700;
+  }
+  .score-badge.high { background: rgba(34,197,94,0.1); color: #16A34A; }
+  .score-badge.medium { background: rgba(245,158,11,0.1); color: #D97706; }
+  .score-badge.low { background: rgba(0,0,0,0.04); color: var(--text-muted); }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .status-dot.active { background: #16A34A; }
+  .status-dot.unsubscribed { background: #EF4444; }
+  .status-dot.bounced { background: var(--text-muted); }
+
+  .import-btn {
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+  }
+  .import-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .top-referrers { margin-top: 16px; }
+  .top-referrers h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .referrer-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .referrer-count { font-weight: 700; color: var(--accent); min-width: 28px; text-align: center; }
+</style>
+
+<!-- Stats -->
+<div class="crm-stats">
+  <div class="crm-stat">
+    <div class="label">Total Contacts</div>
+    <div class="value"><%= @total_count %></div>
+  </div>
+  <div class="crm-stat">
+    <div class="label">Active</div>
+    <div class="value"><%= @active_count %></div>
+    <div class="sub"><%= @total_count > 0 ? ((@active_count.to_f / @total_count) * 100).round : 0 %>% of total</div>
+  </div>
+  <div class="crm-stat">
+    <div class="label">Tags</div>
+    <div class="value"><%= @tags.count %></div>
+  </div>
+  <div class="crm-stat">
+    <div class="label">Avg Score</div>
+    <div class="value"><%= @campaign.contacts.any? ? @campaign.contacts.average(:score).to_i : 0 %></div>
+  </div>
+</div>
+
+<div class="card">
+  <!-- Toolbar -->
+  <div class="crm-toolbar">
+    <%= form_tag portal_campaign_contacts_path(@campaign), method: :get, style: 'display:contents;' do %>
+      <input type="text" name="q" value="<%= params[:q] %>" placeholder="Search by name or email..." class="crm-search">
+      <select name="tag_id" class="crm-filter" onchange="this.form.submit()">
+        <option value="">All Tags</option>
+        <% @tags.each do |tag| %>
+          <option value="<%= tag.id %>" <%= 'selected' if params[:tag_id].to_s == tag.id.to_s %>><%= tag.name %></option>
+        <% end %>
+      </select>
+      <select name="status" class="crm-filter" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" <%= 'selected' if params[:status] == 'active' %>>Active</option>
+        <option value="unsubscribed" <%= 'selected' if params[:status] == 'unsubscribed' %>>Unsubscribed</option>
+        <option value="bounced" <%= 'selected' if params[:status] == 'bounced' %>>Bounced</option>
+      </select>
+      <button type="submit" class="btn btn-sm btn-secondary">Search</button>
+    <% end %>
+    <button onclick="document.getElementById('importModal').style.display='flex'" class="import-btn">Import CSV</button>
+  </div>
+
+  <!-- Contact List -->
+  <% if @contacts.any? %>
+    <table class="contact-table">
+      <thead>
+        <tr>
+          <th>Contact</th>
+          <th>Tags</th>
+          <th>Score</th>
+          <th>Source</th>
+          <th>Status</th>
+          <th>Last Active</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @contacts.each do |contact| %>
+          <tr>
+            <td>
+              <div class="contact-name-cell">
+                <div class="contact-avatar"><%= contact.display_name[0..1].upcase %></div>
+                <div>
+                  <%= link_to contact.display_name, portal_campaign_contact_path(@campaign, contact) %>
+                  <div style="font-size:12px;color:var(--text-muted);font-weight:400;"><%= contact.email %></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <% contact.tags.each do |tag| %>
+                <span class="tag-pill" style="background:<%= tag.color %>"><%= tag.name %></span>
+              <% end %>
+            </td>
+            <td>
+              <% score_class = contact.score >= 20 ? 'high' : (contact.score >= 5 ? 'medium' : 'low') %>
+              <span class="score-badge <%= score_class %>"><%= contact.score %></span>
+            </td>
+            <td style="font-size:12px;color:var(--text-secondary);"><%= contact.source&.titleize %></td>
+            <td>
+              <span class="status-dot <%= contact.status %>"></span>
+              <span style="font-size:12px;"><%= contact.status.titleize %></span>
+            </td>
+            <td style="font-size:12px;color:var(--text-muted);">
+              <%= contact.last_activity_at ? time_ago_in_words(contact.last_activity_at) + ' ago' : '—' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div style="text-align:center;padding:48px;color:var(--text-muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;opacity:0.4;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <p style="font-size:14px;font-weight:600;">No contacts yet</p>
+      <p style="font-size:13px;margin-top:4px;">Contacts are automatically created when fans submit forms on your landing page.</p>
+    </div>
+  <% end %>
+</div>
+
+<% if @top_referrers.any? %>
+  <div class="card top-referrers" style="margin-top:4px;">
+    <h3>Top Referrers</h3>
+    <% @top_referrers.each do |contact| %>
+      <div class="referrer-item">
+        <span class="referrer-count"><%= contact.referral_code.referral_count %></span>
+        <%= link_to contact.display_name, portal_campaign_contact_path(@campaign, contact), style: 'font-weight:600;color:var(--text-primary);text-decoration:none;' %>
+        <span style="color:var(--text-muted);font-size:12px;margin-left:auto;"><%= contact.email %></span>
+      </div>
+    <% end %>
+    <%= link_to 'View All Referrals →', portal_campaign_referrals_path(@campaign), style: 'display:block;margin-top:12px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;' %>
+  </div>
+<% end %>
+
+<!-- Import Modal -->
+<div id="importModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:var(--radius-md);padding:24px;width:420px;max-width:90vw;">
+    <h3 style="font-size:16px;margin-bottom:16px;">Import Contacts</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Upload a CSV with columns: <code>email</code>, <code>name</code> (optional), <code>phone</code> (optional)</p>
+    <%= form_tag import_portal_campaign_contacts_path(@campaign), multipart: true do %>
+      <input type="file" name="csv" accept=".csv" style="margin-bottom:16px;font-size:13px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="document.getElementById('importModal').style.display='none'" class="btn btn-secondary btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Import</button>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -59,14 +59,44 @@
   .canvas-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .sidebar { width: 280px; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
 
+  /* ── Aspect Ratio Toggle ── */
+  .aspect-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .aspect-switcher {
+    display: inline-flex; background: var(--bg-primary); border-radius: 6px; padding: 2px; gap: 2px;
+  }
+  .aspect-btn {
+    display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px;
+    border: none; background: none; font-size: 11px; font-weight: 600; font-family: inherit;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .aspect-btn:hover { color: var(--text-secondary); }
+  .aspect-btn.active { background: var(--accent); color: #fff; }
+  .aspect-btn svg { width: 14px; height: 14px; }
+  .aspect-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
   /* ── Canvas ── */
   .canvas-wrap {
     flex: 1; display: flex; align-items: center; justify-content: center;
     background: #0a0a0f; position: relative; min-height: 0; padding: 12px;
+    transition: all 0.3s ease;
   }
+  .canvas-wrap.portrait { max-width: 380px; margin: 0 auto; width: 100%; }
   #recorderCanvas {
     max-width: 100%; max-height: 100%; border-radius: 8px;
-    background: #000; display: block;
+    background: #000; display: block; transition: all 0.3s ease;
+  }
+  /* Safe zone guide for portrait */
+  .canvas-safe-zone {
+    display: none; position: absolute; z-index: 4; pointer-events: none;
+    border: 1px dashed rgba(255,255,255,0.12); border-radius: 6px;
+  }
+  .canvas-wrap.portrait .canvas-safe-zone { display: block; }
+  .canvas-safe-zone::after {
+    content: 'Safe Zone'; position: absolute; top: 4px; right: 6px;
+    font-size: 8px; color: rgba(255,255,255,0.18); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
   }
   .canvas-badge {
     position: absolute; top: 20px; left: 20px; padding: 5px 12px; border-radius: 6px;
@@ -141,11 +171,14 @@
   .track-clip.image { background: rgba(59,130,246,0.5); border: 1px solid rgba(59,130,246,0.7); }
   .track-clip.audio { background: rgba(245,158,11,0.5); border: 1px solid rgba(245,158,11,0.7); }
   .trim-handle {
-    position: absolute; top: 0; bottom: 0; width: 6px; cursor: ew-resize; z-index: 3;
+    position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 3;
+    transition: background 0.1s;
   }
-  .trim-handle.left { left: 0; border-radius: 4px 0 0 4px; background: rgba(255,255,255,0.15); }
-  .trim-handle.right { right: 0; border-radius: 0 4px 4px 0; background: rgba(255,255,255,0.15); }
-  .trim-handle:hover { background: rgba(255,255,255,0.3); }
+  .trim-handle.left { left: -2px; border-radius: 4px 0 0 4px; background: rgba(255,255,255,0.12); }
+  .trim-handle.right { right: -2px; border-radius: 0 4px 4px 0; background: rgba(255,255,255,0.12); }
+  .trim-handle:hover { background: rgba(255,255,255,0.35); }
+  .track-clip:hover .trim-handle { background: rgba(255,255,255,0.25); }
+  .track-clip.selected, .track-clip:active { outline: 1px solid var(--accent); outline-offset: -1px; z-index: 5; }
   .playhead {
     position: absolute; top: 0; bottom: 0; width: 2px; background: var(--danger);
     z-index: 10; pointer-events: none;
@@ -324,6 +357,120 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .queue-empty { padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  /* ═══════════════════════════════════════
+     MOBILE — Social-style Record Experience
+     ═══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    body { overflow: auto; }
+
+    .top-bar { padding: 0 10px; height: 44px; }
+    .logo { font-size: 12px; }
+    .mode-pills { display: none; }
+    .sub-mode-pills { display: none; }
+    .top-bar-right { gap: 4px; }
+    .top-bar-right .tb-btn { padding: 5px 10px; font-size: 11px; }
+    /* Hide desktop-only top bar buttons on mobile */
+    #btnDownloadRaw, #btnExport, #btnSaveContent { display: none !important; }
+
+    .main-area { flex-direction: column; min-height: calc(100vh - 44px); }
+
+    /* Hide desktop sidebar, timeline, aspect bar */
+    .sidebar { display: none !important; }
+    .timeline { display: none !important; }
+    .aspect-bar { display: none !important; }
+
+    /* Canvas fills the screen */
+    .canvas-col { flex: 1; min-height: 0; }
+    .canvas-wrap {
+      flex: 1; padding: 0; border-radius: 0;
+      max-width: 100% !important; margin: 0 !important;
+      touch-action: none;
+    }
+    .canvas-wrap.portrait { max-width: 100% !important; }
+    #recorderCanvas { border-radius: 0; width: 100%; height: 100%; object-fit: cover; }
+
+    /* Controls bar — fixed bottom, social-style */
+    .controls-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      padding: 12px 20px 28px; gap: 16px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      border: none;
+    }
+    .ctrl-btn { width: 48px; height: 48px; }
+    .ctrl-btn.rec { width: 64px; height: 64px; border-width: 3px; }
+    .ctrl-btn.rec svg { width: 28px; height: 28px; }
+    .ctrl-btn svg { width: 20px; height: 20px; }
+    .ctrl-sep { display: none; }
+    /* Hide play/trim on mobile */
+    #btnPlay, #btnTrim { display: none !important; }
+
+    .canvas-badge { top: 10px; left: 10px; font-size: 10px; padding: 4px 10px; }
+    .canvas-time { top: 10px; right: 10px; font-size: 12px; padding: 4px 10px; }
+
+    /* Hide safe zone on mobile */
+    .canvas-safe-zone { display: none !important; }
+  }
+
+  /* ── Mobile Review Screen (shown after recording) ── */
+  .mobile-review {
+    display: none; position: fixed; inset: 0; z-index: 50;
+    background: var(--bg-primary); flex-direction: column;
+  }
+  .mobile-review.open { display: flex; }
+  .mobile-review-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .mobile-review-header h3 { font-size: 15px; font-weight: 700; }
+  .mr-close {
+    background: none; border: none; color: var(--text-secondary); font-size: 20px;
+    cursor: pointer; padding: 4px 8px;
+  }
+  .mobile-review-video {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: #000; min-height: 0; position: relative;
+  }
+  .mobile-review-video video {
+    width: 100%; height: 100%; object-fit: contain;
+  }
+  .mr-duration {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 4px 14px;
+    border-radius: 20px; font-size: 12px; font-weight: 600; color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+  .mobile-review-actions {
+    padding: 16px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
+    background: var(--bg-secondary); border-top: 1px solid var(--border);
+  }
+  .mr-btn-row { display: flex; gap: 10px; }
+  .mr-btn {
+    flex: 1; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600;
+    font-family: inherit; cursor: pointer; text-align: center; border: none;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .mr-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .mr-btn-save { background: var(--success); color: #fff; }
+  .mr-btn-save:hover { filter: brightness(1.1); }
+  .mr-btn-redo { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+  .mr-btn-redo:hover { border-color: var(--danger); color: var(--danger); }
+  .mr-btn-export { background: var(--accent); color: #fff; }
+  .mr-btn-export:hover { filter: brightness(1.15); }
+  .mr-btn-download { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+  .mr-btn-download:hover { border-color: var(--accent); color: var(--accent); }
+  .mr-saving { font-size: 13px; color: var(--text-muted); text-align: center; padding: 8px; }
+  .mr-saved { font-size: 13px; color: var(--success); text-align: center; padding: 8px; font-weight: 600; }
+
+  /* ── Save to Content button (desktop + mobile) ── */
+  .save-content-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--success); background: rgba(33,150,83,0.1); color: var(--success);
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .save-content-btn:hover { background: var(--success); color: #fff; }
+  .save-content-btn:disabled { opacity: 0.4; cursor: default; }
+  .save-content-btn.saved { background: rgba(33,150,83,0.1); color: var(--success); border-color: var(--success); cursor: default; }
 </style>
 </head>
 <body>
@@ -347,6 +494,7 @@
     <button class="tb-btn" id="btnLaunchRecorder" onclick="R.launchRecorder()">Launch Recorder</button>
     <a href="<%= studio_portal_campaign_live_events_path(@campaign) %>" class="tb-btn">Back to Studio</a>
     <button class="tb-btn" id="btnDownloadRaw" onclick="R.downloadRaw()" style="display:none;">Download Raw</button>
+    <button class="save-content-btn" id="btnSaveContent" onclick="R.saveToContent()" style="display:none;">Save to Content</button>
     <button class="tb-btn primary" id="btnExport" onclick="R.startExport()" disabled>Export MP4</button>
   </div>
 </div>
@@ -354,9 +502,24 @@
 <!-- ── Main ── -->
 <div class="main-area">
   <div class="canvas-col">
+    <!-- Aspect Ratio Toggle -->
+    <div class="aspect-bar">
+      <div class="aspect-switcher">
+        <button class="aspect-btn active" onclick="R.setAspect('landscape',this)" title="Landscape (16:9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/></svg>
+          16:9
+        </button>
+        <button class="aspect-btn" onclick="R.setAspect('portrait',this)" title="Portrait (9:16) — Social Media">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="3"/></svg>
+          9:16
+        </button>
+      </div>
+      <span class="aspect-label" id="recAspectLabel">Landscape (16:9)</span>
+    </div>
     <!-- Canvas -->
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" id="canvasWrap">
       <canvas id="recorderCanvas" width="1920" height="1080"></canvas>
+      <div class="canvas-safe-zone" id="canvasSafeZone"></div>
       <div class="canvas-badge" id="badge"></div>
       <div class="canvas-time" id="canvasTime">00:00</div>
       <div id="teleprompter" style="display:none;">
@@ -728,6 +891,72 @@
       </div>
       <ul class="queue-done-list" id="queueDoneList"></ul>
 
+      <div class="queue-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <div class="queue-section-label">Lower Third Design</div>
+      </div>
+      <div style="padding:0 16px;">
+        <div style="margin-bottom:8px;">
+          <label style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Text Template</label>
+          <input type="text" class="sb-input" id="queueLtText" value="For {name}" placeholder="Use {name} for buyer name" oninput="R.updateQueueLtPreview()">
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">{name} = buyer's name</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Font Size</label>
+            <input type="number" class="sb-input" id="queueLtFontSize" value="36" min="16" max="120" oninput="R.updateQueueLtPreview()">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Color</label>
+            <input type="color" class="sb-input" id="queueLtColor" value="#ffffff" style="padding:2px;height:32px;" oninput="R.updateQueueLtPreview()">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Stroke</label>
+            <input type="color" class="sb-input" id="queueLtStroke" value="#000000" style="padding:2px;height:32px;" oninput="R.updateQueueLtPreview()">
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Font</label>
+            <select class="sb-select" id="queueLtFont" onchange="R.updateQueueLtPreview()">
+              <option value="-apple-system, sans-serif">System</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Monospace</option>
+              <option value="Impact, sans-serif">Impact</option>
+              <option value="'Brush Script MT', cursive">Script</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Position</label>
+            <select class="sb-select" id="queueLtPosition" onchange="R.updateQueueLtPreview()">
+              <option value="bottom">Bottom</option>
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Custom Design (PNG)</label>
+          <label class="sb-btn" style="cursor:pointer;text-align:center;display:block;font-size:11px;">
+            Upload Graphic
+            <input type="file" accept="image/*" style="display:none;" onchange="R.loadQueueLtDesign(this)">
+          </label>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">PNG with transparency. Name text renders on top.</div>
+          <div id="queueLtDesignInfo" style="display:none;margin-top:6px;">
+            <div class="overlay-item">
+              <span class="name" id="queueLtDesignName" style="flex:1;font-size:11px;"></span>
+              <button class="del" onclick="R.removeQueueLtDesign()" style="font-size:14px;">&times;</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label style="font-size:10px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Bar Opacity</label>
+          <input type="range" class="sb-range" id="queueLtBarOpacity" min="0" max="100" value="65" oninput="R.updateQueueLtPreview()">
+        </div>
+        <div id="queueLtPreview" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:6px;text-align:center;min-height:40px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+          <span style="font-size:11px;color:var(--text-muted);">Preview will show here</span>
+        </div>
+      </div>
+
       <div class="queue-controls">
         <button class="q-btn" id="queueSkipBtn" onclick="R.skipBuyer()" disabled>Skip</button>
       </div>
@@ -744,6 +973,36 @@
     <div style="margin-top:16px;text-align:right;">
       <button class="tb-btn" id="exportCloseBtn" onclick="R.closeExportModal()" style="display:none;">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- Mobile Review Screen -->
+<div class="mobile-review" id="mobileReview">
+  <div class="mobile-review-header">
+    <h3>Review Recording</h3>
+    <button class="mr-close" onclick="R.closeMobileReview()">&times;</button>
+  </div>
+  <div class="mobile-review-video">
+    <video id="mobileReviewVideo" playsinline></video>
+    <div class="mr-duration" id="mrDuration">0:00</div>
+  </div>
+  <div class="mobile-review-actions">
+    <button class="mr-btn mr-btn-save" id="mrSaveBtn" onclick="R.saveToContent()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save to Content
+    </button>
+    <div class="mr-btn-row">
+      <button class="mr-btn mr-btn-redo" onclick="R.mobileRedo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        Redo
+      </button>
+      <button class="mr-btn mr-btn-download" onclick="R.downloadRaw()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+    </div>
+    <div class="mr-saving" id="mrSaving" style="display:none;">Saving to your content library...</div>
+    <div class="mr-saved" id="mrSaved" style="display:none;">Saved to Content!</div>
   </div>
 </div>
 
@@ -909,7 +1168,11 @@ var R = (function() {
   }
 
   // ── Compositor ──
+  var compositorRunning = false;
+
   function startCompositor() {
+    if (compositorRunning) return;
+    compositorRunning = true;
     function draw() {
       animFrame = requestAnimationFrame(draw);
       var cw = canvas.width;
@@ -1184,8 +1447,14 @@ var R = (function() {
       // Restart compositor for live camera if still connected
       if (cameraStream) { cameraOn = true; document.getElementById('btnCamera').classList.add('active'); startCompositor(); }
     });
-    // Show download button
+    // Show download + save buttons
     document.getElementById('btnDownloadRaw').style.display = '';
+    document.getElementById('btnSaveContent').style.display = '';
+
+    // On mobile, show the review screen automatically
+    if (window.innerWidth <= 768) {
+      showMobileReview();
+    }
   }
 
   function togglePlayback() {
@@ -1312,8 +1581,8 @@ var R = (function() {
     };
     textOverlays.push(overlay);
     document.getElementById('textContent').value = '';
-    // Set preview time so the new overlay is visible
-    previewTime = overlay.start;
+    // Set preview time so the new overlay is visible (offset past fade-in)
+    previewTime = overlay.start + Math.min(overlay.fadeIn, overlay.duration * 0.5) + 0.01;
     renderTextList();
     updateTimeline();
   }
@@ -1321,11 +1590,16 @@ var R = (function() {
   function renderTextList() {
     var el = document.getElementById('textOverlaysList');
     el.innerHTML = '';
-    textOverlays.forEach(function(o) {
+    textOverlays.forEach(function(o, i) {
       var div = document.createElement('div');
       div.className = 'overlay-item';
-      div.innerHTML = '<span class="name">' + escHtml(o.text) + '</span>' +
-        '<button class="del" onclick="R.removeTextOverlay(' + o.id + ')">&times;</button>';
+      div.style.cursor = 'pointer';
+      div.innerHTML = '<span class="name" style="flex:1;">' + escHtml(o.text) + '</span>' +
+        '<span style="font-size:10px;color:var(--text-muted);margin-right:4px;">' + o.start.toFixed(1) + 's / ' + o.duration.toFixed(1) + 's</span>' +
+        '<button class="del" onclick="event.stopPropagation();R.removeTextOverlay(' + o.id + ')">&times;</button>';
+      div.addEventListener('click', function() {
+        previewTime = o.start + 0.01;
+      });
       el.appendChild(div);
     });
   }
@@ -1356,7 +1630,7 @@ var R = (function() {
         fadeOut: parseFloat(document.getElementById('imgFadeOut').value) || 0.5
       };
       imageOverlays.push(overlay);
-      previewTime = overlay.start;
+      previewTime = overlay.start + Math.min(overlay.fadeIn, overlay.duration * 0.5) + 0.01;
       renderImageList();
       updateTimeline();
     };
@@ -1367,11 +1641,16 @@ var R = (function() {
   function renderImageList() {
     var el = document.getElementById('imageOverlaysList');
     el.innerHTML = '';
-    imageOverlays.forEach(function(o) {
+    imageOverlays.forEach(function(o, i) {
       var div = document.createElement('div');
       div.className = 'overlay-item';
-      div.innerHTML = '<span class="name">' + escHtml(o.name) + '</span>' +
-        '<button class="del" onclick="R.removeImageOverlay(' + o.id + ')">&times;</button>';
+      div.style.cursor = 'pointer';
+      div.innerHTML = '<span class="name" style="flex:1;">' + escHtml(o.name) + '</span>' +
+        '<span style="font-size:10px;color:var(--text-muted);margin-right:4px;">' + o.start.toFixed(1) + 's / ' + o.duration.toFixed(1) + 's</span>' +
+        '<button class="del" onclick="event.stopPropagation();R.removeImageOverlay(' + o.id + ')">&times;</button>';
+      div.addEventListener('click', function() {
+        previewTime = o.start + 0.01;
+      });
       el.appendChild(div);
     });
   }
@@ -1695,6 +1974,7 @@ var R = (function() {
 
   // ── Helpers ──
   function formatTime(s) {
+    if (!isFinite(s) || isNaN(s)) s = 0;
     var m = Math.floor(s / 60);
     var sec = Math.floor(s % 60);
     return m + ':' + String(sec).padStart(2, '0');
@@ -2175,7 +2455,7 @@ var R = (function() {
         fadeOut: 0.5
       };
       lowerThirds.push(lt);
-      previewTime = lt.start;
+      previewTime = lt.start + 0.01;
       renderLowerThirdsList();
       updateTimeline();
     };
@@ -2206,26 +2486,93 @@ var R = (function() {
   function setupTimelineClipDrag() {
     var tracks = document.getElementById('timelineTracks');
     var clips = tracks.querySelectorAll('.track-clip.text, .track-clip.image');
-    clips.forEach(function(clip, idx) {
+    clips.forEach(function(clip) {
+      var lane = clip.parentElement;
+      var isText = clip.classList.contains('text');
+      // Lower thirds use .image class but are in the image track after image overlays
+      var isLowerThird = !isText && clip.style.background && clip.style.background.indexOf('168,85,247') !== -1;
+
+      var overlayArr, overlayIdx;
+      if (isLowerThird) {
+        overlayArr = lowerThirds;
+        // Count lower-third clips before this one
+        var ltClips = lane.querySelectorAll('.track-clip');
+        var ltIdx = 0;
+        for (var s = 0; s < ltClips.length; s++) {
+          if (ltClips[s] === clip) { ltIdx = s - imageOverlays.length; break; }
+        }
+        overlayIdx = Math.max(0, ltIdx);
+      } else if (isText) {
+        overlayArr = textOverlays;
+        var siblings = lane.querySelectorAll('.track-clip.text');
+        overlayIdx = 0;
+        for (var s = 0; s < siblings.length; s++) {
+          if (siblings[s] === clip) { overlayIdx = s; break; }
+        }
+      } else {
+        overlayArr = imageOverlays;
+        var siblings = lane.querySelectorAll('.track-clip.image');
+        overlayIdx = 0;
+        for (var s = 0; s < siblings.length; s++) {
+          if (siblings[s] === clip) { overlayIdx = s; break; }
+        }
+      }
+      if (!overlayArr[overlayIdx]) return;
+
+      // Trim handles on overlay clips — resize start/duration
+      clip.querySelectorAll('.trim-handle').forEach(function(handle) {
+        handle.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var side = handle.classList.contains('left') ? 'left' : 'right';
+          var laneRect = lane.getBoundingClientRect();
+          var dur = timelineDuration || 30;
+          var origStart = overlayArr[overlayIdx].start;
+          var origDuration = overlayArr[overlayIdx].duration;
+
+          function onTrimMove(ev) {
+            var pct = Math.max(0, Math.min(1, (ev.clientX - laneRect.left) / laneRect.width));
+            var time = pct * dur;
+            if (side === 'left') {
+              var maxStart = origStart + origDuration - 0.5;
+              var newStart = Math.max(0, Math.min(time, maxStart));
+              var delta = newStart - origStart;
+              overlayArr[overlayIdx].start = newStart;
+              overlayArr[overlayIdx].duration = origDuration - delta;
+            } else {
+              var newEnd = Math.max(overlayArr[overlayIdx].start + 0.5, time);
+              overlayArr[overlayIdx].duration = newEnd - overlayArr[overlayIdx].start;
+            }
+            previewTime = overlayArr[overlayIdx].start + 0.01;
+            // Visually update clip
+            clip.style.left = (overlayArr[overlayIdx].start / dur * 100) + '%';
+            clip.style.width = Math.max(overlayArr[overlayIdx].duration / dur * 100, 1) + '%';
+          }
+
+          function onTrimUp() {
+            document.removeEventListener('mousemove', onTrimMove);
+            document.removeEventListener('mouseup', onTrimUp);
+            updateTimeline();
+          }
+
+          document.addEventListener('mousemove', onTrimMove);
+          document.addEventListener('mouseup', onTrimUp);
+        });
+      });
+
+      // Drag clip to move start time
       clip.addEventListener('mousedown', function(e) {
         if (e.target.classList.contains('trim-handle')) return;
         e.preventDefault();
-        var lane = clip.parentElement;
         var laneRect = lane.getBoundingClientRect();
         var dur = timelineDuration || 30;
         var startPct = parseFloat(clip.style.left) / 100;
         var startX = e.clientX;
 
-        // Determine which overlay array and index
-        var isText = clip.classList.contains('text');
-        var overlayArr = isText ? textOverlays : imageOverlays;
-        var overlayIdx = 0;
-        // Find the matching overlay index by counting same-type clips before this one
-        var sameSiblings = lane.querySelectorAll('.track-clip');
-        for (var s = 0; s < sameSiblings.length; s++) {
-          if (sameSiblings[s] === clip) { overlayIdx = s; break; }
-        }
-        if (!overlayArr[overlayIdx]) return;
+        // Highlight selected clip
+        tracks.querySelectorAll('.track-clip').forEach(function(c) { c.classList.remove('selected'); });
+        clip.classList.add('selected');
+        clip.style.outline = '1px solid var(--accent)';
 
         function onDrag(ev) {
           var dx = ev.clientX - startX;
@@ -2233,12 +2580,14 @@ var R = (function() {
           var newPct = Math.max(0, Math.min(1, startPct + dPct));
           clip.style.left = (newPct * 100) + '%';
           overlayArr[overlayIdx].start = newPct * dur;
+          previewTime = overlayArr[overlayIdx].start + 0.01;
         }
 
         function onUp() {
           document.removeEventListener('mousemove', onDrag);
           document.removeEventListener('mouseup', onUp);
-          previewTime = overlayArr[overlayIdx].start;
+          clip.style.outline = '';
+          previewTime = overlayArr[overlayIdx].start + 0.01;
           updateTimeline();
         }
 
@@ -2285,6 +2634,9 @@ var R = (function() {
     // Restore studio sidebar
     document.querySelector('.sidebar-tabs').style.display = '';
     document.getElementById('queueSidebar').classList.remove('active');
+    // Clear inline display:none that switchToQueue set on panels
+    var panels = document.querySelectorAll('.sidebar-panel');
+    for (var i = 0; i < panels.length; i++) panels[i].style.display = '';
     // Re-show active panel
     var activeTab = document.querySelector('.sidebar-tab.active');
     if (activeTab) activeTab.click();
@@ -2324,7 +2676,11 @@ var R = (function() {
     }
     queueIndex = index;
     var buyer = queueData[index];
-    document.getElementById('queueCurrent').style.display = '';
+    var el = document.getElementById('queueCurrent');
+    el.style.display = '';
+    // Rebuild inner HTML in case review step replaced it
+    el.innerHTML = '<div class="buyer-name" id="queueBuyerName"></div>' +
+      '<div class="buyer-location" id="queueBuyerLocation"></div>';
     document.getElementById('queueBuyerName').textContent = buyer.name || 'Unknown';
     var loc = [buyer.city, buyer.state].filter(Boolean).join(', ');
     document.getElementById('queueBuyerLocation').textContent = loc || '';
@@ -2357,15 +2713,90 @@ var R = (function() {
     document.getElementById('badge').className = 'canvas-badge';
     document.getElementById('badge').style.display = 'none';
 
-    // Wait for blob, then upload
+    // Wait for blob, then show review controls
     var waitForBlob = setInterval(function() {
       if (recordedBlob) {
         clearInterval(waitForBlob);
-        var buyer = queueData[queueIndex];
-        uploadPersonalVideo(recordedBlob, buyer.id, queueIndex);
-        advanceQueue();
+        showQueueReview();
       }
     }, 100);
+  }
+
+  function showQueueReview() {
+    var buyer = queueData[queueIndex];
+    // Set up playback so they can review
+    setupPlayback();
+
+    // Show review overlay in the queue current area
+    var el = document.getElementById('queueCurrent');
+    el.innerHTML = '<div class="buyer-name">' + escHtml(buyer.name || 'Unknown') + '</div>' +
+      '<div class="buyer-location" style="margin-bottom:10px;">' + escHtml([buyer.city, buyer.state].filter(Boolean).join(', ') || '') + '</div>' +
+      '<div style="font-size:12px;color:var(--success);font-weight:600;margin-bottom:10px;">Recording complete — ' + formatTime(recordElapsed) + '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="q-btn" onclick="R.queuePlayReview()" style="flex:1;" id="queuePlayBtn">Play</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<button class="q-btn" onclick="R.queueRedo()" style="flex:1;border-color:var(--danger);color:var(--danger);">Redo</button>' +
+        '<button class="q-btn" onclick="R.queueSend()" style="flex:1;background:var(--success);border-color:var(--success);color:#fff;">Send</button>' +
+      '</div>';
+
+    // Disable skip while reviewing
+    document.getElementById('queueSkipBtn').disabled = true;
+  }
+
+  function queuePlayReview() {
+    if (!recordedUrl) return;
+    if (isPlaying) {
+      playbackVideo.pause();
+      isPlaying = false;
+      document.getElementById('queuePlayBtn').textContent = 'Play';
+      if (cameraStream && cameraOn) startCompositor();
+    } else {
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; compositorRunning = false; }
+      playbackVideo.currentTime = 0;
+      playbackVideo.play();
+      isPlaying = true;
+      document.getElementById('queuePlayBtn').textContent = 'Pause';
+      // When playback ends, re-enable camera preview
+      playbackVideo.onended = function() {
+        isPlaying = false;
+        document.getElementById('queuePlayBtn').textContent = 'Play';
+        if (cameraStream) { cameraOn = true; startCompositor(); }
+      };
+      startCompositor();
+    }
+  }
+
+  function queueRedo() {
+    // Stop any playback
+    if (isPlaying && playbackVideo) { playbackVideo.pause(); isPlaying = false; }
+    // Clear the recorded blob
+    recordedBlob = null;
+    if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
+    recordedChunks = [];
+    // Restore the buyer display
+    var buyer = queueData[queueIndex];
+    var el = document.getElementById('queueCurrent');
+    el.innerHTML = '<div class="buyer-name" id="queueBuyerName">' + escHtml(buyer.name || 'Unknown') + '</div>' +
+      '<div class="buyer-location" id="queueBuyerLocation">' + escHtml([buyer.city, buyer.state].filter(Boolean).join(', ') || '') + '</div>';
+    // Re-enable skip
+    document.getElementById('queueSkipBtn').disabled = false;
+    // Restart camera preview
+    if (cameraStream) { cameraOn = true; startCompositor(); }
+  }
+
+  function queueSend() {
+    // Stop any playback
+    if (isPlaying && playbackVideo) { playbackVideo.pause(); isPlaying = false; }
+    var buyer = queueData[queueIndex];
+    // Mark as sent immediately so advanceQueue skips this buyer
+    queueData[queueIndex].status = 'sent';
+    uploadPersonalVideo(recordedBlob, buyer.id, queueIndex);
+    advanceQueue();
+    // Re-enable skip
+    document.getElementById('queueSkipBtn').disabled = false;
+    // Restart camera preview
+    if (cameraStream) { cameraOn = true; startCompositor(); }
   }
 
   function uploadPersonalVideo(blob, submissionId, buyerIndex) {
@@ -2398,7 +2829,9 @@ var R = (function() {
   }
 
   function advanceQueue() {
-    var next = findNextPendingIndex(0);
+    // Look for next pending after current, then wrap around from start
+    var next = findNextPendingIndex(queueIndex + 1);
+    if (next < 0) next = findNextPendingIndex(0);
     if (next >= 0) {
       loadBuyer(next);
     } else {
@@ -2513,34 +2946,252 @@ var R = (function() {
     }
   };
 
-  // Draw queue lower-third in compositor
-  var originalDraw = null;
+  // ── Queue Lower Third Customization ──
+  var queueLtDesign = null; // custom design Image object
+  var queueLtDesignLoaded = false;
+
+  function getQueueLtSettings() {
+    return {
+      text: (document.getElementById('queueLtText')?.value || 'For {name}'),
+      fontSize: parseInt(document.getElementById('queueLtFontSize')?.value) || 36,
+      color: document.getElementById('queueLtColor')?.value || '#ffffff',
+      stroke: document.getElementById('queueLtStroke')?.value || '#000000',
+      font: document.getElementById('queueLtFont')?.value || '-apple-system, sans-serif',
+      position: document.getElementById('queueLtPosition')?.value || 'bottom',
+      barOpacity: (parseInt(document.getElementById('queueLtBarOpacity')?.value) || 65) / 100
+    };
+  }
+
   function drawQueueLowerThird() {
     if (!queueMode || queueIndex < 0 || queueIndex >= queueData.length) return;
     var buyer = queueData[queueIndex];
     if (!buyer || !buyer.name) return;
 
+    var s = getQueueLtSettings();
+    var displayText = s.text.replace(/\{name\}/gi, buyer.name);
     var cw = canvas.width;
     var ch = canvas.height;
-    var barH = 80;
-    var barY = ch - barH - 40;
 
-    // Semi-transparent dark bar
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-    ctx.fillRect(0, barY, cw, barH);
+    // Calculate bar position
+    var barH = Math.max(80, s.fontSize * 2.2);
+    var barY;
+    if (s.position === 'top') barY = 40;
+    else if (s.position === 'center') barY = (ch - barH) / 2;
+    else barY = ch - barH - 40; // bottom
 
-    // "For [Buyer Name]"
-    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('For ' + buyer.name, cw / 2, barY + barH / 2);
+    if (queueLtDesign && queueLtDesignLoaded) {
+      // Draw custom design image scaled to full width
+      var imgAspect = queueLtDesign.naturalWidth / queueLtDesign.naturalHeight;
+      var drawW = cw;
+      var drawH = drawW / imgAspect;
+      var drawY;
+      if (s.position === 'top') drawY = 0;
+      else if (s.position === 'center') drawY = (ch - drawH) / 2;
+      else drawY = ch - drawH;
+
+      ctx.drawImage(queueLtDesign, 0, drawY, drawW, drawH);
+
+      // Draw text on top of the design
+      ctx.font = 'bold ' + s.fontSize + 'px ' + s.font;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var textY = drawY + drawH / 2;
+      // Stroke for readability
+      if (s.stroke) {
+        ctx.strokeStyle = s.stroke;
+        ctx.lineWidth = Math.max(2, s.fontSize / 10);
+        ctx.strokeText(displayText, cw / 2, textY);
+      }
+      ctx.fillStyle = s.color;
+      ctx.fillText(displayText, cw / 2, textY);
+    } else {
+      // Default: semi-transparent bar with text
+      ctx.fillStyle = 'rgba(0, 0, 0, ' + s.barOpacity + ')';
+      ctx.fillRect(0, barY, cw, barH);
+
+      ctx.font = 'bold ' + s.fontSize + 'px ' + s.font;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (s.stroke && s.stroke !== s.color) {
+        ctx.strokeStyle = s.stroke;
+        ctx.lineWidth = Math.max(2, s.fontSize / 12);
+        ctx.strokeText(displayText, cw / 2, barY + barH / 2);
+      }
+      ctx.fillStyle = s.color;
+      ctx.fillText(displayText, cw / 2, barY + barH / 2);
+    }
+  }
+
+  function loadQueueLtDesign(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var img = new Image();
+    img.onload = function() {
+      queueLtDesign = img;
+      queueLtDesignLoaded = true;
+      document.getElementById('queueLtDesignName').textContent = file.name;
+      document.getElementById('queueLtDesignInfo').style.display = '';
+      updateQueueLtPreview();
+    };
+    img.src = URL.createObjectURL(file);
+    input.value = '';
+  }
+
+  function removeQueueLtDesign() {
+    queueLtDesign = null;
+    queueLtDesignLoaded = false;
+    document.getElementById('queueLtDesignInfo').style.display = 'none';
+    updateQueueLtPreview();
+  }
+
+  function updateQueueLtPreview() {
+    var previewEl = document.getElementById('queueLtPreview');
+    if (!previewEl) return;
+    var s = getQueueLtSettings();
+    var sampleName = (queueData.length > 0 && queueData[queueIndex]) ? queueData[queueIndex].name : 'Jane Smith';
+    var displayText = s.text.replace(/\{name\}/gi, sampleName || 'Jane Smith');
+    var previewFontSize = Math.min(s.fontSize, 18);
+
+    if (queueLtDesign && queueLtDesignLoaded) {
+      previewEl.innerHTML = '<div style="position:relative;width:100%;min-height:40px;">' +
+        '<img src="' + queueLtDesign.src + '" style="width:100%;display:block;border-radius:4px;">' +
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">' +
+        '<span style="font:bold ' + previewFontSize + 'px ' + s.font + ';color:' + s.color + ';' +
+        'text-shadow: -1px -1px 0 ' + s.stroke + ', 1px -1px 0 ' + s.stroke + ', -1px 1px 0 ' + s.stroke + ', 1px 1px 0 ' + s.stroke + ';">' +
+        escHtml(displayText) + '</span></div></div>';
+    } else {
+      previewEl.innerHTML = '<div style="background:rgba(0,0,0,' + s.barOpacity + ');padding:8px 16px;border-radius:4px;width:100%;">' +
+        '<span style="font:bold ' + previewFontSize + 'px ' + s.font + ';color:' + s.color + ';' +
+        'text-shadow: -1px -1px 0 ' + s.stroke + ', 1px -1px 0 ' + s.stroke + ', -1px 1px 0 ' + s.stroke + ', 1px 1px 0 ' + s.stroke + ';">' +
+        escHtml(displayText) + '</span></div>';
+    }
   }
 
   // ── Enumerate devices on load ──
   if (navigator.mediaDevices) {
     enumerateDeviceLists();
   }
+
+  // ── Save to Content ──
+  function saveToContent() {
+    if (!recordedBlob) return;
+    var saveBtn = document.getElementById('btnSaveContent');
+    var mrSaveBtn = document.getElementById('mrSaveBtn');
+    var mrSaving = document.getElementById('mrSaving');
+    var mrSaved = document.getElementById('mrSaved');
+
+    // Disable buttons and show saving state
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+    if (mrSaveBtn) { mrSaveBtn.disabled = true; mrSaveBtn.innerHTML = '<span class="queue-uploading"></span> Saving...'; }
+    if (mrSaving) mrSaving.style.display = '';
+
+    var formData = new FormData();
+    formData.append('campaign_asset[asset_type]', 'video_recording');
+    formData.append('campaign_asset[file]', recordedBlob, 'recording-' + Date.now() + '.webm');
+
+    var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var uploadUrl = '<%= portal_campaign_campaign_assets_path(@campaign) %>';
+
+    fetch(uploadUrl, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': token },
+      body: formData
+    })
+    .then(function(resp) {
+      if (resp.ok || resp.status === 302) {
+        if (saveBtn) { saveBtn.textContent = 'Saved!'; saveBtn.classList.add('saved'); }
+        if (mrSaving) mrSaving.style.display = 'none';
+        if (mrSaved) mrSaved.style.display = '';
+        if (mrSaveBtn) { mrSaveBtn.disabled = true; mrSaveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Saved!'; }
+      } else {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Failed — Retry'; }
+        if (mrSaving) mrSaving.style.display = 'none';
+        if (mrSaveBtn) { mrSaveBtn.disabled = false; mrSaveBtn.innerHTML = 'Save Failed — Tap to Retry'; }
+      }
+    })
+    .catch(function() {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Failed — Retry'; }
+      if (mrSaving) mrSaving.style.display = 'none';
+      if (mrSaveBtn) { mrSaveBtn.disabled = false; mrSaveBtn.innerHTML = 'Save Failed — Tap to Retry'; }
+    });
+  }
+
+  // ── Mobile Review Screen ──
+  function showMobileReview() {
+    var review = document.getElementById('mobileReview');
+    var video = document.getElementById('mobileReviewVideo');
+    if (!recordedUrl || !review) return;
+
+    video.src = recordedUrl;
+    video.play();
+    // Use recordElapsed (tracked during recording) since WebM blobs often lack duration metadata
+    document.getElementById('mrDuration').textContent = formatTime(recordElapsed || 0);
+
+    // Reset save state
+    document.getElementById('mrSaving').style.display = 'none';
+    document.getElementById('mrSaved').style.display = 'none';
+    var mrSaveBtn = document.getElementById('mrSaveBtn');
+    mrSaveBtn.disabled = false;
+    mrSaveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save to Content';
+
+    review.classList.add('open');
+  }
+
+  function closeMobileReview() {
+    var review = document.getElementById('mobileReview');
+    var video = document.getElementById('mobileReviewVideo');
+    if (video) { video.pause(); video.src = ''; }
+    review.classList.remove('open');
+  }
+
+  function mobileRedo() {
+    closeMobileReview();
+    // Clear recorded data
+    recordedBlob = null;
+    if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
+    recordedChunks = [];
+    document.getElementById('btnExport').disabled = true;
+    document.getElementById('btnDownloadRaw').style.display = 'none';
+    document.getElementById('btnSaveContent').style.display = 'none';
+    // Restart camera
+    if (cameraStream) { cameraOn = true; startCompositor(); }
+  }
+
+  // ── Aspect Ratio Toggle ──
+  var currentAspect = 'landscape';
+
+  function setAspect(mode, btn) {
+    if (mode === currentAspect) return;
+    currentAspect = mode;
+
+    var wrap = document.getElementById('canvasWrap');
+    var label = document.getElementById('recAspectLabel');
+    var safeZone = document.getElementById('canvasSafeZone');
+    document.querySelectorAll('.aspect-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+
+    if (mode === 'portrait') {
+      canvas.width = 1080;
+      canvas.height = 1920;
+      wrap.classList.add('portrait');
+      label.textContent = 'Portrait 9:16 (TikTok, Reels, Shorts)';
+      // Position safe zone guide
+      safeZone.style.top = '8%';
+      safeZone.style.left = '8%';
+      safeZone.style.right = '8%';
+      safeZone.style.bottom = '20%';
+    } else {
+      canvas.width = 1920;
+      canvas.height = 1080;
+      wrap.classList.remove('portrait');
+      label.textContent = 'Landscape (16:9)';
+    }
+    // Ensure compositor is running to render the change
+    startCompositor();
+  }
+
+  // ── Auto-start compositor so overlays preview immediately ──
+  startCompositor();
 
   // ── Public API ──
   return {
@@ -2583,7 +3234,18 @@ var R = (function() {
     switchToQueue: switchToQueue,
     switchToStudio: switchToStudio,
     skipBuyer: skipBuyer,
-    retakeBuyer: retakeBuyer
+    retakeBuyer: retakeBuyer,
+    queuePlayReview: queuePlayReview,
+    queueRedo: queueRedo,
+    queueSend: queueSend,
+    loadQueueLtDesign: loadQueueLtDesign,
+    removeQueueLtDesign: removeQueueLtDesign,
+    updateQueueLtPreview: updateQueueLtPreview,
+    setAspect: setAspect,
+    saveToContent: saveToContent,
+    showMobileReview: showMobileReview,
+    closeMobileReview: closeMobileReview,
+    mobileRedo: mobileRedo
   };
 })();
 </script>

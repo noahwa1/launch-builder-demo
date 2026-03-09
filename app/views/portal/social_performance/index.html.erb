@@ -1,0 +1,205 @@
+<% content_for :page_title, 'Social Performance' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .perf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .perf-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 18px; text-align: center; transition: box-shadow 0.15s;
+  }
+  .perf-card:hover { box-shadow: var(--shadow-md); }
+  .perf-card .perf-val { font-size: 28px; font-weight: 300; margin: 6px 0 2px; letter-spacing: -0.5px; }
+  .perf-card .perf-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .perf-card .perf-change { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .perf-card .perf-change.up { color: #16A34A; }
+  .perf-card .perf-change.down { color: #DC2626; }
+
+  .platform-row {
+    display: flex; align-items: center; gap: 14px; padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .platform-row:last-child { border-bottom: none; }
+  .plat-icon {
+    width: 40px; height: 40px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;
+  }
+  .plat-info { flex: 1; min-width: 0; }
+  .plat-name { font-size: 14px; font-weight: 600; }
+  .plat-handle { font-size: 12px; color: var(--text-muted); }
+  .plat-stats { display: flex; gap: 20px; text-align: center; }
+  .plat-stat-val { font-size: 16px; font-weight: 600; }
+  .plat-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+  .chart-placeholder {
+    height: 200px; background: var(--page-bg); border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px;
+    border: 1px dashed var(--border);
+  }
+
+  .top-post {
+    display: flex; gap: 14px; padding: 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-md); margin-bottom: 10px; transition: box-shadow 0.15s;
+  }
+  .top-post:hover { box-shadow: var(--shadow-md); }
+  .top-post .post-thumb {
+    width: 60px; height: 60px; border-radius: 8px; background: var(--page-bg);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 24px;
+  }
+  .top-post .post-info { flex: 1; min-width: 0; }
+  .top-post .post-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .top-post .post-meta { font-size: 11px; color: var(--text-muted); }
+  .top-post .post-engagement { text-align: right; white-space: nowrap; }
+  .top-post .post-engagement .eng-val { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .top-post .post-engagement .eng-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+
+  @media (max-width: 768px) {
+    .perf-grid { grid-template-columns: 1fr 1fr; }
+    .plat-stats { gap: 12px; }
+    .plat-stat-val { font-size: 14px; }
+  }
+  @media (max-width: 480px) {
+    .perf-grid { grid-template-columns: 1fr; }
+    .platform-row { flex-wrap: wrap; }
+    .plat-stats { width: 100%; justify-content: space-around; padding-top: 8px; }
+  }
+</style>
+
+<%# ── Overview Stats ── %>
+<div class="perf-grid">
+  <div class="perf-card">
+    <div class="perf-label">Total Reach</div>
+    <div class="perf-val">24.8K</div>
+    <div class="perf-change up">+12.3% vs last week</div>
+  </div>
+  <div class="perf-card">
+    <div class="perf-label">Engagements</div>
+    <div class="perf-val">1,847</div>
+    <div class="perf-change up">+8.7% vs last week</div>
+  </div>
+  <div class="perf-card">
+    <div class="perf-label">Link Clicks</div>
+    <div class="perf-val">342</div>
+    <div class="perf-change up">+22.1% vs last week</div>
+  </div>
+  <div class="perf-card">
+    <div class="perf-label">Engagement Rate</div>
+    <div class="perf-val">7.4%</div>
+    <div class="perf-change down">-0.8% vs last week</div>
+  </div>
+</div>
+
+<%# ── Engagement Over Time ── %>
+<div class="card">
+  <h3>Engagement Over Time</h3>
+  <div class="bar-chart" style="height:180px;margin-top:8px;">
+    <% [65, 42, 78, 55, 90, 72, 85, 48, 95, 60, 82, 70, 88, 50].each_with_index do |val, i| %>
+      <div class="bar-group">
+        <div class="bar" style="height:<%= val %>%;"></div>
+        <div class="bar-label"><%= (Date.today - 13 + i).strftime('%-m/%d') %></div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="two-col" style="margin-top:4px;">
+  <%# ── Platform Breakdown ── %>
+  <div class="card">
+    <h3>By Platform</h3>
+    <div class="platform-row">
+      <div class="plat-icon" style="background:rgba(225,48,108,0.1);color:#E1306C;">IG</div>
+      <div class="plat-info">
+        <div class="plat-name">Instagram</div>
+        <div class="plat-handle">@<%= @author.full_name.downcase.gsub(' ','') %></div>
+      </div>
+      <div class="plat-stats">
+        <div><div class="plat-stat-val">12.4K</div><div class="plat-stat-lbl">Reach</div></div>
+        <div><div class="plat-stat-val">892</div><div class="plat-stat-lbl">Engages</div></div>
+      </div>
+    </div>
+    <div class="platform-row">
+      <div class="plat-icon" style="background:rgba(0,0,0,0.06);color:#000;">TT</div>
+      <div class="plat-info">
+        <div class="plat-name">TikTok</div>
+        <div class="plat-handle">@<%= @author.full_name.downcase.gsub(' ','') %>books</div>
+      </div>
+      <div class="plat-stats">
+        <div><div class="plat-stat-val">8.2K</div><div class="plat-stat-lbl">Views</div></div>
+        <div><div class="plat-stat-val">614</div><div class="plat-stat-lbl">Engages</div></div>
+      </div>
+    </div>
+    <div class="platform-row">
+      <div class="plat-icon" style="background:rgba(29,161,242,0.1);color:#1DA1F2;">X</div>
+      <div class="plat-info">
+        <div class="plat-name">X / Twitter</div>
+        <div class="plat-handle">@<%= @author.full_name.downcase.gsub(' ','') %></div>
+      </div>
+      <div class="plat-stats">
+        <div><div class="plat-stat-val">2.8K</div><div class="plat-stat-lbl">Impress</div></div>
+        <div><div class="plat-stat-val">204</div><div class="plat-stat-lbl">Engages</div></div>
+      </div>
+    </div>
+    <div class="platform-row">
+      <div class="plat-icon" style="background:rgba(24,119,242,0.1);color:#1877F2;">f</div>
+      <div class="plat-info">
+        <div class="plat-name">Facebook</div>
+        <div class="plat-handle"><%= @author.full_name %> Author Page</div>
+      </div>
+      <div class="plat-stats">
+        <div><div class="plat-stat-val">1.4K</div><div class="plat-stat-lbl">Reach</div></div>
+        <div><div class="plat-stat-val">137</div><div class="plat-stat-lbl">Engages</div></div>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Top Posts ── %>
+  <div class="card">
+    <h3>Top Performing Posts</h3>
+    <div class="top-post">
+      <div class="post-thumb" style="background:rgba(225,48,108,0.08);color:#E1306C;">IG</div>
+      <div class="post-info">
+        <div class="post-title">Cover reveal carousel with behind-the-scenes shots</div>
+        <div class="post-meta">Instagram &middot; 3 days ago</div>
+      </div>
+      <div class="post-engagement">
+        <div class="eng-val">423</div>
+        <div class="eng-lbl">Engages</div>
+      </div>
+    </div>
+    <div class="top-post">
+      <div class="post-thumb" style="background:rgba(0,0,0,0.04);color:#000;">TT</div>
+      <div class="post-info">
+        <div class="post-title">POV: You open the first edition and find a signed bookplate</div>
+        <div class="post-meta">TikTok &middot; 5 days ago</div>
+      </div>
+      <div class="post-engagement">
+        <div class="eng-val">3.1K</div>
+        <div class="eng-lbl">Views</div>
+      </div>
+    </div>
+    <div class="top-post">
+      <div class="post-thumb" style="background:rgba(29,161,242,0.08);color:#1DA1F2;">X</div>
+      <div class="post-info">
+        <div class="post-title">Pre-order thread with retailer links and bonus teasers</div>
+        <div class="post-meta">X / Twitter &middot; 1 week ago</div>
+      </div>
+      <div class="post-engagement">
+        <div class="eng-val">89</div>
+        <div class="eng-lbl">Retweets</div>
+      </div>
+    </div>
+    <div class="top-post">
+      <div class="post-thumb" style="background:rgba(24,119,242,0.08);color:#1877F2;">f</div>
+      <div class="post-info">
+        <div class="post-title">Reader testimonial quote card with purchase link</div>
+        <div class="post-meta">Facebook &middot; 4 days ago</div>
+      </div>
+      <div class="post-engagement">
+        <div class="eng-val">64</div>
+        <div class="eng-lbl">Shares</div>
+      </div>
+    </div>
+  </div>
+</div>

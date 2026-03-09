@@ -235,10 +235,109 @@
     from { transform: translateY(100%); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+
+  /* ── Aspect Ratio Toggle ── */
+  .aspect-switcher {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .aspect-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .aspect-btn:hover { color: var(--text-primary); background: rgba(0,0,0,0.03); }
+  .aspect-btn.active { background: var(--accent); color: #fff; box-shadow: 0 1px 4px rgba(0,50,98,0.25); }
+  .aspect-btn svg { width: 14px; height: 14px; }
+
+  .preview-wrap { transition: all 0.3s ease; }
+  .preview-wrap.portrait {
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .preview-wrap.portrait .preview-area {
+    aspect-ratio: 9 / 16;
+    min-height: unset;
+  }
+  .preview-wrap.portrait .preview-area video {
+    object-fit: cover;
+  }
+  .portrait-label {
+    display: none;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+  }
+  .preview-wrap.portrait .portrait-label { display: block; }
+
+  /* Safe-zone guide overlay for portrait */
+  .safe-zone-guide {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+  }
+  .preview-wrap.portrait .safe-zone-guide { display: block; }
+  .safe-zone-guide::before {
+    content: '';
+    position: absolute;
+    top: 8%;
+    left: 8%;
+    right: 8%;
+    bottom: 20%;
+    border: 1px dashed rgba(255,255,255,0.15);
+    border-radius: 8px;
+  }
+  .safe-zone-guide::after {
+    content: 'Safe Zone';
+    position: absolute;
+    top: calc(8% + 4px);
+    right: calc(8% + 6px);
+    font-size: 9px;
+    color: rgba(255,255,255,0.2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 </style>
 
 <div class="studio-layout">
   <div>
+    <%# ── Aspect Ratio Toggle ── %>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="aspect-switcher">
+        <button class="aspect-btn active" onclick="setAspect('landscape',this)" title="Landscape (16:9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/></svg>
+          16:9
+        </button>
+        <button class="aspect-btn" onclick="setAspect('portrait',this)" title="Portrait (9:16) — Social Media">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="3"/></svg>
+          9:16
+        </button>
+      </div>
+      <span id="aspectLabel" style="font-size:11px;color:var(--text-muted);font-weight:500;">Landscape preview</span>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
     <%# ── Preview Area ── %>
     <div class="preview-area" id="previewArea">
       <% if @current_live_event %>
@@ -255,6 +354,9 @@
       </div>
       <video id="cameraPreview" autoplay muted playsinline style="display:none;"></video>
 
+      <%# ── Safe Zone Guide (visible in portrait mode) ── %>
+      <div class="safe-zone-guide"></div>
+
       <%# ── Producer Overlays ── %>
       <img id="imageOverlay" src="" alt="" style="display:none;position:absolute;z-index:5;pointer-events:none;">
       <div id="lowerThird" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:6;">
@@ -266,6 +368,8 @@
         </div>
       </div>
     </div>
+    <div class="portrait-label">Social Media Preview (9:16)</div>
+    </div><%# end preview-wrap %>
 
     <%# ── Controls ── %>
     <div class="controls-bar">
@@ -479,6 +583,22 @@
   var cameraOn = false;
   var micOn = false;
   var timerInterval = null;
+
+  // ── Aspect Ratio Toggle ──
+  window.setAspect = function(mode, btn) {
+    var wrap = document.getElementById('previewWrap');
+    var label = document.getElementById('aspectLabel');
+    document.querySelectorAll('.aspect-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+
+    if (mode === 'portrait') {
+      wrap.classList.add('portrait');
+      label.textContent = 'Social media preview (TikTok, Reels, Shorts)';
+    } else {
+      wrap.classList.remove('portrait');
+      label.textContent = 'Landscape preview';
+    }
+  };
 
   window.toggleCamera = function() {
     var video = document.getElementById('cameraPreview');

@@ -1,0 +1,146 @@
+<% content_for :page_title, @deliverable.title %>
+<% content_for :page_actions do %>
+  <%= link_to 'Edit', edit_manage_campaign_admin_deliverable_path(@campaign, @deliverable), class: 'btn btn-secondary btn-sm' %>
+  <%= link_to 'All Deliverables', manage_campaign_admin_deliverables_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .del-detail { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+  @media (max-width: 900px) { .del-detail { grid-template-columns: 1fr; } }
+  .note-thread { margin-top: 4px; }
+  .note-item {
+    display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .note-avatar {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .note-avatar.admin { background: var(--accent); color: #fff; }
+  .note-avatar.creator { background: #F59E0B; color: #fff; }
+  .note-body { flex: 1; }
+  .note-body .header { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .note-body .header strong { color: var(--text-primary); }
+  .note-body .text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+</style>
+
+<div class="del-detail">
+  <!-- Main Column -->
+  <div>
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(0,0,0,0.04);color:var(--text-muted);text-transform:uppercase;"><%= @deliverable.category_label %></span>
+          <% if @deliverable.revision_count > 0 %>
+            <span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(99,102,241,0.08);color:#6366F1;margin-left:4px;">v<%= @deliverable.revision_count + 1 %></span>
+          <% end %>
+        </div>
+        <span style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;color:<%= @deliverable.status_color %>;background:rgba(0,0,0,0.04);">
+          <%= @deliverable.status.titleize %>
+        </span>
+      </div>
+
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;"><%= @deliverable.title %></h2>
+
+      <% if @deliverable.description.present? %>
+        <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;margin-bottom:16px;"><%= @deliverable.description %></div>
+      <% end %>
+
+      <% if @deliverable.file.present? %>
+        <div style="padding:16px;background:var(--page-bg);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--accent);flex-shrink:0;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;"><%= File.basename(@deliverable.file.url) rescue 'Attached file' %></div>
+            </div>
+            <a href="<%= @deliverable.file.url %>" target="_blank" class="btn btn-secondary btn-sm">Download</a>
+          </div>
+          <% ext = File.extname(@deliverable.file.url).downcase rescue '' %>
+          <% if %w[.jpg .jpeg .png .gif .webp].include?(ext) %>
+            <img src="<%= @deliverable.file.url %>" style="max-width:100%;border-radius:8px;margin-top:12px;">
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @deliverable.creator_notes.present? %>
+        <div style="padding:12px;background:rgba(239,68,68,0.04);border-left:3px solid #EF4444;border-radius:0 8px 8px 0;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:600;color:#EF4444;text-transform:uppercase;margin-bottom:4px;">Creator's Revision Notes</div>
+          <div style="font-size:13px;white-space:pre-wrap;"><%= @deliverable.creator_notes %></div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Notes Thread -->
+    <div class="card note-thread">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Notes & Conversation</h3>
+      <% if @notes.any? %>
+        <% @notes.each do |note| %>
+          <div class="note-item">
+            <div class="note-avatar <%= note.user.admin? ? 'admin' : 'creator' %>"><%= note.user.initials %></div>
+            <div class="note-body">
+              <div class="header"><strong><%= note.user.full_name %></strong> · <%= time_ago_in_words(note.created_at) %> ago</div>
+              <div class="text"><%= note.body %></div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px;">No notes yet.</p>
+      <% end %>
+
+      <!-- Add Note -->
+      <%= form_tag add_note_manage_campaign_admin_deliverable_path(@campaign, @deliverable), style: 'margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;' do %>
+        <input type="text" name="body" placeholder="Add a note..." required style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+        <button type="submit" class="btn btn-secondary btn-sm">Send</button>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div>
+    <!-- Info -->
+    <div class="card">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;">Details</h4>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Created by</div>
+          <div><%= @deliverable.creator&.full_name %></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Created</div>
+          <div><%= @deliverable.created_at.strftime('%b %d, %Y at %I:%M %p') %></div>
+        </div>
+        <% if @deliverable.due_date.present? %>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Due date</div>
+            <div style="color:<%= @deliverable.due_date < Date.today ? '#EF4444' : 'var(--text-primary)' %>;font-weight:600;"><%= @deliverable.due_date.strftime('%b %d, %Y') %></div>
+          </div>
+        <% end %>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;">Revisions</div>
+          <div><%= @deliverable.revision_count %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Revision -->
+    <% if @deliverable.revision_requested? %>
+      <div class="card" style="margin-top:4px;border:1px solid rgba(239,68,68,0.2);">
+        <h4 style="font-size:13px;font-weight:700;color:#EF4444;margin-bottom:12px;">Revision Requested</h4>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Upload a revised version to send back for review.</p>
+        <%= form_tag revise_manage_campaign_admin_deliverable_path(@campaign, @deliverable), method: :patch, multipart: true do %>
+          <div style="margin-bottom:10px;">
+            <input type="file" name="file" style="font-size:13px;">
+          </div>
+          <div style="margin-bottom:10px;">
+            <input type="text" name="note" placeholder="Note about what changed..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Upload Revision</button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Danger Zone -->
+    <div class="card" style="margin-top:4px;">
+      <%= link_to 'Delete Deliverable', manage_campaign_admin_deliverable_path(@campaign, @deliverable), method: :delete, data: { confirm: 'Delete this deliverable?' }, style: 'font-size:12px;color:#EF4444;' %>
+    </div>
+  </div>
+</div>

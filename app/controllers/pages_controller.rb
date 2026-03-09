@@ -9,8 +9,9 @@ class PagesController < ApplicationController
   def submit
     @page = LandingPage.find_by!(slug: params[:slug], published: true)
 
-    # Collect all form fields as JSON data
+    # Collect all form fields as JSON data (include ref code if present)
     field_data = params.except(:controller, :action, :slug, :receipt, :authenticity_token, :form_type).permit!.to_h
+    field_data['ref'] = params[:ref] if params[:ref].present?
     form_type = params[:form_type].presence || detect_form_type(field_data)
 
     submission = @page.page_submissions.new(
@@ -24,6 +25,10 @@ class PagesController < ApplicationController
     submission.receipt = params[:receipt] if params[:receipt].present?
 
     if submission.save
+      if @page.respond_to?(:campaign) && @page.campaign
+        CampaignActivityLogger.submission_received(@page.campaign, submission)
+        NotificationService.submission_received(@page.campaign, submission)
+      end
       if @page.notify_on_submission?
         PortalMailer.new_page_submission(submission).deliver_later
       end

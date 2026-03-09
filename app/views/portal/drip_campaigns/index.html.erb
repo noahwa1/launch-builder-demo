@@ -1,0 +1,80 @@
+<% content_for :page_title, 'Drip Campaigns' %>
+<% content_for :page_actions do %>
+  <%= link_to 'New Campaign', new_portal_campaign_drip_campaign_path(@campaign), class: 'btn btn-primary btn-sm' %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .drip-list { display: flex; flex-direction: column; gap: 12px; }
+  .drip-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 20px; display: flex; align-items: center; gap: 16px; transition: all 0.15s;
+    text-decoration: none; color: inherit;
+  }
+  .drip-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+  .drip-icon {
+    width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .drip-icon svg { width: 22px; height: 22px; }
+  .drip-icon.active { background: rgba(34,197,94,0.1); color: #16A34A; }
+  .drip-icon.draft { background: rgba(0,0,0,0.04); color: var(--text-muted); }
+  .drip-icon.paused { background: rgba(245,158,11,0.1); color: #D97706; }
+
+  .drip-info { flex: 1; }
+  .drip-info h3 { font-size: 15px; font-weight: 700; }
+  .drip-info .meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: flex; gap: 16px; }
+
+  .drip-status {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .drip-status.active { background: rgba(34,197,94,0.1); color: #16A34A; }
+  .drip-status.draft { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+  .drip-status.paused { background: rgba(245,158,11,0.1); color: #D97706; }
+
+  .drip-stats { display: flex; gap: 20px; }
+  .drip-stat-item { text-align: center; }
+  .drip-stat-item .num { font-size: 18px; font-weight: 700; }
+  .drip-stat-item .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+</style>
+
+<% if @drips.any? %>
+  <div class="drip-list">
+    <% @drips.each do |drip| %>
+      <%= link_to portal_campaign_drip_campaign_path(@campaign, drip), class: 'drip-card' do %>
+        <div class="drip-icon <%= drip.status %>">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="drip-info">
+          <h3><%= drip.name %></h3>
+          <div class="meta">
+            <span><%= drip.drip_steps.count %> steps</span>
+            <span>Trigger: <%= DripCampaign::TRIGGER_EVENTS[drip.trigger_event] || drip.trigger_event.titleize %></span>
+          </div>
+        </div>
+        <div class="drip-stats">
+          <div class="drip-stat-item">
+            <div class="num"><%= drip.enrolled_count %></div>
+            <div class="label">Enrolled</div>
+          </div>
+          <div class="drip-stat-item">
+            <div class="num"><%= drip.completed_count %></div>
+            <div class="label">Completed</div>
+          </div>
+        </div>
+        <span class="drip-status <%= drip.status %>"><%= drip.status %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card" style="text-align:center;padding:48px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;opacity:0.4;display:block;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <p style="font-size:14px;font-weight:600;">No drip campaigns yet</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:4px;margin-bottom:16px;">Create automated email sequences that engage fans after they submit a receipt.</p>
+    <%= link_to 'Create Your First Drip Campaign', new_portal_campaign_drip_campaign_path(@campaign), class: 'btn btn-primary btn-sm' %>
+  </div>
+<% end %>

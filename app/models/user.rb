@@ -34,6 +34,7 @@ class User < ApplicationRecord
 
   has_many :submissions, foreign_key: :submitted_by
   has_many :sent_messages, class_name: 'PortalMessage', foreign_key: :sender_id
+  has_many :notifications, dependent: :destroy
 
   def full_name
     [first_name, last_name].compact.join(' ').presence || email

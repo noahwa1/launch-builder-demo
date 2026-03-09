@@ -162,6 +162,64 @@
   .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
   .copy-btn.copied { background: rgba(34,197,94,0.08); border-color: #22C55E; color: #16A34A; }
 
+  /* ── Image Picker ── */
+  .img-picker { margin-top: 12px; }
+  .img-picker-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+  .img-picker-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .img-thumb {
+    width: 48px; height: 48px; border-radius: 8px; object-fit: cover; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s; opacity: 0.7;
+  }
+  .img-thumb:hover { opacity: 1; border-color: var(--accent); }
+  .img-thumb.selected { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .img-upload-btn {
+    width: 48px; height: 48px; border-radius: 8px; border: 1.5px dashed var(--border);
+    background: var(--page-bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all 0.15s; position: relative; overflow: hidden;
+  }
+  .img-upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .img-upload-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .img-upload-btn svg { width: 18px; height: 18px; }
+  .img-selected-preview { margin-top: 8px; }
+  .img-selected-preview img { max-width: 100%; max-height: 120px; border-radius: 8px; object-fit: cover; }
+  .img-clear { font-size: 11px; color: #EF4444; cursor: pointer; margin-left: 8px; font-weight: 600; background: none; border: none; font-family: inherit; }
+  .img-clear:hover { text-decoration: underline; }
+
+  /* ── Schedule Button ── */
+  .schedule-btn {
+    flex: 1; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent);
+    font-size: 12px; font-weight: 600; cursor: pointer; background: var(--accent); color: #fff;
+    transition: all 0.15s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .schedule-btn:hover { background: var(--accent-dark, #4338CA); }
+  .schedule-btn.scheduled { background: rgba(34,197,94,0.08); border-color: #22C55E; color: #16A34A; }
+
+  /* ── Schedule Modal ── */
+  .sched-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
+    display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px);
+  }
+  .sched-overlay.open { display: flex; }
+  .sched-modal {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 28px; width: 380px; max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .sched-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .sched-modal label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+  .sched-modal input[type="datetime-local"] {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14px; font-family: inherit; background: #F8F8FA; color: var(--text-primary);
+    margin-bottom: 16px;
+  }
+  .sched-modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: #fff; }
+  .sched-modal .sched-preview { font-size: 12px; color: var(--text-muted); background: var(--page-bg); padding: 10px; border-radius: 8px; margin-bottom: 16px; max-height: 80px; overflow-y: auto; line-height: 1.5; }
+  .sched-modal .sched-actions { display: flex; gap: 8px; }
+  .sched-modal .sched-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; border: none; }
+  .sched-cancel { background: var(--page-bg); color: var(--text-secondary); }
+  .sched-cancel:hover { background: var(--border); }
+  .sched-confirm { background: var(--accent); color: #fff; }
+  .sched-confirm:hover { background: var(--accent-dark, #4338CA); }
+
   /* ── Info Banner ── */
   .info-banner {
     display: flex;
@@ -288,9 +346,13 @@
                 <div class="ps-avatar"><%= author_initials %></div>
                 <div class="ps-name"><%= author_name %></div>
               </div>
-              <% if platform == 'instagram' %>
-                <div class="ps-image"><%= @submission.cover.present? ? "<img src=\"#{@submission.cover.url}\" style=\"width:100%;height:100%;object-fit:cover;\">" : "Book Cover" %></div>
-              <% end %>
+              <div class="ps-image" id="phoneImg-<%= ti %>-<%= platform %>" style="<%= 'display:none;' unless platform == 'instagram' && @submission.cover.present? %>">
+                <% if platform == 'instagram' && @submission.cover.present? %>
+                  <img src="<%= @submission.cover.url %>" style="width:100%;height:100%;object-fit:cover;" id="phoneImgSrc-<%= ti %>-<%= platform %>">
+                <% else %>
+                  <img src="" style="width:100%;height:100%;object-fit:cover;display:none;" id="phoneImgSrc-<%= ti %>-<%= platform %>">
+                <% end %>
+              </div>
               <div class="ps-content" id="preview-<%= ti %>-<%= platform %>"><%= copy %></div>
             </div>
           </div>
@@ -307,10 +369,39 @@
                 <button class="htag" onclick="toggleHashtag(this,'post-<%= ti %>-<%= platform %>')"><%= tag %></button>
               <% end %>
             </div>
+
+            <%# ── Image Picker ── %>
+            <div class="img-picker" id="imgPicker-<%= ti %>-<%= platform %>">
+              <div class="img-picker-label">Attach Image</div>
+              <div class="img-picker-row">
+                <% if @submission.cover.present? %>
+                  <img src="<%= @submission.cover.url %>" class="img-thumb" title="Book cover" onclick="selectImage(this, '<%= ti %>-<%= platform %>', 'cover', '<%= @submission.cover.url %>')">
+                <% end %>
+                <% @photo_assets.each do |asset| %>
+                  <% next unless asset.file.present? %>
+                  <img src="<%= asset.file.url %>" class="img-thumb" title="<%= asset.original_filename || asset.asset_type.humanize %>" data-asset-id="<%= asset.id %>" onclick="selectImage(this, '<%= ti %>-<%= platform %>', '<%= asset.id %>', '<%= asset.file.url %>')">
+                <% end %>
+                <label class="img-upload-btn" title="Upload new image">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <input type="file" accept="image/*" onchange="uploadImage(this, '<%= ti %>-<%= platform %>')">
+                </label>
+              </div>
+              <div class="img-selected-preview" id="imgPreview-<%= ti %>-<%= platform %>" style="display:none;">
+                <img id="imgPreviewSrc-<%= ti %>-<%= platform %>" src="">
+                <button class="img-clear" onclick="clearImage('<%= ti %>-<%= platform %>')">Remove</button>
+              </div>
+              <input type="hidden" id="imgAssetId-<%= ti %>-<%= platform %>" value="">
+              <input type="hidden" id="imgDataUrl-<%= ti %>-<%= platform %>" value="">
+            </div>
+
             <div class="post-actions">
               <button class="copy-btn" onclick="copyPost('post-<%= ti %>-<%= platform %>',this)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
+              </button>
+              <button class="schedule-btn" onclick="openSchedule('post-<%= ti %>-<%= platform %>', '<%= platform %>', '<%= tmpl[:category] %>')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Schedule
               </button>
             </div>
           </div>
@@ -318,6 +409,25 @@
       </div>
     <% end %>
   <% end %>
+</div>
+
+<%# ── Schedule Modal ── %>
+<div class="sched-overlay" id="schedOverlay" onclick="if(event.target===this)closeSchedule()">
+  <div class="sched-modal">
+    <h3>Schedule Post</h3>
+    <label>Date & Time</label>
+    <input type="datetime-local" id="schedDateTime">
+    <div class="sched-preview" id="schedPreview"></div>
+    <img id="schedImgPreview" src="" style="display:none;width:100%;max-height:100px;object-fit:cover;border-radius:8px;margin-bottom:12px;">
+    <input type="hidden" id="schedTextareaId">
+    <input type="hidden" id="schedPlatform">
+    <input type="hidden" id="schedCategory">
+    <input type="hidden" id="schedCardKey">
+    <div class="sched-actions">
+      <button class="sched-cancel" onclick="closeSchedule()">Cancel</button>
+      <button class="sched-confirm" onclick="confirmSchedule()">Add to Calendar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -410,6 +520,166 @@
   window.refreshPreviews = function() {
     // Hype line is a convenience — user types in it, but we don't auto-inject into existing text to avoid confusion
     // It's available as a reference when editing
+  };
+
+  // ── Image picker ──
+  // Track selected images per card: { 'ti-plat': { assetId: '', dataUrl: '', file: null } }
+  var cardImages = {};
+
+  window.selectImage = function(thumb, cardKey, assetIdOrType, url) {
+    // Deselect all in this card
+    var picker = document.getElementById('imgPicker-' + cardKey);
+    picker.querySelectorAll('.img-thumb').forEach(function(t) { t.classList.remove('selected'); });
+    thumb.classList.add('selected');
+
+    cardImages[cardKey] = { assetId: assetIdOrType === 'cover' ? '' : assetIdOrType, dataUrl: '', file: null, url: url };
+    document.getElementById('imgAssetId-' + cardKey).value = assetIdOrType === 'cover' ? '' : assetIdOrType;
+    document.getElementById('imgDataUrl-' + cardKey).value = '';
+
+    // Show preview
+    var prev = document.getElementById('imgPreview-' + cardKey);
+    prev.style.display = '';
+    document.getElementById('imgPreviewSrc-' + cardKey).src = url;
+
+    // Update phone mockup
+    var phoneImg = document.getElementById('phoneImg-' + cardKey);
+    var phoneImgSrc = document.getElementById('phoneImgSrc-' + cardKey);
+    phoneImg.style.display = '';
+    phoneImgSrc.src = url;
+    phoneImgSrc.style.display = '';
+  };
+
+  window.uploadImage = function(input, cardKey) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      cardImages[cardKey] = { assetId: '', dataUrl: e.target.result, file: file, url: e.target.result };
+      document.getElementById('imgAssetId-' + cardKey).value = '';
+      document.getElementById('imgDataUrl-' + cardKey).value = e.target.result;
+
+      // Deselect thumbs
+      var picker = document.getElementById('imgPicker-' + cardKey);
+      picker.querySelectorAll('.img-thumb').forEach(function(t) { t.classList.remove('selected'); });
+
+      // Show preview
+      var prev = document.getElementById('imgPreview-' + cardKey);
+      prev.style.display = '';
+      document.getElementById('imgPreviewSrc-' + cardKey).src = e.target.result;
+
+      // Update phone mockup
+      var phoneImg = document.getElementById('phoneImg-' + cardKey);
+      var phoneImgSrc = document.getElementById('phoneImgSrc-' + cardKey);
+      phoneImg.style.display = '';
+      phoneImgSrc.src = e.target.result;
+      phoneImgSrc.style.display = '';
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  };
+
+  window.clearImage = function(cardKey) {
+    delete cardImages[cardKey];
+    document.getElementById('imgAssetId-' + cardKey).value = '';
+    document.getElementById('imgDataUrl-' + cardKey).value = '';
+    document.getElementById('imgPreview-' + cardKey).style.display = 'none';
+
+    var picker = document.getElementById('imgPicker-' + cardKey);
+    picker.querySelectorAll('.img-thumb').forEach(function(t) { t.classList.remove('selected'); });
+
+    // Hide phone mockup image (unless it was the default IG cover)
+    var phoneImg = document.getElementById('phoneImg-' + cardKey);
+    phoneImg.style.display = 'none';
+  };
+
+  // ── Schedule modal ──
+  window.openSchedule = function(textareaId, platform, category) {
+    var ta = document.getElementById(textareaId);
+    // Extract card key from textarea id: "post-0-instagram" -> "0-instagram"
+    var cardKey = textareaId.replace('post-', '');
+
+    document.getElementById('schedTextareaId').value = textareaId;
+    document.getElementById('schedPlatform').value = platform;
+    document.getElementById('schedCategory').value = category;
+    document.getElementById('schedCardKey').value = cardKey;
+    document.getElementById('schedPreview').textContent = ta.value.substring(0, 120) + (ta.value.length > 120 ? '...' : '');
+
+    // Show image preview in modal if one is selected
+    var imgInfo = cardImages[cardKey];
+    var modalImg = document.getElementById('schedImgPreview');
+    if (imgInfo && imgInfo.url) {
+      modalImg.src = imgInfo.url;
+      modalImg.style.display = '';
+    } else {
+      modalImg.style.display = 'none';
+    }
+
+    // Default to tomorrow at 10am
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    var dt = document.getElementById('schedDateTime');
+    dt.value = tomorrow.toISOString().slice(0, 16);
+
+    document.getElementById('schedOverlay').classList.add('open');
+  };
+
+  window.closeSchedule = function() {
+    document.getElementById('schedOverlay').classList.remove('open');
+  };
+
+  window.confirmSchedule = function() {
+    var textareaId = document.getElementById('schedTextareaId').value;
+    var platform = document.getElementById('schedPlatform').value;
+    var category = document.getElementById('schedCategory').value;
+    var cardKey = document.getElementById('schedCardKey').value;
+    var body = document.getElementById(textareaId).value;
+    var scheduledAt = document.getElementById('schedDateTime').value;
+
+    if (!scheduledAt) { alert('Please pick a date and time.'); return; }
+
+    var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var imgInfo = cardImages[cardKey];
+
+    // Use FormData to support file uploads
+    var formData = new FormData();
+    formData.append('scheduled_post[platform]', platform);
+    formData.append('scheduled_post[category]', category);
+    formData.append('scheduled_post[body]', body);
+    formData.append('scheduled_post[scheduled_at]', scheduledAt);
+    formData.append('scheduled_post[status]', 'scheduled');
+
+    if (imgInfo) {
+      if (imgInfo.assetId) {
+        formData.append('asset_id', imgInfo.assetId);
+      } else if (imgInfo.file) {
+        formData.append('scheduled_post[image]', imgInfo.file);
+      }
+    }
+
+    fetch('<%= schedule_portal_campaign_social_posts_path(@campaign) %>', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrfToken },
+      body: formData
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.success) {
+        closeSchedule();
+        var card = document.getElementById(textareaId).closest('.post-card');
+        var btn = card.querySelector('.schedule-btn');
+        var svg = btn.querySelector('svg').outerHTML;
+        btn.innerHTML = svg + ' Scheduled!';
+        btn.classList.add('scheduled');
+        setTimeout(function() {
+          btn.innerHTML = svg + ' Schedule';
+          btn.classList.remove('scheduled');
+        }, 3000);
+      } else {
+        alert('Error: ' + (data.errors || []).join(', '));
+      }
+    })
+    .catch(function(err) { alert('Something went wrong. Please try again.'); });
   };
 
   // Init all counters/previews

@@ -1,0 +1,149 @@
+<% content_for :page_title, 'Referral Program' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .ref-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .ref-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .ref-stat .label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .ref-stat .value { font-size: 28px; font-weight: 800; color: var(--text-primary); margin-top: 4px; }
+
+  .milestone-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .milestone {
+    flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px; text-align: center; position: relative;
+    overflow: hidden;
+  }
+  .milestone::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .milestone .icon { font-size: 24px; margin-bottom: 4px; }
+  .milestone .name { font-size: 13px; font-weight: 700; }
+  .milestone .threshold { font-size: 11px; color: var(--text-muted); }
+  .milestone .reached {
+    font-size: 18px; font-weight: 800; margin-top: 6px;
+  }
+
+  .leaderboard { }
+  .leaderboard-row {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    border-bottom: 1px solid var(--border); transition: background 0.1s;
+  }
+  .leaderboard-row:hover { background: var(--accent-wash); }
+  .leaderboard-rank {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--page-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: var(--text-primary); flex-shrink: 0;
+  }
+  .leaderboard-rank.gold { background: #FEF3C7; color: #92400E; }
+  .leaderboard-rank.silver { background: #F1F5F9; color: #475569; }
+  .leaderboard-rank.bronze { background: #FED7AA; color: #9A3412; }
+  .leaderboard-info { flex: 1; }
+  .leaderboard-info .name { font-size: 14px; font-weight: 600; }
+  .leaderboard-info .email { font-size: 12px; color: var(--text-muted); }
+  .leaderboard-count {
+    font-size: 20px; font-weight: 800; color: var(--accent);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .leaderboard-count .unit { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+  .ref-link-info {
+    background: var(--accent-wash); border: 1px solid rgba(0,50,98,0.1);
+    border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px;
+  }
+  .ref-link-info h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .ref-link-info p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .ref-link-info code {
+    display: block; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; margin-top: 10px; word-break: break-all;
+  }
+
+  .milestone-badges { display: flex; gap: 8px; }
+  .milestone-badge {
+    width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 10px;
+  }
+</style>
+
+<!-- Stats -->
+<div class="ref-stats">
+  <div class="ref-stat">
+    <div class="label">Total Referrals</div>
+    <div class="value"><%= @total_referrals %></div>
+  </div>
+  <div class="ref-stat">
+    <div class="label">Active Referrers</div>
+    <div class="value"><%= @codes.select { |c| c.referral_count > 0 }.count %></div>
+  </div>
+  <div class="ref-stat">
+    <div class="label">Referral Codes</div>
+    <div class="value"><%= @campaign.referral_codes.count %></div>
+  </div>
+  <div class="ref-stat">
+    <div class="label">Avg per Referrer</div>
+    <div class="value"><%= @codes.any? ? (@codes.sum(&:referral_count).to_f / [@codes.select { |c| c.referral_count > 0 }.count, 1].max).round(1) : 0 %></div>
+  </div>
+</div>
+
+<!-- How it Works -->
+<div class="ref-link-info">
+  <h3>How Referrals Work</h3>
+  <p>Every fan who submits a receipt gets a unique referral link. When their friends use that link to submit, the referral is automatically tracked and the referrer's score goes up.</p>
+  <% if @landing_page&.slug.present? %>
+    <p style="margin-top:8px;">Referral links look like:</p>
+    <code><%= request.base_url %>/pages/<%= @landing_page.slug %>?ref=XXXXXXXX</code>
+  <% else %>
+    <p style="margin-top:8px;color:var(--text-muted);font-style:italic;">Publish a landing page to enable referral links.</p>
+  <% end %>
+</div>
+
+<!-- Milestones -->
+<div class="milestone-bar">
+  <% @milestones.each do |m| %>
+    <% reached = @codes.select { |c| c.referral_count >= m[:count] }.count %>
+    <div class="milestone" style="border-top:3px solid <%= m[:color] %>;">
+      <div class="name" style="color:<%= m[:color] %>;"><%= m[:label] %></div>
+      <div class="threshold"><%= m[:count] %>+ referrals</div>
+      <div class="reached"><%= reached %></div>
+      <div style="font-size:11px;color:var(--text-muted);">fans reached</div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Leaderboard -->
+<div class="card leaderboard">
+  <h3 style="font-size:14px;font-weight:700;padding:16px 16px 0;">Referral Leaderboard</h3>
+  <% if @codes.any? && @codes.first.referral_count > 0 %>
+    <% @codes.select { |c| c.referral_count > 0 }.each_with_index do |code, i| %>
+      <div class="leaderboard-row">
+        <div class="leaderboard-rank <%= i == 0 ? 'gold' : (i == 1 ? 'silver' : (i == 2 ? 'bronze' : '')) %>">
+          <%= i + 1 %>
+        </div>
+        <div class="leaderboard-info">
+          <%= link_to code.contact.display_name, portal_campaign_contact_path(@campaign, code.contact), style: 'text-decoration:none;color:inherit;' do %>
+            <div class="name"><%= code.contact.display_name %></div>
+            <div class="email"><%= code.contact.email %></div>
+          <% end %>
+        </div>
+        <div class="milestone-badges">
+          <% @milestones.each do |m| %>
+            <% if code.referral_count >= m[:count] %>
+              <div class="milestone-badge" style="background:<%= m[:color] %>;color:#fff;" title="<%= m[:label] %>">&#10003;</div>
+            <% end %>
+          <% end %>
+        </div>
+        <div class="leaderboard-count">
+          <%= code.referral_count %>
+          <span class="unit">referrals</span>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div style="text-align:center;padding:48px;color:var(--text-muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;opacity:0.4;display:block;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49"/></svg>
+      <p style="font-size:14px;font-weight:600;">No referrals yet</p>
+      <p style="font-size:13px;margin-top:4px;">Referral codes are automatically generated when fans submit receipts on your landing page.</p>
+    </div>
+  <% end %>
+</div>

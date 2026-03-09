@@ -1,0 +1,159 @@
+<% content_for :page_title, "Edit: #{@drip.name}" %>
+<% content_for :page_actions do %>
+  <%= link_to '← Back to Campaign', portal_campaign_drip_campaign_path(@campaign, @drip), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .edit-layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+  @media (max-width: 900px) { .edit-layout { grid-template-columns: 1fr; } }
+
+  .step-editor {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 16px; margin-bottom: 12px; position: relative;
+  }
+  .step-editor .step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .step-editor .step-label { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+  .step-field { margin-bottom: 10px; }
+  .step-field label {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;
+  }
+  .step-field input, .step-field select, .step-field textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; font-family: inherit; background: var(--surface);
+  }
+  .step-field textarea { min-height: 80px; resize: vertical; }
+
+  .delay-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .delay-preset {
+    padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);
+    font-size: 11px; cursor: pointer; background: none; color: var(--text-secondary);
+    font-family: inherit;
+  }
+  .delay-preset:hover { border-color: var(--accent); color: var(--accent); }
+
+  .template-vars {
+    background: var(--page-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; margin-bottom: 16px;
+  }
+  .template-vars h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+  .template-vars code {
+    display: inline-block; padding: 2px 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 11px; margin: 2px 4px 2px 0; cursor: pointer;
+  }
+  .template-vars code:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+
+<div class="edit-layout">
+  <!-- Steps List -->
+  <div>
+    <div class="card">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:4px;"><%= @drip.name %></h3>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Trigger: <%= DripCampaign::TRIGGER_EVENTS[@drip.trigger_event] %></p>
+
+      <%= form_for @drip, url: portal_campaign_drip_campaign_path(@campaign, @drip), method: :patch do |f| %>
+        <div style="display:flex;gap:8px;margin-bottom:20px;">
+          <%= f.text_field :name, style: 'flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          <%= f.select :trigger_event, DripCampaign::TRIGGER_EVENTS.map { |k,v| [v, k] }, {}, style: 'padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          <button type="submit" class="btn btn-sm btn-secondary">Save</button>
+        </div>
+      <% end %>
+
+      <!-- Existing Steps -->
+      <% @steps.each_with_index do |step, i| %>
+        <div class="step-editor">
+          <div class="step-header">
+            <span class="step-label">Step <%= i + 1 %> — <%= step.delay_label %></span>
+            <%= link_to 'Delete', remove_step_portal_campaign_drip_campaign_path(@campaign, @drip, step_id: step.id), method: :delete, data: { confirm: 'Remove this step?' }, style: 'font-size:11px;color:var(--text-muted);' %>
+          </div>
+          <%= form_tag update_step_portal_campaign_drip_campaign_path(@campaign, @drip, step_id: step.id), method: :patch do %>
+            <div style="display:flex;gap:8px;">
+              <div class="step-field" style="flex:1;">
+                <label>Delay (hours)</label>
+                <input type="number" name="delay_hours" value="<%= step.delay_hours %>" min="0">
+              </div>
+              <div class="step-field" style="width:100px;">
+                <label>Channel</label>
+                <select name="channel">
+                  <option value="email" <%= 'selected' if step.channel == 'email' %>>Email</option>
+                  <option value="sms" <%= 'selected' if step.channel == 'sms' %>>SMS</option>
+                </select>
+              </div>
+            </div>
+            <div class="step-field">
+              <label>Subject</label>
+              <input type="text" name="subject" value="<%= step.subject %>">
+            </div>
+            <div class="step-field">
+              <label>Message Body</label>
+              <textarea name="body"><%= step.body %></textarea>
+            </div>
+            <button type="submit" class="btn btn-sm btn-secondary">Update Step</button>
+          <% end %>
+        </div>
+      <% end %>
+
+      <!-- Add New Step -->
+      <div class="step-editor" style="border-style:dashed;background:var(--page-bg);">
+        <span class="step-label" style="margin-bottom:12px;display:block;">Add Step <%= @steps.count + 1 %></span>
+        <%= form_tag add_step_portal_campaign_drip_campaign_path(@campaign, @drip), method: :post do %>
+          <div style="display:flex;gap:8px;">
+            <div class="step-field" style="flex:1;">
+              <label>Delay (hours after previous)</label>
+              <input type="number" name="delay_hours" value="0" min="0" id="newStepDelay">
+              <div class="delay-presets">
+                <button type="button" class="delay-preset" onclick="document.getElementById('newStepDelay').value=0">Immediately</button>
+                <button type="button" class="delay-preset" onclick="document.getElementById('newStepDelay').value=1">1 hour</button>
+                <button type="button" class="delay-preset" onclick="document.getElementById('newStepDelay').value=24">1 day</button>
+                <button type="button" class="delay-preset" onclick="document.getElementById('newStepDelay').value=72">3 days</button>
+                <button type="button" class="delay-preset" onclick="document.getElementById('newStepDelay').value=168">1 week</button>
+              </div>
+            </div>
+            <div class="step-field" style="width:100px;">
+              <label>Channel</label>
+              <select name="channel">
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+          </div>
+          <div class="step-field">
+            <label>Subject</label>
+            <input type="text" name="subject" placeholder="Email subject line...">
+          </div>
+          <div class="step-field">
+            <label>Message Body</label>
+            <textarea name="body" placeholder="Write your message here. Use template variables like {{name}} and {{book_title}}..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary">Add Step</button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div>
+    <div class="template-vars">
+      <h4>Template Variables</h4>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Click to copy. Use these in your message body:</p>
+      <code onclick="navigator.clipboard.writeText('{{name}}')">{{name}}</code>
+      <code onclick="navigator.clipboard.writeText('{{email}}')">{{email}}</code>
+      <code onclick="navigator.clipboard.writeText('{{book_title}}')">{{book_title}}</code>
+      <code onclick="navigator.clipboard.writeText('{{referral_link}}')">{{referral_link}}</code>
+    </div>
+
+    <div class="card">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">Example Sequences</h4>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+        <p style="font-weight:600;color:var(--text-primary);margin-bottom:4px;">Welcome Sequence</p>
+        <p>Step 1: Immediately — Thank you for your purchase!</p>
+        <p>Step 2: 3 days — Your signed bookplate has shipped</p>
+        <p>Step 3: 7 days — Release day is here!</p>
+        <p style="font-weight:600;color:var(--text-primary);margin:12px 0 4px;">Referral Push</p>
+        <p>Step 1: 1 day — Share with friends & earn rewards</p>
+        <p>Step 2: 5 days — You're X referrals from a bonus!</p>
+      </div>
+    </div>
+  </div>
+</div>

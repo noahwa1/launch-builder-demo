@@ -4,7 +4,7 @@ module Portal
     before_action :require_creator!
     layout 'portal'
 
-    helper_method :current_author, :unread_message_count, :current_campaign
+    helper_method :current_author, :unread_message_count, :unread_notification_count, :current_campaign
 
     private
 
@@ -28,6 +28,10 @@ module Portal
                                               .where.not(sender: current_user)
                                               .unread
                                               .count
+    end
+
+    def unread_notification_count
+      @unread_notification_count ||= current_user.notifications.unread.count
     end
   end
 end

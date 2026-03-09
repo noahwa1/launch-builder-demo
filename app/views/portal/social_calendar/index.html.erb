@@ -1,0 +1,146 @@
+<% content_for :page_title, 'Content Calendar' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-header h2 { font-size: 18px; font-weight: 700; }
+  .cal-nav { display: flex; align-items: center; gap: 12px; }
+  .cal-nav-btn {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    text-decoration: none;
+  }
+  .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-nav-btn svg { width: 16px; height: 16px; }
+  .cal-month { font-size: 16px; font-weight: 700; min-width: 160px; text-align: center; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .cal-day-header {
+    background: var(--surface); padding: 10px 8px; text-align: center;
+    font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cal-day {
+    background: var(--surface); min-height: 100px; padding: 8px;
+    transition: background 0.1s; position: relative;
+  }
+  .cal-day:hover { background: var(--accent-wash); }
+  .cal-day.other-month { background: var(--page-bg); }
+  .cal-day.other-month .day-num { color: var(--text-muted); opacity: 0.4; }
+  .cal-day.today { background: rgba(0,50,98,0.04); }
+  .cal-day.today .day-num { background: var(--accent); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .day-num { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+
+  .cal-event {
+    font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+    margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cal-event.instagram { background: rgba(225,48,108,0.1); color: #E1306C; }
+  .cal-event.tiktok { background: rgba(0,0,0,0.06); color: #111; }
+  .cal-event.twitter { background: rgba(29,161,242,0.1); color: #1DA1F2; }
+  .cal-event.facebook { background: rgba(24,119,242,0.1); color: #1877F2; }
+  .cal-event.live { background: rgba(233,69,96,0.1); color: #e94560; }
+  .cal-event.email { background: rgba(34,197,94,0.1); color: #16A34A; }
+
+  .cal-legend { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .cal-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  .upcoming-status { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .upcoming-status.scheduled { background: rgba(79,70,229,0.08); color: var(--accent); }
+  .upcoming-status.draft { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+  .upcoming-status.posted { background: rgba(34,197,94,0.08); color: #16A34A; }
+
+  @media (max-width: 768px) {
+    .cal-day { min-height: 60px; padding: 4px; }
+    .cal-event { font-size: 9px; padding: 1px 4px; }
+    .day-num { font-size: 11px; }
+    .cal-header h2 { font-size: 16px; }
+  }
+  @media (max-width: 480px) {
+    .cal-day-header { font-size: 9px; padding: 6px 2px; }
+  }
+</style>
+
+<%
+  today = Date.today
+  current_month = @month
+  month_start = current_month.beginning_of_month
+  month_end = current_month.end_of_month
+  cal_start = month_start.beginning_of_week(:sunday)
+  cal_end = month_end.end_of_week(:sunday)
+
+  prev_month = (current_month - 1.month).strftime('%Y-%m-%d')
+  next_month = (current_month + 1.month).strftime('%Y-%m-%d')
+
+  # Group scheduled posts by date
+  posts_by_date = @scheduled_posts.group_by { |p| p.scheduled_at.to_date }
+%>
+
+<div class="card">
+  <div class="cal-header">
+    <h2><%= @submission.title %> — Launch Calendar</h2>
+    <div class="cal-nav">
+      <%= link_to portal_campaign_social_calendar_index_path(@campaign, month: prev_month), class: 'cal-nav-btn', title: 'Previous month' do %>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      <% end %>
+      <span class="cal-month"><%= current_month.strftime('%B %Y') %></span>
+      <%= link_to portal_campaign_social_calendar_index_path(@campaign, month: next_month), class: 'cal-nav-btn', title: 'Next month' do %>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="cal-grid">
+    <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day| %>
+      <div class="cal-day-header"><%= day %></div>
+    <% end %>
+
+    <% (cal_start..cal_end).each do |date| %>
+      <div class="cal-day <%= 'other-month' unless date.month == current_month.month %> <%= 'today' if date == today %>">
+        <div class="day-num"><%= date.day %></div>
+        <% (posts_by_date[date] || []).each do |post| %>
+          <%= link_to portal_campaign_scheduled_post_path(@campaign, post), style: 'text-decoration:none;display:block;' do %>
+            <div class="cal-event <%= post.platform %>" title="<%= post.body.truncate(60) %>">
+              <% label = post.category.present? ? post.category : post.body.truncate(20) %>
+              <%= label %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="cal-legend">
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(225,48,108,0.3);"></div> Instagram</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(0,0,0,0.15);"></div> TikTok</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(29,161,242,0.3);"></div> X / Twitter</div>
+    <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(24,119,242,0.3);"></div> Facebook</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:4px;">
+  <h3>Coming Up</h3>
+  <% upcoming = @campaign.scheduled_posts.upcoming.limit(10) %>
+  <% if upcoming.any? %>
+    <% upcoming.each do |post| %>
+      <%= link_to portal_campaign_scheduled_post_path(@campaign, post), style: 'text-decoration:none;color:inherit;display:block;' do %>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer;" onmouseover="this.style.background='var(--accent-wash)'" onmouseout="this.style.background=''">
+          <div style="width:44px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;line-height:1;"><%= post.scheduled_at.day %></div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;"><%= post.scheduled_at.strftime('%b') %></div>
+          </div>
+          <div class="cal-event <%= post.platform %>" style="font-size:12px;padding:4px 10px;"><%= post.platform == 'twitter' ? 'X / Twitter' : post.platform.capitalize %></div>
+          <div style="flex:1;font-size:14px;font-weight:500;"><%= post.body.truncate(60) %></div>
+          <span class="upcoming-status <%= post.status %>"><%= post.status %></span>
+        </div>
+      <% end %>
+    <% end %>
+  <% else %>
+    <div class="empty-state" style="padding:32px;text-align:center;">
+      <p style="color:var(--text-muted);">No upcoming posts scheduled. Head to the <a href="<%= portal_campaign_social_posts_path(@campaign) %>" style="color:var(--accent);font-weight:600;">Post Generator</a> to create and schedule posts.</p>
+    </div>
+  <% end %>
+</div>

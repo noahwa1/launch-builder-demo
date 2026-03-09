@@ -1,0 +1,23 @@
+<% if @notifications.any? %>
+  <% @notifications.each do |notif| %>
+    <a href="<%= notif.read? ? (notif.url || portal_notifications_path) : mark_read_portal_notification_path(notif) %>"
+       data-method="<%= notif.read? ? 'get' : 'patch' %>"
+       style="display:flex;gap:10px;padding:10px 14px;text-decoration:none;color:inherit;border-bottom:1px solid var(--border);transition:background 0.1s;<%= 'background:rgba(0,50,98,0.03);' unless notif.read? %>"
+       onmouseover="this.style.background='var(--accent-wash)'" onmouseout="this.style.background='<%= notif.read? ? '' : 'rgba(0,50,98,0.03)' %>'">
+      <% unless notif.read? %>
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px;"></div>
+      <% end %>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:<%= notif.read? ? '400' : '600' %>;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          <%= notif.title %>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:1px;"><%= notif.time_ago %></div>
+      </div>
+    </a>
+  <% end %>
+  <a href="<%= portal_notifications_path %>" style="display:block;text-align:center;padding:10px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;border-top:1px solid var(--border);">
+    View all notifications
+  </a>
+<% else %>
+  <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No notifications</div>
+<% end %>
