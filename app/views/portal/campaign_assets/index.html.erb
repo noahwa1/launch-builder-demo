@@ -13,6 +13,14 @@
   .asset-info .type { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .asset-actions { display: flex; align-items: center; justify-content: space-between; padding: 0 12px 12px; }
   .upload-section { margin-bottom: 24px; }
+
+  @media (max-width: 768px) {
+    .asset-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .asset-thumb { height: 110px; }
+  }
+  @media (max-width: 480px) {
+    .asset-grid { grid-template-columns: 1fr; }
+  }
 </style>
 
 <!-- Upload Form -->

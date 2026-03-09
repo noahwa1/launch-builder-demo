@@ -33,6 +33,14 @@
   /* ── Post Grid ── */
   .posts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 900px) { .posts-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) {
+    .platform-switcher { gap: 4px; }
+    .plat-btn { padding: 8px 14px; font-size: 12px; }
+    .cat-tabs { gap: 2px; }
+    .cat-tab { padding: 6px 10px; font-size: 11px; }
+    .phone-mockup { max-width: 220px; }
+    .post-card-body { padding: 14px; }
+  }
 
   .post-card {
     background: var(--surface);

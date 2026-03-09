@@ -109,6 +109,32 @@
   .check-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .check-dot.done { background: #22C55E; border-color: #22C55E; color: #fff; }
   .check-dot.done svg { width: 10px; height: 10px; }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 768px) {
+    .hero-banner { flex-direction: column; text-align: center; padding: 24px 20px; gap: 16px; }
+    .hero-info h2 { font-size: 22px; }
+    .hero-stats { justify-content: center; gap: 16px; }
+    .hero-stat .num { font-size: 20px; }
+
+    .toolkit-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .toolkit-card { padding: 16px; }
+    .toolkit-card .tk-title { font-size: 14px; }
+    .toolkit-card .tk-desc { font-size: 12px; }
+    .toolkit-card .tk-badge { font-size: 10px; padding: 2px 7px; top: 10px; right: 10px; }
+
+    .bottom-grid-3 { grid-template-columns: 1fr !important; }
+
+    .example-grid { grid-template-columns: 1fr; }
+
+    .ob-video-step, .ob-examples-step { padding: 24px 20px; }
+    .ob-video-step h2, .ob-examples-step h2 { font-size: 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .toolkit-grid { grid-template-columns: 1fr; }
+    .hero-stats { flex-wrap: wrap; }
+  }
 </style>
 
 <%# ── LIVE NOW BAR ── %>
@@ -225,7 +251,7 @@
 </div>
 
 <%# ── BOTTOM ROW: Progress + What's Next + Upcoming Events ── %>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+<div class="bottom-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
   <%# Campaign Progress %>
   <div class="card">
     <h3>Campaign Progress</h3>

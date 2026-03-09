@@ -17,6 +17,12 @@
 <style>
   .studio-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
   @media (max-width: 1000px) { .studio-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) {
+    .preview-area { min-height: 240px; }
+    .controls-bar { gap: 8px; padding: 12px; flex-wrap: wrap; }
+    .ctrl-btn { width: 44px; height: 44px; }
+    .go-live-btn { padding: 10px 24px; font-size: 14px; }
+  }
 
   /* ── Preview Area ── */
   .preview-area {
