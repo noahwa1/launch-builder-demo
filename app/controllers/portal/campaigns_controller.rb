@@ -15,11 +15,41 @@ module Portal
       @next_event = @campaign.next_scheduled_event
       @upcoming_events = @campaign.live_events.upcoming.limit(3)
       @submission = @campaign.submission
+      @confirmations = @campaign.creator_confirmations.index_by(&:section)
+      @blockers = @campaign.phase_blockers
+      @current_phase_idx = Campaign.phases[@campaign.phase]
+
+      # Content phase data
+      @pending_deliverables = @campaign.admin_deliverables.where(status: [:pending_review, :revised]) if @campaign.deliverables_enabled?
+      @content_items = @campaign.checklist_items.where(category: 'content').order(:position) if @campaign.asset_uploads_enabled?
+
+      # Review phase data
+      @revision_deliverables = @campaign.admin_deliverables.needs_revision if @campaign.deliverables_enabled?
+      @all_incomplete = @campaign.checklist_items.required.incomplete.order(:position)
+
+      # Live phase data
+      @recent_submissions = @landing_page&.page_submissions&.order(created_at: :desc)&.limit(5) || []
+      @personal_video_count = @campaign.personal_videos.count
+      @personal_video_total = @landing_page&.page_submissions&.count || 0
+      @activities = @campaign.activities.recent.includes(:user).select { |a| a.visible_for_campaign?(@campaign) }.first(30)
     end
 
     def complete_onboarding
       @campaign.complete_onboarding!
       redirect_to portal_campaign_path(@campaign), notice: "Let's get started!"
+    end
+
+    def advance_phase
+      if @campaign.can_advance?
+        old_phase = @campaign.phase
+        @campaign.advance_phase!
+        @campaign.skip_empty_phases!
+        CampaignActivityLogger.phase_advanced(@campaign, old_phase, @campaign.phase, current_user)
+        NotificationService.phase_advanced(@campaign, @campaign.phase)
+        redirect_to portal_campaign_path(@campaign), notice: "Advanced to #{@campaign.phase.titleize} phase!"
+      else
+        redirect_to portal_campaign_path(@campaign), alert: "Cannot advance yet — #{@campaign.phase_blockers.to_sentence}."
+      end
     end
 
     def links

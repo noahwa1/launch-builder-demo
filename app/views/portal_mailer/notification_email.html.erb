@@ -1,0 +1,18 @@
+<h2><%= @notification.title %></h2>
+
+<p>Hi <%= @user.first_name %>,</p>
+
+<% if @notification.body.present? %>
+  <p><%= @notification.body %></p>
+<% end %>
+
+<% if @notification.url.present? %>
+  <p><a href="<%= @notification.url %>">View in your Creators Portal</a></p>
+<% end %>
+
+<p>— The Launch Team</p>
+
+<p style="font-size: 12px; color: #999;">
+  You're receiving this because you have email notifications enabled.
+  You can change this in your portal settings.
+</p>

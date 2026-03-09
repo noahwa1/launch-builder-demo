@@ -130,6 +130,55 @@ class PortalMailer < ApplicationMailer
     )
   end
 
+  def deliverable_ready(deliverable)
+    @deliverable = deliverable
+    @campaign = deliverable.campaign
+    @creator = @campaign.author&.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "New deliverable ready for review: #{@deliverable.title}"
+    )
+  end
+
+  def phase_advanced_notification(campaign, to_phase)
+    @campaign = campaign
+    @to_phase = to_phase
+    @creator = @campaign.author&.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "Your campaign has moved to the #{@to_phase.titleize} phase"
+    )
+  end
+
+  def deadline_approaching(campaign, deadline_name, days_left)
+    @campaign = campaign
+    @deadline_name = deadline_name
+    @days_left = days_left
+    @creator = @campaign.author&.user
+    return unless @creator
+
+    mail(
+      to: @creator.email,
+      subject: "#{@deadline_name} is in #{@days_left} #{'day'.pluralize(@days_left)}"
+    )
+  end
+
+  def notification_email(notification)
+    @notification = notification
+    @user = notification.user
+    @campaign = notification.campaign
+    return unless @user
+
+    mail(
+      to: @user.email,
+      subject: notification.title
+    )
+  end
+
   def payment_processed(payment)
     @payment = payment
     @author = payment.author

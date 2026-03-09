@@ -1,0 +1,187 @@
+<% content_for :page_title, 'Edit Scheduled Post' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Calendar', portal_campaign_social_calendar_index_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .sp-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .sp-layout { grid-template-columns: 1fr; } }
+
+  .sp-preview-card { position: sticky; top: 24px; }
+  .sp-phone {
+    width: 100%; max-width: 300px; margin: 0 auto;
+    background: #111; border-radius: 28px; padding: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+  .sp-screen { background: #fff; border-radius: 18px; overflow: hidden; min-height: 280px; }
+  .sp-screen .sp-head { padding: 12px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; }
+  .sp-screen .sp-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .sp-screen .sp-author { font-size: 13px; font-weight: 700; color: #111; }
+  .sp-screen .sp-img { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #f0f0f0, #e8e8e8); display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 12px; }
+  .sp-screen .sp-img img { width: 100%; height: 100%; object-fit: cover; }
+  .sp-screen .sp-body { padding: 14px; font-size: 13px; line-height: 1.6; color: #333; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; }
+  .sp-screen .sp-body .hashtag-text { color: #4F46E5; }
+
+  .sp-form label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+  .sp-form .field { margin-bottom: 18px; }
+  .sp-form textarea {
+    width: 100%; min-height: 140px; padding: 12px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 13px; line-height: 1.6; font-family: inherit; resize: vertical;
+    background: #F8F8FA; color: var(--text-primary);
+  }
+  .sp-form textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: #fff; }
+  .sp-form select, .sp-form input[type="datetime-local"] {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14px; font-family: inherit; background: #F8F8FA; color: var(--text-primary);
+  }
+  .sp-form select:focus, .sp-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: #fff; }
+
+  .sp-plat-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+  }
+  .sp-plat-badge.instagram { background: rgba(225,48,108,0.1); color: #E1306C; }
+  .sp-plat-badge.tiktok { background: rgba(0,0,0,0.06); color: #111; }
+  .sp-plat-badge.twitter { background: rgba(29,161,242,0.1); color: #1DA1F2; }
+  .sp-plat-badge.facebook { background: rgba(24,119,242,0.1); color: #1877F2; }
+
+  .sp-status-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .sp-status-badge.draft { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+  .sp-status-badge.scheduled { background: rgba(79,70,229,0.08); color: var(--accent); }
+  .sp-status-badge.posted { background: rgba(34,197,94,0.08); color: #16A34A; }
+
+  .sp-img-section { margin-bottom: 18px; }
+  .sp-img-current { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; }
+  .sp-img-upload { display: flex; align-items: center; gap: 10px; }
+  .sp-img-upload input[type="file"] { font-size: 12px; }
+
+  .sp-actions { display: flex; gap: 10px; margin-top: 10px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .sp-actions .btn { flex: 1; }
+  .sp-delete { background: none; border: 1px solid #EF4444; color: #EF4444; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .sp-delete:hover { background: rgba(239,68,68,0.06); }
+</style>
+
+<%
+  author_initials = @author.full_name.split.map(&:first).join.upcase[0..1]
+  plat_name = @post.platform == 'twitter' ? 'X / Twitter' : @post.platform.capitalize
+%>
+
+<div class="sp-layout">
+  <%# ── Left: Edit Form ── %>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <span class="sp-plat-badge <%= @post.platform %>"><%= plat_name %></span>
+      <% if @post.category.present? %>
+        <span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(79,70,229,0.08);padding:3px 8px;border-radius:4px;"><%= @post.category %></span>
+      <% end %>
+      <span class="sp-status-badge <%= @post.status %>"><%= @post.status %></span>
+    </div>
+
+    <%= form_with model: @post, url: portal_campaign_scheduled_post_path(@campaign, @post), method: :patch, html: { class: 'sp-form', multipart: true } do |f| %>
+      <div class="field">
+        <label>Post Content</label>
+        <%= f.text_area :body, id: 'spBody', oninput: 'updateSpPreview()' %>
+      </div>
+
+      <div class="field">
+        <label>Scheduled Date & Time</label>
+        <%= f.datetime_local_field :scheduled_at %>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field">
+          <label>Platform</label>
+          <%= f.select :platform, [['Instagram','instagram'],['TikTok','tiktok'],['X / Twitter','twitter'],['Facebook','facebook']] %>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <%= f.select :status, [['Draft','draft'],['Scheduled','scheduled'],['Posted','posted']] %>
+        </div>
+      </div>
+
+      <div class="sp-img-section">
+        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;">Image</label>
+        <% if @post.image.present? %>
+          <img src="<%= @post.image.url %>" class="sp-img-current" alt="Post image">
+        <% end %>
+        <div class="sp-img-upload">
+          <%= f.file_field :image, accept: 'image/*', style: 'font-size:12px;' %>
+        </div>
+      </div>
+
+      <div class="sp-actions">
+        <%= f.submit 'Save Changes', class: 'btn btn-primary' %>
+        <%= link_to 'Delete', portal_campaign_scheduled_post_path(@campaign, @post), data: { turbo_method: :delete, turbo_confirm: 'Remove this post from the calendar?' }, class: 'sp-delete', style: 'text-align:center;text-decoration:none;' %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ── Right: Live Preview ── %>
+  <div class="sp-preview-card">
+    <div class="card">
+      <h3 style="margin-bottom:16px;">Preview</h3>
+      <div class="sp-phone">
+        <div class="sp-screen">
+          <div class="sp-head">
+            <div class="sp-avatar"><%= author_initials %></div>
+            <div class="sp-author"><%= @author.full_name %></div>
+          </div>
+          <% if @post.image.present? %>
+            <div class="sp-img"><img src="<%= @post.image.url %>" id="spPreviewImg"></div>
+          <% else %>
+            <div class="sp-img" id="spPreviewImgPlaceholder" style="display:none;"><img id="spPreviewImg" src="" style="width:100%;height:100%;object-fit:cover;"></div>
+          <% end %>
+          <div class="sp-body" id="spPreviewBody"><%= @post.body %></div>
+        </div>
+      </div>
+      <% if @post.scheduled_at.present? %>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text-muted);">
+          Scheduled for <strong style="color:var(--text-primary);"><%= @post.scheduled_at.strftime('%B %-d, %Y at %-I:%M %p') %></strong>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateSpPreview() {
+    var body = document.getElementById('spBody').value;
+    var el = document.getElementById('spPreviewBody');
+    var escaped = body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    el.innerHTML = escaped.replace(/(#\w+)/g, '<span class="hashtag-text">$1</span>');
+  }
+
+  // Live preview for new image upload
+  var fileInput = document.querySelector('input[type="file"][accept="image/*"]');
+  if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var existing = document.getElementById('spPreviewImg');
+        if (existing) {
+          existing.src = ev.target.result;
+        }
+        var placeholder = document.getElementById('spPreviewImgPlaceholder');
+        if (placeholder) {
+          placeholder.style.display = '';
+          placeholder.querySelector('img').src = ev.target.result;
+        }
+        // Also update the current image preview in the form
+        var currentImg = document.querySelector('.sp-img-current');
+        if (currentImg) {
+          currentImg.src = ev.target.result;
+        } else {
+          var section = document.querySelector('.sp-img-section');
+          var img = document.createElement('img');
+          img.src = ev.target.result;
+          img.className = 'sp-img-current';
+          img.alt = 'Post image';
+          section.insertBefore(img, section.querySelector('.sp-img-upload'));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+</script>

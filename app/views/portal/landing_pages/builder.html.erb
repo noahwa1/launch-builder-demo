@@ -340,6 +340,56 @@
     width: 0; height: 0; border-left: 6px solid transparent;
     border-right: 6px solid transparent; border-top: 6px solid rgba(22,22,35,0.96);
   }
+
+  /* ── Creator Mode Styles ── */
+  <% unless @admin_mode %>
+  .admin-only { display: none !important; }
+  .section-nav { padding: 0; }
+  .section-nav-welcome {
+    padding: 16px; margin: 12px; background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(108,92,231,0.03));
+    border: 1px solid rgba(108,92,231,0.15); border-radius: 10px; font-size: 12px; color: #b8b8cc; line-height: 1.5;
+  }
+  .section-nav-welcome strong { color: #fff; display: block; margin-bottom: 4px; font-size: 13px; }
+  .section-card {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin: 2px 12px;
+    border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+    color: #b8b8cc; font-size: 13px;
+  }
+  .section-card:hover { background: rgba(108,92,231,0.08); border-color: rgba(108,92,231,0.15); color: #fff; }
+  .section-card.active { background: rgba(108,92,231,0.12); border-color: var(--accent); color: #fff; }
+  .section-card .sec-icon {
+    width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+  }
+  .section-card .sec-info { flex: 1; min-width: 0; }
+  .section-card .sec-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .section-card .sec-status { font-size: 10px; margin-top: 2px; }
+  .section-card .sec-status.edited { color: #22c55e; }
+  .section-card .sec-status.needs-attention { color: #f59e0b; }
+  .section-card .sec-check { font-size: 14px; flex-shrink: 0; }
+
+  /* Creator editing panel (below section list) */
+  .creator-edit-panel {
+    margin: 12px; padding: 16px; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; display: none;
+  }
+  .creator-edit-panel.visible { display: block; }
+  .creator-edit-panel h4 { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .creator-edit-hint { font-size: 12px; color: #888; line-height: 1.5; margin-bottom: 10px; }
+  .creator-edit-hint i { color: var(--accent); margin-right: 4px; }
+  .creator-action-btn {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+    color: #ccc; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s; margin-bottom: 6px;
+  }
+  .creator-action-btn:hover { background: rgba(108,92,231,0.1); border-color: var(--accent); color: #fff; }
+  .creator-action-btn i { color: var(--accent); width: 16px; text-align: center; }
+  .form-locked-msg {
+    font-size: 12px; color: #888; padding: 12px; background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.1); border-radius: 8px; line-height: 1.5;
+  }
+  .form-locked-msg i { color: #f59e0b; margin-right: 4px; }
+  <% end %>
 </style>
 
   </head>
@@ -348,24 +398,28 @@
 <!-- Floating Element Toolbar -->
 <div id="element-toolbar">
   <div class="tb-label" id="tb-label">section</div>
-  <button onclick="tbSelectParent()" title="Select Parent"><i class="fas fa-level-up-alt"></i></button>
-  <div class="tb-sep"></div>
-  <button onclick="tbMoveUp()" title="Move Up"><i class="fas fa-chevron-up"></i></button>
-  <button onclick="tbMoveDown()" title="Move Down"><i class="fas fa-chevron-down"></i></button>
-  <div class="tb-sep"></div>
-  <button onclick="tbDuplicate()" title="Duplicate"><i class="fas fa-clone"></i></button>
-  <button class="danger" onclick="tbDelete()" title="Delete"><i class="fas fa-trash-alt"></i></button>
-  <div class="tb-sep"></div>
+  <% if @admin_mode %>
+    <button onclick="tbSelectParent()" title="Select Parent"><i class="fas fa-level-up-alt"></i></button>
+    <div class="tb-sep"></div>
+    <button onclick="tbMoveUp()" title="Move Up"><i class="fas fa-chevron-up"></i></button>
+    <button onclick="tbMoveDown()" title="Move Down"><i class="fas fa-chevron-down"></i></button>
+    <div class="tb-sep"></div>
+    <button onclick="tbDuplicate()" title="Duplicate"><i class="fas fa-clone"></i></button>
+    <button class="danger" onclick="tbDelete()" title="Delete"><i class="fas fa-trash-alt"></i></button>
+    <div class="tb-sep"></div>
+  <% end %>
   <button onclick="tbUploadImage()" title="Upload Image"><i class="fas fa-camera"></i></button>
-  <button id="tb-front-btn" onclick="tbBringToFront()" title="Bring to Front"><i class="fas fa-layer-group"></i></button>
-  <div class="tb-sep"></div>
-  <div class="tb-color" id="tb-color-swatch" title="Background Color">
-    <input type="color" id="tb-color-input" value="#ffffff" onchange="tbSetBgColor(this.value)">
-  </div>
-  <div class="tb-opacity" title="Background Opacity">
-    <input type="range" id="tb-opacity-input" min="0" max="100" value="100" oninput="tbSetOpacity(this.value)">
-    <span id="tb-opacity-label">100%</span>
-  </div>
+  <% if @admin_mode %>
+    <button id="tb-front-btn" onclick="tbBringToFront()" title="Bring to Front"><i class="fas fa-layer-group"></i></button>
+    <div class="tb-sep"></div>
+    <div class="tb-color" id="tb-color-swatch" title="Background Color">
+      <input type="color" id="tb-color-input" value="#ffffff" onchange="tbSetBgColor(this.value)">
+    </div>
+    <div class="tb-opacity" title="Background Opacity">
+      <input type="range" id="tb-opacity-input" min="0" max="100" value="100" oninput="tbSetOpacity(this.value)">
+      <span id="tb-opacity-label">100%</span>
+    </div>
+  <% end %>
   <div class="tb-arrow"></div>
 </div>
 
@@ -383,15 +437,24 @@
     <button class="device-btn active" onclick="setDevice('Desktop', this)" title="Desktop"><i class="fas fa-desktop"></i></button>
     <button class="device-btn" onclick="setDevice('Tablet', this)" title="Tablet"><i class="fas fa-tablet-alt"></i></button>
     <button class="device-btn" onclick="setDevice('Mobile portrait', this)" title="Mobile"><i class="fas fa-mobile-alt"></i></button>
-    <div class="sep"></div>
-    <button id="sticky-toggle" onclick="toggleStickyNav(this)" title="Toggle sticky nav"><i class="fas fa-thumbtack"></i></button>
+    <% if @admin_mode %>
+      <div class="sep"></div>
+      <button id="sticky-toggle" onclick="toggleStickyNav(this)" title="Toggle sticky nav"><i class="fas fa-thumbtack"></i></button>
+    <% end %>
   </div>
 
   <div class="actions">
-    <button class="btn-action btn-secondary" onclick="openTemplates()"><i class="fas fa-th-large"></i> Templates</button>
+    <% if @admin_mode %>
+      <button class="btn-action btn-secondary" onclick="openTemplates()"><i class="fas fa-th-large"></i> Templates / Reset</button>
+      <% unless @standalone_mode %>
+        <a href="<%= wizard_manage_campaign_landing_page_path(@campaign) %>" class="btn-action btn-secondary" style="text-decoration:none;"><i class="fas fa-magic"></i> Wizard</a>
+      <% end %>
+    <% end %>
     <button class="btn-action btn-secondary" onclick="togglePreview()"><i class="fas fa-eye"></i> Preview</button>
-    <button class="btn-action btn-secondary" onclick="openCode()"><i class="fas fa-code"></i> Export</button>
-    <button class="btn-action btn-secondary" onclick="openHtmlEditor()"><i class="fas fa-file-code"></i> Edit HTML</button>
+    <% if @admin_mode %>
+      <button class="btn-action btn-secondary" onclick="openCode()"><i class="fas fa-code"></i> Export</button>
+      <button class="btn-action btn-secondary" onclick="openHtmlEditor()"><i class="fas fa-file-code"></i> Edit HTML</button>
+    <% end %>
     <button class="btn-action btn-success" onclick="saveToServer()"><i class="fas fa-save"></i> Save</button>
   </div>
 </div>
@@ -401,113 +464,140 @@
   <div id="gjs"></div>
 
   <div class="sidebar">
-    <div class="sidebar-tabs">
-      <button class="active" onclick="showPanel('blocks', this)">Blocks</button>
-      <button onclick="showPanel('styles', this)">Design</button>
-      <button onclick="showPanel('layers', this)">Layers</button>
-    </div>
-    <div class="sidebar-content">
-      <div id="panel-blocks" class="sidebar-panel active">
-        <div id="custom-blocks"></div>
+    <% if @admin_mode %>
+      <%# ── Admin Mode: Full sidebar with Blocks/Design/Layers ── %>
+      <div class="sidebar-tabs">
+        <button class="active" onclick="showPanel('blocks', this)">Blocks</button>
+        <button onclick="showPanel('styles', this)">Design</button>
+        <button onclick="showPanel('layers', this)">Layers</button>
       </div>
-      <div id="panel-styles" class="sidebar-panel">
-        <div id="img-actions" class="img-actions" style="display:none;">
-          <div class="img-actions-title">Media</div>
-          <div class="img-actions-row">
-            <label class="img-action-btn">
-              <i class="fas fa-image"></i> Background
-              <input type="file" accept="image/*" onchange="applyUploadedBg(this)">
-            </label>
-            <label class="img-action-btn">
-              <i class="fas fa-photo-video"></i> Insert Img
-              <input type="file" accept="image/*" onchange="insertUploadedImg(this)">
-            </label>
-          </div>
+      <div class="sidebar-content">
+        <div id="panel-blocks" class="sidebar-panel active">
+          <div id="custom-blocks"></div>
         </div>
-        <div id="align-actions" class="img-actions" style="display:none;">
-          <div class="img-actions-title">Quick Align</div>
-          <div class="img-actions-row">
-            <button class="img-action-btn" onclick="quickAlign('left')"><i class="fas fa-align-left"></i> Left</button>
-            <button class="img-action-btn" onclick="quickAlign('center')"><i class="fas fa-align-center"></i> Center</button>
-            <button class="img-action-btn" onclick="quickAlign('right')"><i class="fas fa-align-right"></i> Right</button>
-          </div>
-        </div>
-        <div id="link-actions" class="link-actions" style="display:none;">
-          <div class="link-actions-title"><i class="fas fa-link"></i> Link</div>
-          <div class="link-input-row">
-            <input type="text" id="link-url-input" placeholder="https://...">
-            <button class="link-apply-btn" onclick="applyLink()">Set</button>
-            <button class="link-remove-btn" onclick="removeLink()"><i class="fas fa-unlink"></i></button>
-          </div>
-        </div>
-        <div id="effects-panel">
-          <div class="fx-section">
-            <div class="fx-title">Hover Effects</div>
-            <div class="fx-grid">
-              <button class="fx-btn" data-hover="hover-lift" onclick="toggleHover('hover-lift',this)"><i class="fas fa-arrow-up" style="margin-right:3px;font-size:9px;"></i>Lift</button>
-              <button class="fx-btn" data-hover="hover-scale" onclick="toggleHover('hover-scale',this)"><i class="fas fa-expand" style="margin-right:3px;font-size:9px;"></i>Scale</button>
-              <button class="fx-btn" data-hover="hover-glow" onclick="toggleHover('hover-glow',this)"><i class="fas fa-sun" style="margin-right:3px;font-size:9px;"></i>Glow</button>
-              <button class="fx-btn" data-hover="hover-brighten" onclick="toggleHover('hover-brighten',this)"><i class="fas fa-lightbulb" style="margin-right:3px;font-size:9px;"></i>Bright</button>
-              <button class="fx-btn" data-hover="hover-shadow" onclick="toggleHover('hover-shadow',this)"><i class="fas fa-clone" style="margin-right:3px;font-size:9px;"></i>Shadow</button>
-              <button class="fx-btn" data-hover="hover-darken" onclick="toggleHover('hover-darken',this)"><i class="fas fa-moon" style="margin-right:3px;font-size:9px;"></i>Darken</button>
+        <div id="panel-styles" class="sidebar-panel">
+          <div id="img-actions" class="img-actions" style="display:none;">
+            <div class="img-actions-title">Media</div>
+            <div class="img-actions-row">
+              <label class="img-action-btn">
+                <i class="fas fa-image"></i> Background
+                <input type="file" accept="image/*" onchange="applyUploadedBg(this)">
+              </label>
+              <label class="img-action-btn">
+                <i class="fas fa-photo-video"></i> Insert Img
+                <input type="file" accept="image/*" onchange="insertUploadedImg(this)">
+              </label>
             </div>
           </div>
-          <div class="fx-section">
-            <div class="fx-title">Scroll Animation</div>
-            <select class="fx-select" id="aos-select" onchange="setAosAnimation(this.value)">
-              <option value="">None</option>
-              <optgroup label="Fade">
-                <option value="fade-up">Fade Up</option>
-                <option value="fade-down">Fade Down</option>
-                <option value="fade-left">Fade Left</option>
-                <option value="fade-right">Fade Right</option>
-              </optgroup>
-              <optgroup label="Zoom">
-                <option value="zoom-in">Zoom In</option>
-                <option value="zoom-out">Zoom Out</option>
-                <option value="zoom-in-up">Zoom In Up</option>
-              </optgroup>
-              <optgroup label="Flip &amp; Slide">
-                <option value="flip-up">Flip Up</option>
-                <option value="flip-left">Flip Left</option>
-                <option value="slide-up">Slide Up</option>
-                <option value="slide-right">Slide Right</option>
-              </optgroup>
-            </select>
-            <div class="fx-row" id="aos-options" style="display:none;">
-              <label>Duration <input type="number" id="aos-duration" value="800" min="100" max="3000" step="100" onchange="setAosDuration(this.value)">ms</label>
-              <label>Delay <input type="number" id="aos-delay" value="0" min="0" max="2000" step="100" onchange="setAosDelay(this.value)">ms</label>
+          <div id="align-actions" class="img-actions" style="display:none;">
+            <div class="img-actions-title">Quick Align</div>
+            <div class="img-actions-row">
+              <button class="img-action-btn" onclick="quickAlign('left')"><i class="fas fa-align-left"></i> Left</button>
+              <button class="img-action-btn" onclick="quickAlign('center')"><i class="fas fa-align-center"></i> Center</button>
+              <button class="img-action-btn" onclick="quickAlign('right')"><i class="fas fa-align-right"></i> Right</button>
             </div>
           </div>
-          <div class="fx-section">
-            <div class="fx-title">Box Shadow</div>
-            <div class="fx-grid">
-              <button class="fx-btn" onclick="setShadow('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
-              <button class="fx-btn" onclick="setShadow('subtle',this)">Subtle</button>
-              <button class="fx-btn" onclick="setShadow('medium',this)">Medium</button>
-              <button class="fx-btn" onclick="setShadow('heavy',this)">Heavy</button>
-              <button class="fx-btn" onclick="setShadow('glow',this)"><i class="fas fa-star" style="margin-right:3px;font-size:9px;"></i>Glow</button>
-              <button class="fx-btn" onclick="setShadow('warm',this)">Warm</button>
+          <div id="link-actions" class="link-actions" style="display:none;">
+            <div class="link-actions-title"><i class="fas fa-link"></i> Link</div>
+            <div class="link-input-row">
+              <input type="text" id="link-url-input" placeholder="https://...">
+              <button class="link-apply-btn" onclick="applyLink()">Set</button>
+              <button class="link-remove-btn" onclick="removeLink()"><i class="fas fa-unlink"></i></button>
             </div>
           </div>
-          <div class="fx-section">
-            <div class="fx-title">Overlay</div>
-            <div class="fx-grid">
-              <button class="fx-btn" onclick="setOverlay('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
-              <button class="fx-btn" onclick="setOverlay('darken',this)">Darken</button>
-              <button class="fx-btn" onclick="setOverlay('lighten',this)">Lighten</button>
-              <button class="fx-btn" onclick="setOverlay('gradient-dark',this)">Grad Dark</button>
-              <button class="fx-btn" onclick="setOverlay('gradient-color',this)">Grad Color</button>
+          <div id="effects-panel">
+            <div class="fx-section">
+              <div class="fx-title">Hover Effects</div>
+              <div class="fx-grid">
+                <button class="fx-btn" data-hover="hover-lift" onclick="toggleHover('hover-lift',this)"><i class="fas fa-arrow-up" style="margin-right:3px;font-size:9px;"></i>Lift</button>
+                <button class="fx-btn" data-hover="hover-scale" onclick="toggleHover('hover-scale',this)"><i class="fas fa-expand" style="margin-right:3px;font-size:9px;"></i>Scale</button>
+                <button class="fx-btn" data-hover="hover-glow" onclick="toggleHover('hover-glow',this)"><i class="fas fa-sun" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+                <button class="fx-btn" data-hover="hover-brighten" onclick="toggleHover('hover-brighten',this)"><i class="fas fa-lightbulb" style="margin-right:3px;font-size:9px;"></i>Bright</button>
+                <button class="fx-btn" data-hover="hover-shadow" onclick="toggleHover('hover-shadow',this)"><i class="fas fa-clone" style="margin-right:3px;font-size:9px;"></i>Shadow</button>
+                <button class="fx-btn" data-hover="hover-darken" onclick="toggleHover('hover-darken',this)"><i class="fas fa-moon" style="margin-right:3px;font-size:9px;"></i>Darken</button>
+              </div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-title">Scroll Animation</div>
+              <select class="fx-select" id="aos-select" onchange="setAosAnimation(this.value)">
+                <option value="">None</option>
+                <optgroup label="Fade">
+                  <option value="fade-up">Fade Up</option>
+                  <option value="fade-down">Fade Down</option>
+                  <option value="fade-left">Fade Left</option>
+                  <option value="fade-right">Fade Right</option>
+                </optgroup>
+                <optgroup label="Zoom">
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="zoom-in-up">Zoom In Up</option>
+                </optgroup>
+                <optgroup label="Flip &amp; Slide">
+                  <option value="flip-up">Flip Up</option>
+                  <option value="flip-left">Flip Left</option>
+                  <option value="slide-up">Slide Up</option>
+                  <option value="slide-right">Slide Right</option>
+                </optgroup>
+              </select>
+              <div class="fx-row" id="aos-options" style="display:none;">
+                <label>Duration <input type="number" id="aos-duration" value="800" min="100" max="3000" step="100" onchange="setAosDuration(this.value)">ms</label>
+                <label>Delay <input type="number" id="aos-delay" value="0" min="0" max="2000" step="100" onchange="setAosDelay(this.value)">ms</label>
+              </div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-title">Box Shadow</div>
+              <div class="fx-grid">
+                <button class="fx-btn" onclick="setShadow('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+                <button class="fx-btn" onclick="setShadow('subtle',this)">Subtle</button>
+                <button class="fx-btn" onclick="setShadow('medium',this)">Medium</button>
+                <button class="fx-btn" onclick="setShadow('heavy',this)">Heavy</button>
+                <button class="fx-btn" onclick="setShadow('glow',this)"><i class="fas fa-star" style="margin-right:3px;font-size:9px;"></i>Glow</button>
+                <button class="fx-btn" onclick="setShadow('warm',this)">Warm</button>
+              </div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-title">Overlay</div>
+              <div class="fx-grid">
+                <button class="fx-btn" onclick="setOverlay('none',this)"><i class="fas fa-times" style="margin-right:3px;font-size:9px;"></i>None</button>
+                <button class="fx-btn" onclick="setOverlay('darken',this)">Darken</button>
+                <button class="fx-btn" onclick="setOverlay('lighten',this)">Lighten</button>
+                <button class="fx-btn" onclick="setOverlay('gradient-dark',this)">Grad Dark</button>
+                <button class="fx-btn" onclick="setOverlay('gradient-color',this)">Grad Color</button>
+              </div>
             </div>
           </div>
+          <div id="traits-container"></div>
+          <div id="styles-container"></div>
         </div>
+        <div id="panel-layers" class="sidebar-panel">
+          <div id="layers-container"></div>
+        </div>
+      </div>
+    <% else %>
+      <%# ── Creator Mode: Section Navigator ── %>
+      <div class="section-nav">
+        <div class="section-nav-welcome">
+          <strong>Your page is ready!</strong>
+          Review each section and make it yours. Double-click text to edit, click images to replace them.
+        </div>
+        <div id="section-list"></div>
+        <div id="creator-edit-panel" class="creator-edit-panel"></div>
+      </div>
+      <%# Hidden containers that GrapesJS needs to mount into %>
+      <div style="display:none;">
+        <div id="panel-blocks"></div>
+        <div id="panel-styles"></div>
+        <div id="panel-layers"></div>
+        <div id="img-actions"></div>
+        <div id="align-actions"></div>
+        <div id="link-actions"></div>
+        <div id="link-url-input"></div>
+        <div id="effects-panel"></div>
         <div id="traits-container"></div>
         <div id="styles-container"></div>
-      </div>
-      <div id="panel-layers" class="sidebar-panel">
         <div id="layers-container"></div>
       </div>
-    </div>
+    <% end %>
   </div>
 </div>
 
@@ -570,6 +660,7 @@
 var CAMPAIGN_ID = '<%= @standalone_mode ? @page.id : @campaign.id %>';
 var SAVE_URL = '<%= @standalone_mode ? manage_page_path(@page, format: :json) : (@admin_mode ? manage_campaign_landing_page_path(@campaign, format: :json) : portal_campaign_landing_page_path(@campaign, format: :json)) %>';
 var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+var CREATOR_MODE = <%= @admin_mode ? 'false' : 'true' %>;
 
 // ════════════════════════════════════════════════════════
 // LAUNCH CSS (injected into canvas iframe)
@@ -924,6 +1015,14 @@ editor.on('load', function() {
           document.getElementById('saved-builder-html').value = data.html_content;
           document.getElementById('saved-builder-css').value = data.css_content || '';
         }
+        // Re-run creator mode setup after async content load
+        if (CREATOR_MODE) {
+          setTimeout(function() {
+            markUploadPlaceholders();
+            lockForCreatorMode();
+            buildSectionNavigator();
+          }, 300);
+        }
       }).catch(function() {});
   }
 
@@ -938,6 +1037,14 @@ editor.on('load', function() {
   }
 
   // No longer auto-open templates — user can click "Templates" button when ready
+
+  // Creator mode: lock components + build section navigator after content loads
+  if (CREATOR_MODE) {
+    setTimeout(function() {
+      lockForCreatorMode();
+      buildSectionNavigator();
+    }, 500);
+  }
 });
 
 var markTimeout;
@@ -1087,6 +1194,18 @@ editor.on('component:selected', function(component) {
     }
   });
 
+  if (CREATOR_MODE) {
+    // Creator mode: show floating toolbar + highlight section card, show edit panel
+    setTimeout(function() {
+      if (!rteActive) {
+        showElementToolbar(component);
+      }
+      highlightSectionCard(component);
+      showCreatorEditPanel(component);
+    }, 50);
+    return;
+  }
+
   showPanel('styles', document.querySelector('.sidebar-tabs button:nth-child(2)'));
   document.getElementById('img-actions').style.display = '';
   document.getElementById('align-actions').style.display = '';
@@ -1114,6 +1233,12 @@ editor.on('component:selected', function(component) {
 });
 
 editor.on('component:deselected', function() {
+  if (CREATOR_MODE) {
+    hideElementToolbar();
+    clearSectionCardHighlight();
+    hideCreatorEditPanel();
+    return;
+  }
   showPanel('blocks', document.querySelector('.sidebar-tabs button:first-child'));
   document.getElementById('img-actions').style.display = 'none';
   document.getElementById('link-actions').style.display = 'none';
@@ -1195,6 +1320,7 @@ function togglePreview() {
 }
 
 function showPanel(name, btn) {
+  if (CREATOR_MODE) return; // Creator mode uses section navigator instead
   document.querySelectorAll('.sidebar-panel').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById('panel-' + name).classList.add('active');
   document.querySelectorAll('.sidebar-tabs button').forEach(function(b) { b.classList.remove('active'); });
@@ -1612,12 +1738,18 @@ function showElementToolbar(component) {
   }
   document.getElementById('tb-label').textContent = label;
 
-  // Set color swatch to current background
+  // Set color swatch to current background (admin mode only)
+  var swatch = document.getElementById('tb-color-swatch');
+  if (!swatch) {
+    // Creator mode — skip color/opacity/front-btn logic, just position toolbar
+    toolbar.style.display = 'flex';
+    positionToolbar(el, toolbar);
+    return;
+  }
   var doc = editor.Canvas.getDocument();
   var iframeWin = doc ? (doc.defaultView || window) : window;
   var computed = iframeWin.getComputedStyle(el);
   var bgColor = computed.backgroundColor;
-  var swatch = document.getElementById('tb-color-swatch');
   var colorInput = document.getElementById('tb-color-input');
   var opacityInput = document.getElementById('tb-opacity-input');
   var opacityLabel = document.getElementById('tb-opacity-label');
@@ -1956,6 +2088,231 @@ editor.on('load', function() {
   }
 })();
 
+// ════════════════════════════════════════════════════════
+// CREATOR MODE
+// ════════════════════════════════════════════════════════
+var sectionFriendlyMap = {
+  'project-header': { label: 'Nav Bar', icon: 'fa-bars' },
+  'section-intro': { label: 'Hero', icon: 'fa-star' },
+  'steps-section': { label: 'Steps', icon: 'fa-list-ol' },
+  'book-section': { label: 'Book', icon: 'fa-book' },
+  'author-section': { label: 'Author', icon: 'fa-user' },
+  'testimonials-section': { label: 'Testimonials', icon: 'fa-quote-left' },
+  'launch-footer': { label: 'Footer', icon: 'fa-grip-lines' },
+  'section-wrapper': { label: 'Section', icon: 'fa-layer-group' },
+};
+
+function lockForCreatorMode() {
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+  lockRecursive(wrapper);
+  unlockEditableElements(wrapper);
+}
+
+function lockRecursive(comp) {
+  comp.set({ draggable: false, droppable: false, removable: false, copyable: false, resizable: false });
+  comp.components().forEach(function(child) { lockRecursive(child); });
+}
+
+function unlockEditableElements(wrapper) {
+  // Text elements — editable + selectable
+  ['h1','h2','h3','h4','p','blockquote','cite','span'].forEach(function(tag) {
+    wrapper.find(tag).forEach(function(comp) {
+      comp.set({ editable: true, selectable: true });
+    });
+  });
+  // Upload placeholders — selectable
+  wrapper.find('.upload-placeholder').forEach(function(comp) {
+    comp.set({ selectable: true });
+  });
+  // Images — selectable
+  wrapper.find('img').forEach(function(comp) {
+    comp.set({ selectable: true });
+  });
+  // Links — selectable
+  wrapper.find('a').forEach(function(comp) {
+    comp.set({ selectable: true });
+  });
+  // Top-level sections — selectable (so section card clicks work)
+  wrapper.components().forEach(function(comp) {
+    comp.set({ selectable: true });
+  });
+}
+
+function buildSectionNavigator() {
+  var list = document.getElementById('section-list');
+  if (!list) return;
+  list.innerHTML = '';
+  var wrapper = editor.DomComponents.getWrapper();
+  if (!wrapper) return;
+
+  wrapper.components().forEach(function(comp, idx) {
+    var classes = comp.getClasses() || [];
+    var sectionInfo = null;
+    for (var i = 0; i < classes.length; i++) {
+      if (sectionFriendlyMap[classes[i]]) {
+        sectionInfo = sectionFriendlyMap[classes[i]];
+        break;
+      }
+    }
+    if (!sectionInfo) {
+      // Skip unknown top-level wrappers
+      var tag = comp.get('tagName') || 'div';
+      if (tag === 'style' || tag === 'script') return;
+      sectionInfo = { label: 'Section ' + (idx + 1), icon: 'fa-layer-group' };
+    }
+
+    var card = document.createElement('div');
+    card.className = 'section-card';
+    card.setAttribute('data-section-idx', idx);
+
+    var status = detectSectionStatus(comp);
+    var statusClass = status === 'edited' ? 'edited' : 'needs-attention';
+    var statusText = status === 'edited' ? 'Looks good' : 'Review this section';
+
+    card.innerHTML =
+      '<div class="sec-icon"><i class="fas ' + sectionInfo.icon + '"></i></div>' +
+      '<div class="sec-info"><div class="sec-name">' + sectionInfo.label + '</div>' +
+      '<div class="sec-status ' + statusClass + '">' + statusText + '</div></div>' +
+      '<div class="sec-check">' + (status === 'edited' ? '<i class="fas fa-check-circle" style="color:#22c55e;"></i>' : '<i class="fas fa-circle" style="color:#555;"></i>') + '</div>';
+
+    card.addEventListener('click', function() {
+      scrollToAndSelect(comp);
+    });
+
+    list.appendChild(card);
+  });
+}
+
+function detectSectionStatus(comp) {
+  // Simple heuristic: if the section has images (not placeholders), it's likely been edited
+  var images = comp.find('img');
+  var placeholders = comp.find('.upload-placeholder');
+  if (images.length > 0 && placeholders.length === 0) return 'edited';
+  // Check if any text content has been changed from placeholder
+  var texts = comp.find('p, h1, h2, h3, h4');
+  var hasContent = false;
+  texts.forEach(function(t) {
+    var content = (t.get('content') || '').trim();
+    if (content.length > 0 && content !== 'Your text here' && content !== 'Lorem ipsum') {
+      hasContent = true;
+    }
+  });
+  if (hasContent && placeholders.length === 0) return 'edited';
+  return 'needs-attention';
+}
+
+function scrollToAndSelect(comp) {
+  var el = comp.getEl();
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  editor.select(comp);
+}
+
+function highlightSectionCard(component) {
+  clearSectionCardHighlight();
+  // Find which top-level section this component belongs to
+  var topComp = component;
+  var wrapper = editor.DomComponents.getWrapper();
+  while (topComp && topComp.parent() && topComp.parent() !== wrapper) {
+    topComp = topComp.parent();
+  }
+  if (!topComp || topComp === wrapper) return;
+  var idx = wrapper.components().indexOf(topComp);
+  if (idx < 0) return;
+  var card = document.querySelector('.section-card[data-section-idx="' + idx + '"]');
+  if (card) card.classList.add('active');
+}
+
+function clearSectionCardHighlight() {
+  document.querySelectorAll('.section-card.active').forEach(function(c) { c.classList.remove('active'); });
+}
+
+function showCreatorEditPanel(component) {
+  var panel = document.getElementById('creator-edit-panel');
+  if (!panel) return;
+
+  var tag = component.get('tagName') || 'div';
+  var classes = component.getClasses() || [];
+  var isImg = component.is('image') || tag === 'img';
+  var isText = ['h1','h2','h3','h4','p','blockquote','cite','span'].indexOf(tag) >= 0;
+  var isForm = classes.indexOf('bg-form') >= 0;
+  var isSection = false;
+  for (var i = 0; i < classes.length; i++) {
+    if (sectionFriendlyMap[classes[i]]) { isSection = true; break; }
+  }
+
+  var html = '';
+
+  if (isText) {
+    html = '<h4>Edit Text</h4>' +
+      '<div class="creator-edit-hint"><i class="fas fa-mouse-pointer"></i> Double-click the text on the canvas to start typing.</div>' +
+      '<div class="creator-edit-hint"><i class="fas fa-palette"></i> Use the toolbar that appears to change font size and color.</div>';
+  } else if (isImg || classes.indexOf('upload-placeholder') >= 0) {
+    html = '<h4>Replace Image</h4>' +
+      '<div class="creator-edit-hint"><i class="fas fa-camera"></i> Click the camera icon in the toolbar above to upload a new image.</div>' +
+      '<button class="creator-action-btn" onclick="tbUploadImage()"><i class="fas fa-upload"></i> Upload New Image</button>';
+  } else if (isForm) {
+    html = '<h4>Sign-Up Form</h4>' +
+      '<div class="form-locked-msg"><i class="fas fa-lock"></i> The form layout is managed by your launch team. You can edit the text above and below the form by clicking on it.</div>';
+  } else if (isSection) {
+    // Section-level panel with bg controls
+    var sectionLabel = 'Section';
+    for (var j = 0; j < classes.length; j++) {
+      if (sectionFriendlyMap[classes[j]]) { sectionLabel = sectionFriendlyMap[classes[j]].label; break; }
+    }
+    html = '<h4>' + sectionLabel + '</h4>' +
+      '<div class="creator-edit-hint"><i class="fas fa-hand-pointer"></i> Click any text or image inside this section to edit it.</div>' +
+      '<button class="creator-action-btn" onclick="creatorUploadBg()"><i class="fas fa-image"></i> Change Background Image</button>' +
+      '<button class="creator-action-btn" onclick="creatorPickBgColor()"><i class="fas fa-palette"></i> Change Background Color</button>';
+  } else {
+    html = '<h4>Selected Element</h4>' +
+      '<div class="creator-edit-hint"><i class="fas fa-hand-pointer"></i> Click text to edit it, or use the toolbar for images.</div>';
+  }
+
+  panel.innerHTML = html;
+  panel.classList.add('visible');
+}
+
+function hideCreatorEditPanel() {
+  var panel = document.getElementById('creator-edit-panel');
+  if (panel) {
+    panel.classList.remove('visible');
+    panel.innerHTML = '';
+  }
+}
+
+// Creator mode background helpers
+function creatorUploadBg() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = function() {
+    if (!input.files || !input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      sel.addStyle({ 'background-image': 'url(' + e.target.result + ')', 'background-size': 'cover', 'background-position': 'center' });
+    };
+    reader.readAsDataURL(input.files[0]);
+  };
+  input.click();
+}
+
+function creatorPickBgColor() {
+  var sel = editor.getSelected();
+  if (!sel) return;
+  var input = document.createElement('input');
+  input.type = 'color';
+  input.value = '#ffffff';
+  input.onchange = function() {
+    sel.addStyle({ 'background-color': input.value, 'background-image': 'none' });
+  };
+  input.click();
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
@@ -1971,8 +2328,8 @@ document.addEventListener('keydown', function(e) {
   if (mod && e.key === 'z' && e.shiftKey) { e.preventDefault(); doRedo(); }
   if (mod && e.key === 'y') { e.preventDefault(); doRedo(); }
   if (mod && e.key === 's') { e.preventDefault(); saveToServer(); }
-  if (mod && e.key === 'd') { e.preventDefault(); tbDuplicate(); }
-  if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
+  if (mod && e.key === 'd' && !CREATOR_MODE) { e.preventDefault(); tbDuplicate(); }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !mod && !CREATOR_MODE) {
     // Don't delete component if user is editing text (contenteditable in iframe or outer doc)
     if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
     // Check if GrapesJS RTE (rich text editor) is active inside the canvas iframe

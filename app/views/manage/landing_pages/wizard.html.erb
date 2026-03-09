@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <%= csrf_meta_tags %>
+  <title>Page Wizard — <%= @campaign.title %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+  :root {
+    --accent: #003262;
+    --accent-light: #1a4a7a;
+    --accent-gold: #C5A44E;
+    --accent-glow: rgba(0,50,98,0.12);
+    --page-bg: #F8F8FA;
+    --surface: #fff;
+    --text-primary: #111118;
+    --text-secondary: #6E6E78;
+    --text-muted: #9D9DA7;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --success: #16a34a;
+    --danger: #dc2626;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--page-bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* ── Top Bar ── */
+  .wiz-topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .wiz-topbar-left { display: flex; align-items: center; gap: 16px; }
+  .wiz-topbar-left a {
+    color: var(--text-secondary); font-size: 13px; text-decoration: none;
+    display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); transition: all 0.15s;
+  }
+  .wiz-topbar-left a:hover { border-color: var(--accent); color: var(--accent); }
+  .wiz-topbar h1 { font-size: 16px; font-weight: 700; }
+  .wiz-topbar h1 span { color: var(--accent-gold); }
+
+  /* ── Progress ── */
+  .wiz-progress {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 32px 24px 8px; max-width: 800px; margin: 0 auto;
+  }
+  .wiz-progress-step {
+    display: flex; align-items: center; gap: 0; flex-shrink: 0;
+  }
+  .wiz-progress-dot {
+    width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    transition: all 0.25s; flex-shrink: 0;
+  }
+  .wiz-progress-dot.active { border-color: var(--accent); color: #fff; background: var(--accent); }
+  .wiz-progress-dot.done { border-color: var(--success); color: #fff; background: var(--success); }
+  .wiz-progress-line {
+    width: 40px; height: 2px; background: var(--border-strong); transition: background 0.25s;
+  }
+  .wiz-progress-line.done { background: var(--success); }
+  .wiz-progress-label {
+    font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 72px;
+  }
+  .wiz-progress-label.active { color: var(--accent); font-weight: 600; }
+  .wiz-progress-label.done { color: var(--success); }
+
+  /* ── Container ── */
+  .wiz-container {
+    max-width: 720px; margin: 0 auto; padding: 24px;
+  }
+  .wiz-step { display: none; }
+  .wiz-step.active { display: block; }
+  .wiz-step h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .wiz-step .wiz-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+  /* ── Template Cards ── */
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .tpl-card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: var(--radius-md); padding: 24px 16px; text-align: center;
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .tpl-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .tpl-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow-md); }
+  .tpl-card .tpl-icon { font-size: 36px; margin-bottom: 12px; }
+  .tpl-card .tpl-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .tpl-card .tpl-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .tpl-card .tpl-check {
+    position: absolute; top: 10px; right: 10px; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px;
+    display: none; align-items: center; justify-content: center;
+  }
+  .tpl-card.selected .tpl-check { display: flex; }
+
+  /* ── Form Fields ── */
+  .wiz-fieldset {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .wiz-fieldset legend {
+    font-size: 13px; font-weight: 700; color: var(--accent); padding: 0 8px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .wiz-field { margin-bottom: 14px; }
+  .wiz-field:last-child { margin-bottom: 0; }
+  .wiz-field label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .wiz-field input[type="text"],
+  .wiz-field input[type="url"],
+  .wiz-field input[type="email"],
+  .wiz-field textarea,
+  .wiz-field select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+    color: var(--text-primary); background: var(--surface); transition: border-color 0.15s;
+    outline: none;
+  }
+  .wiz-field input:focus, .wiz-field textarea:focus, .wiz-field select:focus {
+    border-color: var(--accent);
+  }
+  .wiz-field textarea { resize: vertical; min-height: 80px; }
+  .wiz-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .wiz-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .wiz-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ── Dynamic List Items ── */
+  .wiz-list-item {
+    display: flex; gap: 10px; align-items: center; padding: 10px 12px;
+    background: var(--page-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 8px; transition: border-color 0.15s;
+  }
+  .wiz-list-item:hover { border-color: var(--border-strong); }
+  .wiz-list-item input {
+    flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; font-family: inherit; outline: none; background: var(--surface);
+  }
+  .wiz-list-item input:focus { border-color: var(--accent); }
+  .wiz-list-item .wiz-icon-input { width: 48px; text-align: center; font-size: 16px; }
+  .wiz-list-item .wiz-name-input { flex: 1; }
+  .wiz-list-item .wiz-url-input { flex: 1.5; }
+  .wiz-remove-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .wiz-remove-btn:hover { background: rgba(220,38,38,0.08); color: var(--danger); }
+  .wiz-add-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+    background: none; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);
+    color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; margin-top: 4px;
+  }
+  .wiz-add-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+
+  /* ── Step / Bonus List ── */
+  .wiz-step-item {
+    display: grid; grid-template-columns: 32px 1fr 2fr 28px; gap: 8px;
+    align-items: center; margin-bottom: 8px;
+  }
+  .wiz-step-num {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent-glow);
+    color: var(--accent); font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wiz-bonus-item {
+    display: grid; grid-template-columns: 56px 1fr 2fr 28px; gap: 8px;
+    align-items: center; margin-bottom: 8px;
+  }
+
+  /* ── Review ── */
+  .wiz-review-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+    overflow: hidden; margin-bottom: 16px;
+  }
+  .wiz-review-header {
+    padding: 14px 20px; background: var(--accent-glow); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .wiz-review-header h3 { font-size: 14px; font-weight: 700; }
+  .wiz-review-header .wiz-edit-link {
+    font-size: 12px; color: var(--accent); cursor: pointer; text-decoration: none;
+    padding: 4px 10px; border-radius: 6px; transition: background 0.15s;
+  }
+  .wiz-review-header .wiz-edit-link:hover { background: rgba(0,50,98,0.08); }
+  .wiz-review-body { padding: 16px 20px; }
+  .wiz-review-row { display: flex; margin-bottom: 8px; }
+  .wiz-review-row:last-child { margin-bottom: 0; }
+  .wiz-review-label { width: 120px; font-size: 12px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
+  .wiz-review-value { font-size: 13px; color: var(--text-primary); }
+  .wiz-review-value.empty { color: var(--text-muted); font-style: italic; }
+  .wiz-overwrite-warning {
+    padding: 12px 16px; background: #fef3c7; border: 1px solid #f59e0b;
+    border-radius: var(--radius-sm); font-size: 13px; color: #92400e;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+
+  /* ── Footer ── */
+  .wiz-footer {
+    max-width: 720px; margin: 0 auto; padding: 16px 24px 40px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .wiz-btn {
+    padding: 10px 24px; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 8px; border: none;
+  }
+  .wiz-btn-primary { background: var(--accent); color: #fff; }
+  .wiz-btn-primary:hover { background: var(--accent-light); }
+  .wiz-btn-success { background: var(--success); color: #fff; }
+  .wiz-btn-success:hover { opacity: 0.9; }
+  .wiz-btn-secondary {
+    background: var(--surface); color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+  }
+  .wiz-btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .wiz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="wiz-topbar">
+  <div class="wiz-topbar-left">
+    <a href="<%= @admin_mode ? manage_campaign_path(@campaign) : portal_campaign_landing_page_path(@campaign) %>">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <h1>Page <span>Wizard</span></h1>
+  </div>
+  <div>
+    <a href="<%= @admin_mode ? builder_manage_campaign_landing_page_path(@campaign) : builder_portal_campaign_landing_page_path(@campaign) %>" class="wiz-btn wiz-btn-secondary" style="font-size:13px;padding:6px 14px;">
+      <i class="fas fa-edit"></i> Open Builder Instead
+    </a>
+  </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="wiz-progress" id="wizProgress">
+  <% steps = ['Template', 'Hero', 'Book', 'Author', 'Retailers', 'Extras', 'Review'] %>
+  <% steps.each_with_index do |step_name, i| %>
+    <div class="wiz-progress-step" data-step="<%= i + 1 %>">
+      <div>
+        <div class="wiz-progress-dot<%= ' active' if i == 0 %>" id="dot-<%= i+1 %>"><%= i + 1 %></div>
+        <div class="wiz-progress-label<%= ' active' if i == 0 %>" id="label-<%= i+1 %>"><%= step_name %></div>
+      </div>
+    </div>
+    <% if i < steps.size - 1 %>
+      <div class="wiz-progress-line" id="line-<%= i+1 %>"></div>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- Steps Container -->
+<div class="wiz-container">
+
+  <!-- Step 1: Choose Template -->
+  <div class="wiz-step active" id="step-1">
+    <h2>Choose a Template</h2>
+    <p class="wiz-subtitle">Pick a starting point for your landing page. Everything is customizable in the next steps.</p>
+    <div class="tpl-grid">
+      <%
+        tpl_icons = { 'standard' => "\u{1F4D6}", 'personalized_video' => "\u{1F3AC}", 'preorder_incentive' => "\u{1F381}", 'address_capture' => "\u{1F4E8}", 'landing_page' => "\u{1F310}", 'vinyl' => "\u{1F3B5}" }
+        tpl_descs = { 'standard' => 'Classic book landing page with author bio, book details, and testimonials.', 'personalized_video' => 'Receipt upload flow with a personalized video reward from the author.', 'preorder_incentive' => 'Pre-order with bonus content cards and receipt verification.', 'address_capture' => 'Collect shipping addresses for signed copies or bookplates.', 'landing_page' => 'General-purpose page with retailers, email signup, and testimonials.', 'vinyl' => 'Dark-themed layout designed for album and vinyl releases.' }
+      %>
+      <% LandingPageGenerator::TEMPLATES.each do |key, label| %>
+        <div class="tpl-card<%= ' selected' if key == (@wizard_data[:template] || 'standard') %>"
+             data-tpl="<%= key %>" onclick="selectTemplate('<%= key %>')">
+          <div class="tpl-check"><i class="fas fa-check"></i></div>
+          <div class="tpl-icon"><%= tpl_icons[key] %></div>
+          <div class="tpl-name"><%= label %></div>
+          <div class="tpl-desc"><%= tpl_descs[key] %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Step 2: Hero Section -->
+  <div class="wiz-step" id="step-2">
+    <h2>Hero Section</h2>
+    <p class="wiz-subtitle">The first thing visitors see. Make it count.</p>
+    <div class="wiz-fieldset">
+      <div class="wiz-field">
+        <label>Headline</label>
+        <input type="text" id="wiz-headline" value="<%= h(@wizard_data.dig(:hero, :headline) || '') %>" placeholder="Your Book Title">
+      </div>
+      <div class="wiz-field">
+        <label>Subheadline</label>
+        <input type="text" id="wiz-subheadline" value="<%= h(@wizard_data.dig(:hero, :subheadline) || '') %>" placeholder="by Author Name">
+      </div>
+      <div class="wiz-row">
+        <div class="wiz-field">
+          <label>CTA Button Text</label>
+          <input type="text" id="wiz-cta-text" value="<%= h(@wizard_data.dig(:hero, :cta_text) || 'Order Your Copy') %>" placeholder="Order Your Copy">
+        </div>
+        <div class="wiz-field">
+          <label>CTA Button URL</label>
+          <input type="url" id="wiz-cta-url" value="<%= h(@wizard_data.dig(:hero, :cta_url) || '') %>" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Book / Album Details -->
+  <div class="wiz-step" id="step-3">
+    <h2>Book Details</h2>
+    <p class="wiz-subtitle">Tell readers about the book.</p>
+    <div class="wiz-fieldset">
+      <div class="wiz-field">
+        <label>Book Title</label>
+        <input type="text" id="wiz-book-title" value="<%= h(@wizard_data.dig(:book, :title) || '') %>" placeholder="The Book Title">
+      </div>
+      <div class="wiz-field">
+        <label>Description / Synopsis</label>
+        <textarea id="wiz-book-desc" rows="4" placeholder="A captivating story about..."><%= h(@wizard_data.dig(:book, :description) || '') %></textarea>
+      </div>
+      <div class="wiz-row">
+        <div class="wiz-field">
+          <label>Genre</label>
+          <input type="text" id="wiz-book-genre" value="<%= h(@wizard_data.dig(:book, :genre) || '') %>" placeholder="Fiction">
+        </div>
+        <div class="wiz-field">
+          <label>Release Date</label>
+          <input type="text" id="wiz-book-release" value="<%= h(@wizard_data.dig(:book, :release_date) || '') %>" placeholder="Coming Soon">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Author / Artist -->
+  <div class="wiz-step" id="step-4">
+    <h2>Author / Artist</h2>
+    <p class="wiz-subtitle">Introduce the person behind the work.</p>
+    <div class="wiz-fieldset">
+      <div class="wiz-field">
+        <label>Name</label>
+        <input type="text" id="wiz-author-name" value="<%= h(@wizard_data.dig(:author, :name) || '') %>" placeholder="Author Name">
+      </div>
+      <div class="wiz-field">
+        <label>Bio</label>
+        <textarea id="wiz-author-bio" rows="4" placeholder="About the author..."><%= h(@wizard_data.dig(:author, :bio) || '') %></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: Retailers -->
+  <div class="wiz-step" id="step-5">
+    <h2>Retailers</h2>
+    <p class="wiz-subtitle">Where can people buy the book? Add or remove retailers.</p>
+    <div class="wiz-fieldset">
+      <div id="retailer-list">
+        <% (@wizard_data[:retailers] || []).each_with_index do |r, i| %>
+          <div class="wiz-list-item" data-idx="<%= i %>">
+            <input type="text" class="wiz-icon-input ret-icon" value="<%= r['icon'] || r[:icon] %>" placeholder="&#128218;">
+            <input type="text" class="wiz-name-input ret-name" value="<%= h(r['name'] || r[:name] || '') %>" placeholder="Retailer name">
+            <input type="url" class="wiz-url-input ret-url" value="<%= h(r['url'] || r[:url] || '') %>" placeholder="https://...">
+            <button type="button" class="wiz-remove-btn" onclick="removeRetailer(this)" title="Remove"><i class="fas fa-times"></i></button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="wiz-add-btn" onclick="addRetailer()"><i class="fas fa-plus"></i> Add Retailer</button>
+    </div>
+  </div>
+
+  <!-- Step 6: Extras -->
+  <div class="wiz-step" id="step-6">
+    <h2>Extras</h2>
+    <p class="wiz-subtitle">Add finishing touches to your page.</p>
+
+    <!-- Steps (for personalized_video / preorder_incentive) -->
+    <div id="extras-steps" class="wiz-fieldset" style="display:none;">
+      <legend style="font-size:13px;font-weight:700;color:var(--accent);padding:0 8px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">How It Works Steps</legend>
+      <div id="steps-list">
+        <% (@wizard_data[:steps] || []).each_with_index do |s, i| %>
+          <div class="wiz-step-item">
+            <div class="wiz-step-num"><%= i + 1 %></div>
+            <input type="text" class="step-title" value="<%= h(s['title'] || s[:title] || '') %>" placeholder="Step title">
+            <input type="text" class="step-desc" value="<%= h(s['description'] || s[:description] || '') %>" placeholder="Description">
+            <button type="button" class="wiz-remove-btn" onclick="removeStep(this)" title="Remove"><i class="fas fa-times"></i></button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="wiz-add-btn" onclick="addStep()"><i class="fas fa-plus"></i> Add Step</button>
+    </div>
+
+    <!-- Testimonials -->
+    <div id="extras-testimonials" class="wiz-fieldset">
+      <legend style="font-size:13px;font-weight:700;color:var(--accent);padding:0 8px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Testimonials</legend>
+      <div id="testimonials-list">
+        <% (@wizard_data[:testimonials] || []).each_with_index do |t, i| %>
+          <div class="wiz-list-item">
+            <input type="text" class="wiz-name-input test-quote" value="<%= h(t['quote'] || t[:quote] || '') %>" placeholder="&quot;An amazing read...&quot;">
+            <input type="text" class="test-attr" value="<%= h(t['attribution'] || t[:attribution] || '') %>" placeholder="- Name" style="width:140px;">
+            <button type="button" class="wiz-remove-btn" onclick="removeTestimonial(this)" title="Remove"><i class="fas fa-times"></i></button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="wiz-add-btn" onclick="addTestimonial()"><i class="fas fa-plus"></i> Add Testimonial</button>
+    </div>
+
+    <!-- Bonuses (preorder_incentive only) -->
+    <div id="extras-bonuses" class="wiz-fieldset" style="display:none;">
+      <legend style="font-size:13px;font-weight:700;color:var(--accent);padding:0 8px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Pre-Order Bonuses</legend>
+      <div id="bonuses-list">
+        <% (@wizard_data[:bonuses] || []).each_with_index do |b, i| %>
+          <div class="wiz-bonus-item">
+            <input type="text" class="wiz-icon-input bonus-emoji" value="<%= b['emoji'] || b[:emoji] %>" placeholder="&#127873;">
+            <input type="text" class="bonus-title" value="<%= h(b['title'] || b[:title] || '') %>" placeholder="Bonus title">
+            <input type="text" class="bonus-desc" value="<%= h(b['description'] || b[:description] || '') %>" placeholder="Description">
+            <button type="button" class="wiz-remove-btn" onclick="removeBonus(this)" title="Remove"><i class="fas fa-times"></i></button>
+          </div>
+        <% end %>
+      </div>
+      <button type="button" class="wiz-add-btn" onclick="addBonus()"><i class="fas fa-plus"></i> Add Bonus</button>
+    </div>
+  </div>
+
+  <!-- Step 7: Review & Generate -->
+  <div class="wiz-step" id="step-7">
+    <h2>Review & Generate</h2>
+    <p class="wiz-subtitle">Everything look right? Hit generate to create your page.</p>
+
+    <% if @landing_page.has_content? %>
+      <div class="wiz-overwrite-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        This will replace the current page content. You can always open the builder to make further edits.
+      </div>
+    <% end %>
+
+    <div id="review-content"></div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="wiz-footer">
+  <button type="button" class="wiz-btn wiz-btn-secondary" id="backBtn" onclick="goBack()" style="display:none;">
+    <i class="fas fa-arrow-left"></i> Back
+  </button>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button type="button" class="wiz-btn wiz-btn-primary" id="nextBtn" onclick="goNext()">
+      Next <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var currentStep = 1;
+  var totalSteps = 7;
+  var selectedTemplate = '<%= @wizard_data[:template] || 'standard' %>';
+
+  var GENERATE_URL = '<%= @admin_mode ? wizard_generate_manage_campaign_landing_page_path(@campaign) : wizard_generate_portal_campaign_landing_page_path(@campaign) %>';
+
+  var templateNames = <%= raw LandingPageGenerator::TEMPLATES.to_json %>;
+
+  var tplSections = {
+    standard:           { steps: false, retailers: false, testimonials: true, bonuses: false, author: true },
+    personalized_video: { steps: true,  retailers: true,  testimonials: true, bonuses: false, author: true },
+    preorder_incentive: { steps: true,  retailers: true,  testimonials: false, bonuses: true, author: false },
+    address_capture:    { steps: false, retailers: false, testimonials: false, bonuses: false, author: true },
+    landing_page:       { steps: false, retailers: true,  testimonials: true, bonuses: false, author: true },
+    vinyl:              { steps: false, retailers: false, testimonials: true, bonuses: false, author: true }
+  };
+
+  var tplCTA = {
+    standard: 'Order Your Copy',
+    personalized_video: 'Get Your Personalized Video',
+    preorder_incentive: 'Pre-Order Now',
+    address_capture: 'Claim Your Signed Copy',
+    landing_page: 'Learn More',
+    vinyl: 'Order Vinyl'
+  };
+
+  // ── Template selection ──
+  window.selectTemplate = function(key) {
+    selectedTemplate = key;
+    document.querySelectorAll('.tpl-card').forEach(function(c) {
+      c.classList.toggle('selected', c.dataset.tpl === key);
+    });
+    // Update CTA default if not user-edited
+    var ctaInput = document.getElementById('wiz-cta-text');
+    if (!ctaInput._userEdited) ctaInput.value = tplCTA[key] || 'Order Your Copy';
+    updateExtrasVisibility();
+  };
+
+  function updateExtrasVisibility() {
+    var vis = tplSections[selectedTemplate] || tplSections.standard;
+    el('extras-steps').style.display = vis.steps ? '' : 'none';
+    el('extras-testimonials').style.display = vis.testimonials ? '' : 'none';
+    el('extras-bonuses').style.display = vis.bonuses ? '' : 'none';
+  }
+
+  // Track user edits
+  document.addEventListener('input', function(e) {
+    if (e.target.id && e.target.id.startsWith('wiz-')) e.target._userEdited = true;
+  });
+
+  // ── Navigation ──
+  window.goNext = function() {
+    if (currentStep === totalSteps) { submitWizard(); return; }
+    var nextStep = currentStep + 1;
+    // Skip steps based on template
+    if (nextStep === 4 && !(tplSections[selectedTemplate] || tplSections.standard).author) nextStep = 5;
+    if (nextStep === 5 && !(tplSections[selectedTemplate] || tplSections.standard).retailers) nextStep = 6;
+    goToStep(nextStep);
+  };
+
+  window.goBack = function() {
+    var prevStep = currentStep - 1;
+    // Skip back over skipped steps
+    if (prevStep === 5 && !(tplSections[selectedTemplate] || tplSections.standard).retailers) prevStep = 4;
+    if (prevStep === 4 && !(tplSections[selectedTemplate] || tplSections.standard).author) prevStep = 3;
+    if (prevStep >= 1) goToStep(prevStep);
+  };
+
+  function goToStep(n) {
+    currentStep = n;
+    // Show/hide steps
+    for (var i = 1; i <= totalSteps; i++) {
+      el('step-' + i).classList.toggle('active', i === n);
+    }
+    // Update progress dots
+    for (var i = 1; i <= totalSteps; i++) {
+      var dot = el('dot-' + i);
+      var label = el('label-' + i);
+      dot.className = 'wiz-progress-dot';
+      label.className = 'wiz-progress-label';
+      if (i < n) { dot.classList.add('done'); dot.innerHTML = '<i class="fas fa-check" style="font-size:11px;"></i>'; label.classList.add('done'); }
+      else if (i === n) { dot.classList.add('active'); dot.textContent = i; label.classList.add('active'); }
+      else { dot.textContent = i; }
+      if (i < totalSteps) {
+        var line = el('line-' + i);
+        line.classList.toggle('done', i < n);
+      }
+    }
+    // Back/Next button state
+    el('backBtn').style.display = n > 1 ? '' : 'none';
+    if (n === totalSteps) {
+      el('nextBtn').innerHTML = '<i class="fas fa-magic"></i> Generate Page';
+      el('nextBtn').className = 'wiz-btn wiz-btn-success';
+      buildReview();
+    } else {
+      el('nextBtn').innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+      el('nextBtn').className = 'wiz-btn wiz-btn-primary';
+    }
+    // Update extras visibility when entering step 6
+    if (n === 6) updateExtrasVisibility();
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Dynamic list helpers ──
+  window.addRetailer = function() {
+    var list = el('retailer-list');
+    var div = document.createElement('div');
+    div.className = 'wiz-list-item';
+    div.innerHTML = '<input type="text" class="wiz-icon-input ret-icon" value="\uD83D\uDCDA" placeholder="&#128218;">' +
+      '<input type="text" class="wiz-name-input ret-name" value="" placeholder="Retailer name">' +
+      '<input type="url" class="wiz-url-input ret-url" value="" placeholder="https://...">' +
+      '<button type="button" class="wiz-remove-btn" onclick="removeRetailer(this)" title="Remove"><i class="fas fa-times"></i></button>';
+    list.appendChild(div);
+  };
+  window.removeRetailer = function(btn) { btn.closest('.wiz-list-item').remove(); };
+
+  window.addTestimonial = function() {
+    var list = el('testimonials-list');
+    var div = document.createElement('div');
+    div.className = 'wiz-list-item';
+    div.innerHTML = '<input type="text" class="wiz-name-input test-quote" value="" placeholder="&quot;An amazing read...&quot;">' +
+      '<input type="text" class="test-attr" value="" placeholder="- Name" style="width:140px;">' +
+      '<button type="button" class="wiz-remove-btn" onclick="removeTestimonial(this)" title="Remove"><i class="fas fa-times"></i></button>';
+    list.appendChild(div);
+  };
+  window.removeTestimonial = function(btn) { btn.closest('.wiz-list-item').remove(); };
+
+  window.addStep = function() {
+    var list = el('steps-list');
+    var count = list.querySelectorAll('.wiz-step-item').length + 1;
+    var div = document.createElement('div');
+    div.className = 'wiz-step-item';
+    div.innerHTML = '<div class="wiz-step-num">' + count + '</div>' +
+      '<input type="text" class="step-title" value="" placeholder="Step title">' +
+      '<input type="text" class="step-desc" value="" placeholder="Description">' +
+      '<button type="button" class="wiz-remove-btn" onclick="removeStep(this)" title="Remove"><i class="fas fa-times"></i></button>';
+    list.appendChild(div);
+  };
+  window.removeStep = function(btn) {
+    btn.closest('.wiz-step-item').remove();
+    renumberSteps();
+  };
+  function renumberSteps() {
+    el('steps-list').querySelectorAll('.wiz-step-item').forEach(function(item, i) {
+      item.querySelector('.wiz-step-num').textContent = i + 1;
+    });
+  }
+
+  window.addBonus = function() {
+    var list = el('bonuses-list');
+    var div = document.createElement('div');
+    div.className = 'wiz-bonus-item';
+    div.innerHTML = '<input type="text" class="wiz-icon-input bonus-emoji" value="\uD83C\uDF81" placeholder="&#127873;">' +
+      '<input type="text" class="bonus-title" value="" placeholder="Bonus title">' +
+      '<input type="text" class="bonus-desc" value="" placeholder="Description">' +
+      '<button type="button" class="wiz-remove-btn" onclick="removeBonus(this)" title="Remove"><i class="fas fa-times"></i></button>';
+    list.appendChild(div);
+  };
+  window.removeBonus = function(btn) { btn.closest('.wiz-bonus-item').remove(); };
+
+  // ── Review builder ──
+  function buildReview() {
+    var vis = tplSections[selectedTemplate] || tplSections.standard;
+    var html = '';
+
+    // Template
+    html += reviewCard('Template', [
+      ['Type', templateNames[selectedTemplate] || selectedTemplate]
+    ], 1);
+
+    // Hero
+    html += reviewCard('Hero Section', [
+      ['Headline', val('wiz-headline')],
+      ['Subheadline', val('wiz-subheadline')],
+      ['CTA Text', val('wiz-cta-text')],
+      ['CTA URL', val('wiz-cta-url')]
+    ], 2);
+
+    // Book
+    html += reviewCard('Book Details', [
+      ['Title', val('wiz-book-title')],
+      ['Description', truncate(val('wiz-book-desc'), 100)],
+      ['Genre', val('wiz-book-genre')],
+      ['Release Date', val('wiz-book-release')]
+    ], 3);
+
+    // Author
+    if (vis.author) {
+      html += reviewCard('Author', [
+        ['Name', val('wiz-author-name')],
+        ['Bio', truncate(val('wiz-author-bio'), 100)]
+      ], 4);
+    }
+
+    // Retailers
+    if (vis.retailers) {
+      var retailers = [];
+      el('retailer-list').querySelectorAll('.wiz-list-item').forEach(function(item) {
+        var name = item.querySelector('.ret-name').value.trim();
+        if (name) retailers.push(name);
+      });
+      html += reviewCard('Retailers', [
+        ['Count', retailers.length + ' retailer' + (retailers.length !== 1 ? 's' : '')],
+        ['Names', retailers.join(', ') || 'None']
+      ], 5);
+    }
+
+    // Extras
+    var extrasRows = [];
+    if (vis.steps) {
+      var stepCount = el('steps-list').querySelectorAll('.wiz-step-item').length;
+      extrasRows.push(['Steps', stepCount + ' step' + (stepCount !== 1 ? 's' : '')]);
+    }
+    if (vis.testimonials) {
+      var testCount = el('testimonials-list').querySelectorAll('.wiz-list-item').length;
+      extrasRows.push(['Testimonials', testCount + ' testimonial' + (testCount !== 1 ? 's' : '')]);
+    }
+    if (vis.bonuses) {
+      var bonusCount = el('bonuses-list').querySelectorAll('.wiz-bonus-item').length;
+      extrasRows.push(['Bonuses', bonusCount + ' bonus' + (bonusCount !== 1 ? 'es' : '')]);
+    }
+    if (extrasRows.length) {
+      html += reviewCard('Extras', extrasRows, 6);
+    }
+
+    el('review-content').innerHTML = html;
+  }
+
+  function reviewCard(title, rows, editStep) {
+    var h = '<div class="wiz-review-card"><div class="wiz-review-header"><h3>' + esc(title) + '</h3>' +
+      '<a class="wiz-edit-link" onclick="goToStep(' + editStep + ')"><i class="fas fa-pen" style="font-size:10px;margin-right:4px;"></i>Edit</a></div>' +
+      '<div class="wiz-review-body">';
+    rows.forEach(function(r) {
+      var value = r[1] || '';
+      var cls = value ? '' : ' empty';
+      h += '<div class="wiz-review-row"><div class="wiz-review-label">' + esc(r[0]) + '</div><div class="wiz-review-value' + cls + '">' + esc(value || 'Not set') + '</div></div>';
+    });
+    h += '</div></div>';
+    return h;
+  }
+
+  // ── Form submission ──
+  function submitWizard() {
+    var btn = el('nextBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    var data = collectData();
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GENERATE_URL;
+    form.style.display = 'none';
+
+    var csrfParam = document.querySelector('meta[name="csrf-param"]');
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfParam && csrfToken) addField(form, csrfParam.content, csrfToken.content);
+    addField(form, '_method', 'patch');
+
+    flattenToForm(data, 'wizard_data', form);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function collectData() {
+    var vis = tplSections[selectedTemplate] || tplSections.standard;
+    var data = { template: selectedTemplate };
+
+    data.hero = {
+      headline: val('wiz-headline'),
+      subheadline: val('wiz-subheadline'),
+      cta_text: val('wiz-cta-text'),
+      cta_url: val('wiz-cta-url')
+    };
+
+    data.book = {
+      description: val('wiz-book-desc'),
+      genre: val('wiz-book-genre'),
+      release_date: val('wiz-book-release')
+    };
+
+    if (vis.author) {
+      data.author = {
+        name: val('wiz-author-name'),
+        bio: val('wiz-author-bio')
+      };
+    }
+
+    if (vis.retailers) {
+      data.retailers = [];
+      el('retailer-list').querySelectorAll('.wiz-list-item').forEach(function(item) {
+        var name = item.querySelector('.ret-name').value.trim();
+        if (name) {
+          data.retailers.push({
+            name: name,
+            url: item.querySelector('.ret-url').value.trim() || '#',
+            icon: item.querySelector('.ret-icon').value.trim() || "\uD83D\uDCDA"
+          });
+        }
+      });
+    }
+
+    if (vis.steps) {
+      data.steps = [];
+      el('steps-list').querySelectorAll('.wiz-step-item').forEach(function(item, i) {
+        var title = item.querySelector('.step-title').value.trim();
+        if (title) {
+          data.steps.push({
+            number: String(i + 1),
+            title: title,
+            description: item.querySelector('.step-desc').value.trim()
+          });
+        }
+      });
+    }
+
+    if (vis.testimonials) {
+      data.testimonials = [];
+      el('testimonials-list').querySelectorAll('.wiz-list-item').forEach(function(item) {
+        var quote = item.querySelector('.test-quote').value.trim();
+        if (quote) {
+          data.testimonials.push({
+            quote: quote,
+            attribution: item.querySelector('.test-attr').value.trim()
+          });
+        }
+      });
+    }
+
+    if (vis.bonuses) {
+      data.bonuses = [];
+      el('bonuses-list').querySelectorAll('.wiz-bonus-item').forEach(function(item) {
+        var title = item.querySelector('.bonus-title').value.trim();
+        if (title) {
+          data.bonuses.push({
+            emoji: item.querySelector('.bonus-emoji').value.trim() || "\uD83C\uDF81",
+            title: title,
+            description: item.querySelector('.bonus-desc').value.trim()
+          });
+        }
+      });
+    }
+
+    return data;
+  }
+
+  function addField(form, name, value) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = name; inp.value = value;
+    form.appendChild(inp);
+  }
+
+  function flattenToForm(obj, prefix, form) {
+    for (var key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      var v = obj[key];
+      var fieldName = prefix ? prefix + '[' + key + ']' : key;
+      if (Array.isArray(v)) {
+        v.forEach(function(item, idx) {
+          if (typeof item === 'object' && item !== null) {
+            flattenToForm(item, fieldName + '[' + idx + ']', form);
+          } else {
+            addField(form, fieldName + '[]', item);
+          }
+        });
+      } else if (typeof v === 'object' && v !== null) {
+        flattenToForm(v, fieldName, form);
+      } else {
+        addField(form, fieldName, v);
+      }
+    }
+  }
+
+  // ── Helpers ──
+  function el(id) { return document.getElementById(id); }
+  function val(id) { var e = el(id); return e ? e.value.trim() : ''; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function truncate(s, n) { return s.length > n ? s.substring(0, n) + '...' : s; }
+
+  // Make goToStep available globally (for review edit links)
+  window.goToStep = goToStep;
+
+  // Initialize extras visibility
+  updateExtrasVisibility();
+
+  // Keyboard: Enter to advance (unless in textarea)
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      goNext();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

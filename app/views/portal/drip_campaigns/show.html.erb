@@ -1,0 +1,128 @@
+<% content_for :page_title, @drip.name %>
+<% content_for :page_actions do %>
+  <%= link_to 'Edit Steps', edit_portal_campaign_drip_campaign_path(@campaign, @drip), class: 'btn btn-secondary btn-sm' %>
+  <%= link_to toggle_status_portal_campaign_drip_campaign_path(@campaign, @drip), method: :patch, class: "btn btn-sm #{@drip.active? ? 'btn-secondary' : 'btn-primary'}" do %>
+    <%= @drip.active? ? 'Pause' : (@drip.draft? ? 'Activate' : 'Resume') %>
+  <% end %>
+  <%= link_to '← All Drips', portal_campaign_drip_campaigns_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .drip-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .drip-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; text-align: center; }
+  .drip-stat-card .num { font-size: 28px; font-weight: 800; }
+  .drip-stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+  .step-flow { position: relative; padding-left: 24px; }
+  .step-flow::before {
+    content: ''; position: absolute; left: 11px; top: 24px; bottom: 24px;
+    width: 2px; background: var(--border);
+  }
+  .step-node {
+    position: relative; padding: 16px; margin-bottom: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+  .step-node::before {
+    content: ''; position: absolute; left: -17px; top: 20px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--surface);
+  }
+  .step-num { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .step-delay { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: var(--accent-wash); color: var(--accent); margin-left: 8px; }
+  .step-subject { font-size: 15px; font-weight: 600; margin-top: 6px; }
+  .step-body { font-size: 13px; color: var(--text-secondary); margin-top: 6px; white-space: pre-wrap; }
+  .step-channel { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.04); color: var(--text-muted); text-transform: uppercase; }
+
+  .enrollment-list { margin-top: 4px; }
+  .enrollment-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .enrollment-step {
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+  }
+  .enrollment-step.active { background: rgba(0,50,98,0.08); color: var(--accent); }
+  .enrollment-step.completed { background: rgba(34,197,94,0.08); color: #16A34A; }
+  .enrollment-step.cancelled { background: rgba(0,0,0,0.04); color: var(--text-muted); }
+</style>
+
+<!-- Stats -->
+<div class="drip-overview">
+  <div class="drip-stat-card">
+    <div class="num"><%= @stats[:enrolled] %></div>
+    <div class="label">Enrolled</div>
+  </div>
+  <div class="drip-stat-card">
+    <div class="num"><%= @stats[:active] %></div>
+    <div class="label">Active</div>
+  </div>
+  <div class="drip-stat-card">
+    <div class="num"><%= @stats[:completed] %></div>
+    <div class="label">Completed</div>
+  </div>
+  <div class="drip-stat-card">
+    <div class="num"><%= @stats[:messages_sent] %></div>
+    <div class="label">Sent</div>
+  </div>
+  <div class="drip-stat-card">
+    <div class="num"><%= @stats[:messages_sent] > 0 ? ((@stats[:opened].to_f / @stats[:messages_sent]) * 100).round : 0 %>%</div>
+    <div class="label">Open Rate</div>
+  </div>
+</div>
+
+<!-- Sequence Flow -->
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <h3 style="font-size:14px;font-weight:700;">Sequence</h3>
+    <div>
+      <span class="step-channel"><%= DripCampaign::TRIGGER_EVENTS[@drip.trigger_event] || @drip.trigger_event.titleize %></span>
+      <span class="drip-status <%= @drip.status %>" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;margin-left:8px;
+        background:<%= @drip.active? ? 'rgba(34,197,94,0.1)' : (@drip.paused? ? 'rgba(245,158,11,0.1)' : 'rgba(0,0,0,0.04)') %>;
+        color:<%= @drip.active? ? '#16A34A' : (@drip.paused? ? '#D97706' : 'var(--text-muted)') %>;">
+        <%= @drip.status %>
+      </span>
+    </div>
+  </div>
+
+  <% if @steps.any? %>
+    <div class="step-flow">
+      <% @steps.each_with_index do |step, i| %>
+        <div class="step-node">
+          <span class="step-num">Step <%= i + 1 %></span>
+          <span class="step-delay"><%= step.delay_label %></span>
+          <span class="step-channel" style="margin-left:4px;"><%= step.channel %></span>
+          <% if step.subject.present? %>
+            <div class="step-subject"><%= step.subject %></div>
+          <% end %>
+          <div class="step-body"><%= step.body.truncate(200) %></div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">
+      No steps yet. <%= link_to 'Add steps →', edit_portal_campaign_drip_campaign_path(@campaign, @drip), style: 'color:var(--accent);font-weight:600;' %>
+    </p>
+  <% end %>
+</div>
+
+<!-- Enrollments -->
+<div class="card enrollment-list" style="margin-top:4px;">
+  <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Recent Enrollments</h3>
+  <% if @enrollments.any? %>
+    <% @enrollments.each do |enrollment| %>
+      <div class="enrollment-item">
+        <%= link_to enrollment.contact.display_name, portal_campaign_contact_path(@campaign, enrollment.contact), style: 'font-weight:600;color:var(--text-primary);text-decoration:none;' %>
+        <span style="color:var(--text-muted);font-size:12px;"><%= enrollment.contact.email %></span>
+        <span class="enrollment-step <%= enrollment.status %>" style="margin-left:auto;">
+          <% if enrollment.active? %>
+            Step <%= enrollment.current_step + 1 %>/<%= @steps.count %>
+          <% else %>
+            <%= enrollment.status.titleize %>
+          <% end %>
+        </span>
+      </div>
+    <% end %>
+  <% else %>
+    <p style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">No enrollments yet. Contacts will be enrolled when the trigger event occurs.</p>
+  <% end %>
+</div>

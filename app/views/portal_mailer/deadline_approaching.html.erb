@@ -1,0 +1,9 @@
+<h2>Deadline Approaching</h2>
+
+<p>Hi <%= @creator.first_name %>,</p>
+
+<p>Your <strong><%= @deadline_name.downcase %></strong> for "<strong><%= @campaign.title %></strong>" is in <strong><%= @days_left %> <%= 'day'.pluralize(@days_left) %></strong>.</p>
+
+<p>Make sure all your items are completed before the deadline. Log in to your Creators Portal to check your progress.</p>
+
+<p>— The Launch Team</p>

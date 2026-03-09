@@ -50,11 +50,13 @@ module Portal
 
     def go_live
       @live_event.go_live!
+      CampaignActivityLogger.event_went_live(@campaign, @live_event, current_user)
       redirect_to portal_campaign_path(@campaign), notice: 'You are LIVE! Your landing page now shows the stream.'
     end
 
     def end_stream
       @live_event.end_stream!
+      CampaignActivityLogger.event_ended(@campaign, @live_event, current_user)
       redirect_to portal_campaign_path(@campaign), notice: 'Stream ended.'
     end
 

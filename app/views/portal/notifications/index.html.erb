@@ -1,0 +1,65 @@
+<% content_for :page_title, 'Notifications' %>
+<% content_for :page_actions do %>
+  <% if @unread_count > 0 %>
+    <%= button_to 'Mark All Read', mark_all_read_portal_notifications_path, method: :patch, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline' } %>
+  <% end %>
+<% end %>
+
+<style>
+  .notif-item { display: flex; gap: 14px; align-items: flex-start; padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; text-decoration: none; color: inherit; }
+  .notif-item:hover { background: var(--accent-wash); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item.unread { background: rgba(0,50,98,0.02); }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+  .notif-dot.unread { background: var(--accent); }
+  .notif-dot.read { background: transparent; }
+  .notif-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+  .notif-icon.deliverable_ready, .notif-icon.deliverable_revised { background: rgba(99,102,241,0.08); color: #6366F1; }
+  .notif-icon.asset_approved { background: rgba(34,197,94,0.08); color: #16A34A; }
+  .notif-icon.asset_changes_requested { background: rgba(245,158,11,0.08); color: #D97706; }
+  .notif-icon.phase_advanced { background: rgba(0,50,98,0.08); color: var(--accent); }
+  .notif-icon.submission_received { background: rgba(34,197,94,0.08); color: #16A34A; }
+  .notif-icon.message_received { background: rgba(0,50,98,0.08); color: var(--accent); }
+  .notif-icon.deadline_approaching { background: rgba(239,68,68,0.08); color: #DC2626; }
+</style>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <% if @notifications.any? %>
+    <% @notifications.each do |notif| %>
+      <%= link_to (notif.read? ? portal_notifications_path : mark_read_portal_notification_path(notif)), method: (notif.read? ? :get : :patch), class: "notif-item #{notif.read? ? '' : 'unread'}", style: 'text-decoration:none;color:inherit;' do %>
+        <div class="notif-dot <%= notif.read? ? 'read' : 'unread' %>"></div>
+        <div class="notif-icon <%= notif.notification_type %>">
+          <% case notif.notification_type %>
+          <% when 'deliverable_ready', 'deliverable_revised' %>&#128196;
+          <% when 'asset_approved' %>&#9989;
+          <% when 'asset_changes_requested' %>&#9888;
+          <% when 'phase_advanced' %>&#9654;
+          <% when 'submission_received' %>&#128233;
+          <% when 'message_received' %>&#128172;
+          <% when 'deadline_approaching' %>&#9200;
+          <% else %>&#128276;
+          <% end %>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:<%= notif.read? ? '400' : '600' %>;color:var(--text-primary);margin-bottom:2px;">
+            <%= notif.title %>
+          </div>
+          <% if notif.body.present? %>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.4;margin-bottom:4px;">
+              <%= truncate(notif.body, length: 140) %>
+            </div>
+          <% end %>
+          <div style="font-size:11px;color:var(--text-muted);">
+            <%= notif.time_ago %> &middot; <%= notif.campaign.title %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  <% else %>
+    <div style="text-align:center;padding:48px 24px;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:8px;">&#128276;</div>
+      <div style="font-size:14px;font-weight:500;">No notifications yet</div>
+      <div style="font-size:13px;margin-top:4px;">You'll see updates here when something needs your attention.</div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,266 @@
+<% content_for :page_title, @contact.display_name %>
+<% content_for :page_actions do %>
+  <%= link_to '← All Contacts', portal_campaign_contacts_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .contact-profile { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+  @media (max-width: 900px) { .contact-profile { grid-template-columns: 1fr; } }
+
+  .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .profile-avatar {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--accent);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; flex-shrink: 0;
+  }
+  .profile-info h2 { font-size: 20px; font-weight: 700; }
+  .profile-info .email { font-size: 13px; color: var(--text-secondary); }
+
+  .profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tag-pill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+    border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff;
+  }
+  .tag-pill .remove {
+    background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer;
+    font-size: 14px; padding: 0; margin-left: 2px; line-height: 1;
+  }
+  .tag-pill .remove:hover { color: #fff; }
+
+  .add-tag-form { display: flex; gap: 6px; margin-bottom: 20px; }
+  .add-tag-input {
+    flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 12px; font-family: inherit;
+  }
+
+  .score-ring {
+    width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 800; color: var(--accent); margin: 0 auto 8px;
+  }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .detail-item { }
+  .detail-item .label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .detail-item .value { font-size: 14px; font-weight: 500; margin-top: 2px; }
+
+  .timeline { margin-top: 4px; }
+  .timeline-item {
+    display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .timeline-icon {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent-wash);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .timeline-icon svg { width: 14px; height: 14px; color: var(--accent); }
+  .timeline-content { flex: 1; }
+  .timeline-content .event-type { font-weight: 600; }
+  .timeline-content .event-subject { color: var(--text-secondary); }
+  .timeline-content .event-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .timeline-content .event-body { font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding: 8px; background: var(--page-bg); border-radius: 6px; }
+
+  .referral-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .referral-link-box {
+    background: var(--page-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; font-size: 13px; font-family: monospace; word-break: break-all;
+    margin: 8px 0;
+  }
+</style>
+
+<div class="contact-profile">
+  <!-- Main Column -->
+  <div>
+    <div class="card">
+      <div class="profile-header">
+        <div class="profile-avatar"><%= @contact.display_name[0..1].upcase %></div>
+        <div class="profile-info">
+          <h2><%= @contact.display_name %></h2>
+          <div class="email"><%= @contact.email %></div>
+        </div>
+        <div style="margin-left:auto;">
+          <span class="status-dot <%= @contact.status %>" style="width:8px;height:8px;border-radius:50;display:inline-block;margin-right:4px;background:<%= @contact.active? ? '#16A34A' : (@contact.unsubscribed? ? '#EF4444' : 'var(--text-muted)') %>;"></span>
+          <span style="font-size:12px;font-weight:600;"><%= @contact.status.titleize %></span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="profile-tags">
+        <% @contact.tags.each do |tag| %>
+          <span class="tag-pill" style="background:<%= tag.color %>">
+            <%= tag.name %>
+            <%= button_to '×', remove_tag_portal_campaign_contact_path(@campaign, @contact, tag_id: tag.id), method: :delete, class: 'remove', form: { style: 'display:inline' } %>
+          </span>
+        <% end %>
+      </div>
+      <%= form_tag add_tag_portal_campaign_contact_path(@campaign, @contact), class: 'add-tag-form' do %>
+        <input type="text" name="tag_name" placeholder="Add tag..." class="add-tag-input" required>
+        <input type="color" name="tag_color" value="#003262" style="width:32px;height:32px;border:none;cursor:pointer;padding:0;">
+        <button type="submit" class="btn btn-sm btn-secondary">Add</button>
+      <% end %>
+
+      <!-- Details -->
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="label">Phone</div>
+          <div class="value"><%= @contact.phone.presence || '—' %></div>
+        </div>
+        <div class="detail-item">
+          <div class="label">Source</div>
+          <div class="value"><%= @contact.source&.titleize || '—' %></div>
+        </div>
+        <div class="detail-item">
+          <div class="label">First Seen</div>
+          <div class="value"><%= @contact.created_at.strftime('%b %d, %Y') %></div>
+        </div>
+        <div class="detail-item">
+          <div class="label">Last Activity</div>
+          <div class="value"><%= @contact.last_activity_at ? time_ago_in_words(@contact.last_activity_at) + ' ago' : '—' %></div>
+        </div>
+      </div>
+
+      <% if @referral_code %>
+        <div class="referral-section">
+          <h3 style="font-size:14px;font-weight:700;">Referral Link</h3>
+          <% page_url = @campaign.landing_page&.slug.present? ? "/pages/#{@campaign.landing_page.slug}" : '#' %>
+          <div class="referral-link-box"><%= request.base_url %><%= page_url %>?ref=<%= @referral_code.code %></div>
+          <div style="display:flex;gap:16px;margin-top:8px;">
+            <div style="font-size:13px;"><strong><%= @referral_code.referral_count %></strong> <span style="color:var(--text-muted);">referrals</span></div>
+          </div>
+          <% if @referrals.any? %>
+            <div style="margin-top:12px;">
+              <% @referrals.each do |ref| %>
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                  <span style="font-weight:600;"><%= ref.referred_contact.display_name %></span>
+                  <span style="color:var(--text-muted);margin-left:auto;font-size:12px;"><%= ref.created_at.strftime('%b %d') %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="card timeline" style="margin-top:4px;">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Activity Timeline</h3>
+      <% if @events.any? %>
+        <% @events.each do |event| %>
+          <div class="timeline-item">
+            <div class="timeline-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <% case event.event_type %>
+                <% when 'receipt_submitted' %><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>
+                <% when 'email_sent', 'email_opened' %><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                <% when 'email_clicked' %><path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+                <% when 'referred_friend' %><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49"/>
+                <% when 'video_received' %><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/>
+                <% when 'tagged' %><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l6.58-6.58a1 1 0 0 0 0-1.42Z"/><circle cx="7.5" cy="7.5" r="1.5"/>
+                <% when 'manual_note' %><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                <% else %><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                <% end %>
+              </svg>
+            </div>
+            <div class="timeline-content">
+              <span class="event-type"><%= event.event_type.titleize %></span>
+              <% if event.subject.present? %>
+                <span class="event-subject"> — <%= event.subject %></span>
+              <% end %>
+              <div class="event-time"><%= time_ago_in_words(event.created_at) %> ago</div>
+              <% if event.data.is_a?(Hash) && event.data['body'].present? %>
+                <div class="event-body"><%= event.data['body'] %></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No activity recorded yet.</p>
+      <% end %>
+
+      <!-- Add Note -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <%= form_tag add_note_portal_campaign_contact_path(@campaign, @contact), style: 'display:flex;flex-direction:column;gap:8px;' do %>
+          <input type="text" name="note_subject" placeholder="Note title (optional)" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;">
+          <div style="display:flex;gap:8px;">
+            <input type="text" name="note_body" placeholder="Add a note about this contact..." required style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;">
+            <button type="submit" class="btn btn-sm btn-secondary">Add Note</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div>
+    <!-- Engagement Score -->
+    <div class="card" style="text-align:center;">
+      <div class="score-ring"><%= @contact.score %></div>
+      <div style="font-size:13px;font-weight:600;">Engagement Score</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+        <% if @contact.score >= 20 %>
+          Highly engaged fan
+        <% elsif @contact.score >= 5 %>
+          Moderately engaged
+        <% else %>
+          New contact
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Drip Enrollments -->
+    <div class="card" style="margin-top:4px;">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Drip Campaigns</h3>
+      <% active_enrollments = @contact.drip_enrollments.includes(:drip_campaign) %>
+      <% if active_enrollments.any? %>
+        <% active_enrollments.each do |enrollment| %>
+          <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:13px;font-weight:600;"><%= enrollment.drip_campaign.name %></div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+              Step <%= enrollment.current_step + 1 %> of <%= enrollment.drip_campaign.drip_steps.count %> —
+              <span style="font-weight:600;color:<%= enrollment.completed? ? '#16A34A' : 'var(--accent)' %>;"><%= enrollment.status.titleize %></span>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <% if @available_drips.any? %>
+        <div style="margin-top:12px;">
+          <%= form_tag enroll_drip_portal_campaign_contact_path(@campaign, @contact), style: 'display:flex;gap:6px;' do %>
+            <select name="drip_campaign_id" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;">
+              <% @available_drips.each do |drip| %>
+                <option value="<%= drip.id %>"><%= drip.name %></option>
+              <% end %>
+            </select>
+            <button type="submit" class="btn btn-sm btn-secondary">Enroll</button>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Edit Contact -->
+    <div class="card" style="margin-top:4px;">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Edit Contact</h3>
+      <%= form_for @contact, url: portal_campaign_contact_path(@campaign, @contact), method: :patch do |f| %>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">NAME</label>
+            <%= f.text_field :name, style: 'width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">EMAIL</label>
+            <%= f.email_field :email, style: 'width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">PHONE</label>
+            <%= f.phone_field :phone, style: 'width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">STATUS</label>
+            <%= f.select :status, Contact.statuses.keys.map { |s| [s.titleize, s] }, {}, style: 'width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;' %>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

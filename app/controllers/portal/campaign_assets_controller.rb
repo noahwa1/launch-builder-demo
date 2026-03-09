@@ -13,6 +13,7 @@ module Portal
       @asset.original_filename = params[:campaign_asset][:file]&.original_filename if params.dig(:campaign_asset, :file)
 
       if @asset.save
+        CampaignActivityLogger.asset_uploaded(@campaign, @asset, current_user)
         redirect_to portal_campaign_campaign_assets_path(@campaign), notice: 'Asset uploaded successfully.'
       else
         @assets = @campaign.campaign_assets.order(created_at: :desc)

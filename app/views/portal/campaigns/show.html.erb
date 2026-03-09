@@ -1,156 +1,210 @@
 <% content_for :page_title, 'Marketing Hub' %>
 
+<%
+  phase_descriptions = {
+    'setup'   => 'Review and confirm the details your team has prepared for you.',
+    'content' => 'Upload your photos and videos, and review the creative your team has built.',
+    'review'  => 'Final review — approve remaining items so we can go live.',
+    'live'    => "Your campaign is live! Here's how it's performing.",
+    'wrap_up' => "Campaign complete. Here's your summary and earnings."
+  }
+  phase_icons = {
+    'setup'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+    'content' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+    'review'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+    'live'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg>',
+    'wrap_up' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+  }
+  # Previews for future phases (only shown if the phase will have content)
+  phase_previews = {
+    'content' => (@campaign.asset_uploads_enabled? || @campaign.deliverables_enabled?) ? "You'll upload your photos and review creative from your team." : nil,
+    'review'  => "Final checks — approve everything so we can go live.",
+    'live'    => "Your campaign goes public. Track performance and engage fans.",
+    'wrap_up' => (@campaign.royalties_enabled?) ? "Campaign results, royalty info, and downloadable recap." : "Campaign results and recap."
+  }
+  confirmed_count = @campaign.confirmable_sections.count { |s| c = @confirmations[s]; c&.persisted? && !c&.has_changes_requested? }
+%>
+
 <style>
-  /* ── Marketing Hub Styles ── */
-  .hero-banner {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    border-radius: var(--radius-lg);
-    padding: 36px 40px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-banner::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 60%;
-    height: 200%;
-    background: radial-gradient(ellipse, rgba(79,70,229,0.15), transparent 70%);
-    pointer-events: none;
-  }
+  /* ── Hero Banner ── */
+  .hero-banner { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: var(--radius-lg); padding: 32px 36px; color: #fff; display: flex; align-items: center; gap: 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .hero-banner::before { content: ''; position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: radial-gradient(ellipse, rgba(79,70,229,0.15), transparent 70%); pointer-events: none; }
   .hero-cover { flex-shrink: 0; position: relative; z-index: 1; }
-  .hero-cover img { width: 100px; height: 150px; object-fit: cover; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
-  .hero-cover .cover-placeholder { width: 100px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 12px; }
+  .hero-cover img { width: 90px; height: 135px; object-fit: cover; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .hero-cover .cover-placeholder { width: 90px; height: 135px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 12px; }
   .hero-info { flex: 1; position: relative; z-index: 1; }
-  .hero-info .greeting { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
-  .hero-info h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
-  .hero-info .book-title { font-size: 16px; color: rgba(255,255,255,0.7); font-weight: 400; }
-  .hero-stats { display: flex; gap: 24px; margin-top: 16px; }
+  .hero-info .greeting { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+  .hero-info h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .hero-info .book-title { font-size: 14px; color: rgba(255,255,255,0.6); }
+  .hero-stats { display: flex; gap: 20px; margin-top: 12px; }
   .hero-stat { text-align: center; }
-  .hero-stat .num { font-size: 24px; font-weight: 700; }
-  .hero-stat .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .hero-stat .num { font-size: 20px; font-weight: 700; }
+  .hero-stat .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.4); margin-top: 2px; }
 
-  /* ── Live Now Bar ── */
-  .live-bar {
-    background: linear-gradient(90deg, #e94560, #c0392b);
-    border-radius: var(--radius-md);
-    padding: 14px 24px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    animation: livePulse 3s ease-in-out infinite;
-  }
-  .live-bar .live-left { display: flex; align-items: center; gap: 12px; font-weight: 700; }
-  .live-dot { width: 10px; height: 10px; background: #fff; border-radius: 50%; animation: dotBlink 1.5s ease-in-out infinite; }
-  @keyframes livePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.3); } 50% { box-shadow: 0 0 20px 4px rgba(233,69,96,0.15); } }
-  @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  /* ── Phase Stepper ── */
+  .phase-stepper { display: flex; gap: 4px; margin-bottom: 6px; }
+  .phase-step { flex: 1; text-align: center; position: relative; }
+  .phase-step .step-bar { height: 6px; border-radius: 3px; margin-bottom: 8px; transition: background 0.3s; }
+  .phase-step .step-bar.past { background: #16A34A; }
+  .phase-step .step-bar.current { background: var(--accent); }
+  .phase-step .step-bar.future { background: var(--border); }
+  .phase-step .step-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .phase-step .step-label.past { color: #16A34A; }
+  .phase-step .step-label.current { color: var(--accent); }
+  .phase-step .step-label.future { color: var(--text-muted); }
 
-  /* ── Toolkit Grid ── */
-  .toolkit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .toolkit-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    text-decoration: none;
-    color: var(--text-primary);
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-  .toolkit-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
-  .toolkit-card .tk-icon {
-    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 14px; font-size: 20px;
-  }
-  .toolkit-card .tk-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-  .toolkit-card .tk-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; flex: 1; }
-  .toolkit-card .tk-badge { position: absolute; top: 16px; right: 16px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-  .tk-landing .tk-icon { background: rgba(79,70,229,0.1); color: var(--accent); }
-  .tk-live .tk-icon { background: rgba(233,69,96,0.1); color: #e94560; }
-  .tk-social .tk-icon { background: rgba(59,130,246,0.1); color: #3B82F6; }
-  .tk-content .tk-icon { background: rgba(34,197,94,0.1); color: #22C55E; }
-  .tk-links .tk-icon { background: rgba(245,158,11,0.1); color: #F59E0B; }
-  .tk-logistics .tk-icon { background: rgba(168,85,247,0.1); color: #A855F7; }
+  /* ── Phase Status Bar ── */
+  .phase-status-bar { padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+  .phase-status-bar.setup { background: rgba(79,70,229,0.04); border: 1px solid rgba(79,70,229,0.12); }
+  .phase-status-bar.content { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.12); }
+  .phase-status-bar.review { background: rgba(245,158,11,0.04); border: 1px solid rgba(245,158,11,0.12); }
+  .phase-status-bar.live { background: rgba(233,69,96,0.04); border: 1px solid rgba(233,69,96,0.12); }
+  .phase-status-bar.wrap_up { background: rgba(139,92,246,0.04); border: 1px solid rgba(139,92,246,0.12); }
+  .phase-status-bar .status-text { font-size: 14px; color: var(--text-secondary); flex: 1; }
 
-  /* ── Activity & Tips ── */
-  .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
-  .activity-item:last-child { border-bottom: none; }
-  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-  .activity-text { font-size: 14px; color: var(--text-secondary); }
-  .activity-time { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  /* ── Key Dates ── */
+  .key-dates { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .key-date { flex: 1; min-width: 140px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .key-date .kd-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .key-date .kd-value { font-size: 14px; font-weight: 700; margin-top: 3px; }
+  .key-date .kd-countdown { font-size: 11px; margin-top: 2px; }
 
-  .tip-card { display: flex; gap: 12px; padding: 14px; border-radius: 10px; background: var(--accent-wash); border: 1px solid rgba(79,70,229,0.08); margin-bottom: 10px; }
-  .tip-card:last-child { margin-bottom: 0; }
-  .tip-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-glow); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .tip-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-  .tip-text strong { color: var(--text-primary); }
+  /* ── Confirm Sections ── */
+  .confirm-section { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 12px; transition: all 0.15s; }
+  .confirm-section.confirmed { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.02); }
+  .confirm-section.changes-requested { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.02); }
+  .confirm-section.needs-review { border-color: rgba(217,119,6,0.3); }
+  .confirm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .confirm-header h4 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .confirm-status { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .confirm-status.st-confirmed { background: rgba(34,197,94,0.08); color: #16A34A; }
+  .confirm-status.st-changes { background: rgba(245,158,11,0.08); color: #D97706; }
+  .confirm-status.st-pending { background: rgba(217,119,6,0.08); color: #D97706; }
+  .confirm-data { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px; }
+  .confirm-data .data-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+  .confirm-data .data-value { margin-bottom: 10px; }
+  .confirm-actions { display: flex; gap: 8px; align-items: flex-start; }
+  .confirm-btn { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; text-decoration: none; display: inline-block; }
+  .confirm-btn.approve { background: #16A34A; color: #fff; }
+  .confirm-btn.approve:hover { background: #15803d; }
+  .confirm-changes-form { flex: 1; }
+  .confirm-changes-form textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; margin-bottom: 8px; }
+  .confirm-btn.request { background: rgba(245,158,11,0.06); color: #D97706; border: 1px solid rgba(245,158,11,0.2); }
+  .confirm-btn.request:hover { background: rgba(245,158,11,0.12); }
+  .confirm-note { margin-top: 8px; padding: 10px 14px; background: rgba(245,158,11,0.04); border-left: 3px solid #D97706; border-radius: 0 8px 8px 0; font-size: 13px; }
+  .confirm-note .note-label { font-size: 11px; font-weight: 600; color: #D97706; text-transform: uppercase; margin-bottom: 4px; }
+  .confirm-meta { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .team-label { font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-wash); padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
 
-  /* ── Progress Ring ── */
-  .progress-ring-wrap { text-align: center; }
-  .progress-ring { width: 120px; height: 120px; margin: 0 auto 12px; position: relative; }
-  .progress-ring svg { transform: rotate(-90deg); }
-  .progress-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
-  .progress-ring .ring-fill { fill: none; stroke: url(#progressGrad); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
-  .progress-ring .ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; }
+  /* ── Phase Card / Accordion ── */
+  .phase-card { border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+  .phase-card.active-phase { border-color: var(--accent); box-shadow: 0 2px 12px rgba(79,70,229,0.08); }
+  .phase-card-header { padding: 16px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .phase-card-header h3 { font-size: 15px; font-weight: 700; flex: 1; margin: 0; }
+  .phase-card-body { padding: 0 20px 20px; }
+  .phase-badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
+  /* ── Advance Button ── */
+  .advance-bar { padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .advance-bar.ready { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.2); }
+  .advance-bar.blocked { background: rgba(245,158,11,0.04); border: 1px solid rgba(245,158,11,0.15); }
+  .advance-btn { padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; background: #16A34A; color: #fff; transition: all 0.15s; }
+  .advance-btn:hover { background: #15803d; transform: translateY(-1px); }
+
+  /* ── Future Phase Preview ── */
+  .future-preview { padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; opacity: 0.6; display: flex; align-items: center; gap: 12px; }
+  .future-preview .lock-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+
+  /* ── Content Phase Cards ── */
+  .content-section { margin-bottom: 16px; }
+  .content-section h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .del-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-bottom: 1px solid var(--border); text-decoration: none; color: inherit; transition: background 0.1s; }
+  .del-row:hover { background: var(--accent-wash); }
+  .del-row:last-child { border-bottom: none; }
+  .del-row-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .del-row-info { flex: 1; }
+  .del-row-info h5 { font-size: 13px; font-weight: 600; margin: 0; }
+  .del-row-info .meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Checklist Rows ── */
   .checklist-mini-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
   .checklist-mini-row:last-child { border-bottom: none; }
   .check-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .check-dot.done { background: #22C55E; border-color: #22C55E; color: #fff; }
   .check-dot.done svg { width: 10px; height: 10px; }
 
-  /* ── Mobile responsive ── */
+  /* ── Live Stats ── */
+  .live-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .live-stat { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+  .live-stat .ls-num { font-size: 28px; font-weight: 700; }
+  .live-stat .ls-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Toolkit Links ── */
+  .toolkit-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: inherit; transition: all 0.15s; margin-bottom: 8px; }
+  .toolkit-row:hover { border-color: var(--accent); background: var(--accent-wash); }
+  .toolkit-row .tk-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .toolkit-row .tk-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .toolkit-row .tk-arrow { color: var(--text-muted); }
+
+  /* ── Mobile ── */
   @media (max-width: 768px) {
-    .hero-banner { flex-direction: column; text-align: center; padding: 24px 20px; gap: 16px; }
-    .hero-info h2 { font-size: 22px; }
-    .hero-stats { justify-content: center; gap: 16px; }
-    .hero-stat .num { font-size: 20px; }
+    .hero-banner { flex-direction: column; text-align: center; padding: 24px 20px; gap: 14px; }
+    .hero-info h2 { font-size: 20px; }
+    .hero-stats { justify-content: center; gap: 14px; }
+    .key-dates { flex-direction: column; }
 
-    .toolkit-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .toolkit-card { padding: 16px; }
-    .toolkit-card .tk-title { font-size: 14px; }
-    .toolkit-card .tk-desc { font-size: 12px; }
-    .toolkit-card .tk-badge { font-size: 10px; padding: 2px 7px; top: 10px; right: 10px; }
+    /* Phase stepper: compact horizontal with shorter labels */
+    .phase-stepper { gap: 2px; }
+    .phase-step .step-label { font-size: 9px; letter-spacing: 0; }
+    .phase-step .step-label svg { display: none; }
 
-    .bottom-grid-3 { grid-template-columns: 1fr !important; }
+    /* Confirmation buttons: full-width tap targets */
+    .confirm-actions { flex-direction: column; }
+    .confirm-btn { width: 100%; text-align: center; padding: 12px 20px; min-height: 44px; }
+    .confirm-changes-form { width: 100%; }
+    .confirm-section { padding: 16px; }
 
-    .example-grid { grid-template-columns: 1fr; }
+    /* Deliverable review cards: clear tap actions */
+    .del-row { padding: 14px 12px; min-height: 54px; }
+    .del-row-icon { width: 32px; height: 32px; }
 
-    .ob-video-step, .ob-examples-step { padding: 24px 20px; }
-    .ob-video-step h2, .ob-examples-step h2 { font-size: 20px; }
+    /* Live stats responsive */
+    .live-stats { grid-template-columns: 1fr 1fr; }
+
+    /* Toolkit links: stack vertically */
+    .toolkit-row { padding: 14px 16px; min-height: 52px; }
+
+    /* Activity feed: clean vertical timeline */
+    .phase-card-header { padding: 14px 16px; }
+    .phase-card-body { padding: 0 16px 16px; }
+
+    /* Advance bar: stack on mobile */
+    .advance-bar { flex-direction: column; gap: 10px; text-align: center; }
+    .advance-btn { width: 100%; }
+
+    /* Future previews */
+    .future-preview { padding: 14px 16px; }
   }
 
   @media (max-width: 480px) {
-    .toolkit-grid { grid-template-columns: 1fr; }
+    .phase-stepper { flex-wrap: wrap; gap: 2px; }
+    .phase-step { min-width: 0; flex: 1 1 18%; }
+    .phase-step .step-label { font-size: 8px; }
+    .live-stats { grid-template-columns: 1fr; }
     .hero-stats { flex-wrap: wrap; }
   }
 </style>
 
 <%# ── LIVE NOW BAR ── %>
 <% if @current_live_event %>
-  <div class="live-bar">
-    <div class="live-left">
-      <span class="live-dot"></span>
+  <div style="background:linear-gradient(90deg,#e94560,#c0392b);border-radius:var(--radius-md);padding:14px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:12px;font-weight:700;">
+      <span style="width:10px;height:10px;background:#fff;border-radius:50%;animation:dotBlink 1.5s ease-in-out infinite;"></span>
       LIVE NOW — <%= @current_live_event.title %>
     </div>
-    <div style="display:flex;gap:8px;">
-      <% if @landing_page&.published? %>
-        <%= link_to public_page_path(@landing_page.slug), target: '_blank', class: 'btn btn-sm', style: 'background:rgba(255,255,255,0.2);color:#fff;border:none;' do %>View Page<% end %>
-      <% end %>
-      <%= button_to 'End Stream', end_stream_portal_campaign_live_event_path(@campaign, @current_live_event), method: :patch, class: 'btn btn-sm', style: 'background:rgba(255,255,255,0.2);color:#fff;border:none;', form: { style: 'display:inline' } %>
-    </div>
+    <%= link_to 'Enter Studio', studio_portal_campaign_live_events_path(@campaign), class: 'btn btn-sm', style: 'background:rgba(255,255,255,0.2);color:#fff;border:none;' %>
   </div>
+  <style>@keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }</style>
 <% end %>
 
 <%# ── HERO BANNER ── %>
@@ -165,152 +219,568 @@
   <div class="hero-info">
     <div class="greeting">Welcome back,</div>
     <h2><%= @campaign.author.full_name %></h2>
-    <div class="book-title"><%= @submission.title %><%= @submission.genre.present? ? " — #{@submission.genre}" : '' %></div>
+    <div class="book-title"><%= @submission.title %></div>
     <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="num"><%= @progress %>%</div>
-        <div class="lbl">Ready</div>
-      </div>
-      <div class="hero-stat">
-        <div class="num"><%= @submission_count %></div>
-        <div class="lbl">Leads</div>
-      </div>
-      <div class="hero-stat">
-        <div class="num"><%= @assets_count %></div>
-        <div class="lbl">Assets</div>
-      </div>
-      <div class="hero-stat">
-        <div class="num"><%= @campaign.live_events.where(status: :ended).count %></div>
-        <div class="lbl">Streams</div>
-      </div>
+      <div class="hero-stat"><div class="num"><%= @progress %>%</div><div class="lbl">Ready</div></div>
+      <div class="hero-stat"><div class="num"><%= @submission_count %></div><div class="lbl">Leads</div></div>
+      <div class="hero-stat"><div class="num"><%= @assets_count %></div><div class="lbl">Assets</div></div>
     </div>
   </div>
 </div>
 
-<%# ── MARKETING TOOLKIT ── %>
-<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);margin-bottom:12px;">Your Marketing Toolkit</h3>
-
-<div class="toolkit-grid">
-  <%# Landing Page %>
-  <%= link_to portal_campaign_landing_page_path(@campaign), class: 'toolkit-card tk-landing' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
-    <div class="tk-title">Landing Page</div>
-    <div class="tk-desc">Your book's home on the web. Build, customize, and publish.</div>
-    <% if @landing_page&.published? %>
-      <span class="tk-badge" style="background:rgba(34,197,94,0.1);color:#16A34A;">Live</span>
-    <% elsif @landing_page&.has_content? %>
-      <span class="tk-badge" style="background:rgba(245,158,11,0.1);color:#D97706;">Draft</span>
-    <% end %>
-  <% end %>
-
-  <%# Go Live Studio %>
-  <%= link_to studio_portal_campaign_live_events_path(@campaign), class: 'toolkit-card tk-live' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg></div>
-    <div class="tk-title">Go Live Studio</div>
-    <div class="tk-desc">Stream directly from your browser. Book signings, Q&A, fan events.</div>
-    <% if @current_live_event %>
-      <span class="tk-badge" style="background:#e94560;color:#fff;">LIVE</span>
-    <% elsif @next_event %>
-      <span class="tk-badge" style="background:rgba(79,70,229,0.1);color:var(--accent);">Upcoming</span>
-    <% end %>
-  <% end %>
-
-  <%# Social Posts %>
-  <%= link_to portal_campaign_social_posts_path(@campaign), class: 'toolkit-card tk-social' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>
-    <div class="tk-title">Social Posts</div>
-    <div class="tk-desc">Ready-to-post templates for Instagram, TikTok, X, and Facebook.</div>
-  <% end %>
-
-  <%# Content & Assets %>
-  <%= link_to portal_campaign_campaign_assets_path(@campaign), class: 'toolkit-card tk-content' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
-    <div class="tk-title">Content & Assets</div>
-    <div class="tk-desc">Upload photos, videos, and promo material for your campaign.</div>
-    <% if @pending_assets > 0 %>
-      <span class="tk-badge" style="background:rgba(245,158,11,0.1);color:#D97706;"><%= @pending_assets %> pending</span>
-    <% end %>
-  <% end %>
-
-  <%# Links %>
-  <%= link_to links_portal_campaign_path(@campaign), class: 'toolkit-card tk-links' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-    <div class="tk-title">Links & URLs</div>
-    <div class="tk-desc">Signed editions URL, retail links, Linktree.</div>
-    <% if @campaign.signed_editions_url.present? %>
-      <span class="tk-badge" style="background:rgba(34,197,94,0.1);color:#16A34A;">Set</span>
-    <% end %>
-  <% end %>
-
-  <%# Logistics %>
-  <%= link_to logistics_portal_campaign_path(@campaign), class: 'toolkit-card tk-logistics' do %>
-    <div class="tk-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
-    <div class="tk-title">Logistics</div>
-    <div class="tk-desc">Shipping address, bookplate design, management contacts.</div>
+<%# ── PHASE STEPPER ── %>
+<div class="phase-stepper">
+  <% Campaign.phases.each do |name, idx| %>
+    <% state = idx < @current_phase_idx ? 'past' : (idx == @current_phase_idx ? 'current' : 'future') %>
+    <div class="phase-step">
+      <div class="step-bar <%= state %>"></div>
+      <div class="step-label <%= state %>">
+        <% if state == 'past' %>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+        <% end %>
+        <%= name.titleize %>
+      </div>
+    </div>
   <% end %>
 </div>
 
-<%# ── BOTTOM ROW: Progress + What's Next + Upcoming Events ── %>
-<div class="bottom-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
-  <%# Campaign Progress %>
-  <div class="card">
-    <h3>Campaign Progress</h3>
-    <div class="progress-ring-wrap">
-      <div class="progress-ring">
-        <svg viewBox="0 0 120 120" width="120" height="120">
-          <defs><linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:var(--accent)"/><stop offset="100%" style="stop-color:var(--accent-light)"/></linearGradient></defs>
-          <circle class="ring-bg" cx="60" cy="60" r="52"/>
-          <circle class="ring-fill" cx="60" cy="60" r="52" stroke-dasharray="<%= 2 * Math::PI * 52 %>" stroke-dashoffset="<%= 2 * Math::PI * 52 * (1 - @progress / 100.0) %>"/>
-        </svg>
-        <div class="ring-text"><%= @progress %>%</div>
-      </div>
-      <div style="font-size:13px;color:var(--text-muted);"><%= @campaign.checklist_items.where(status: :complete).count %> of <%= @campaign.checklist_items.count %> items complete</div>
-    </div>
-  </div>
+<%# ── PHASE STATUS BAR ── %>
+<div class="phase-status-bar <%= @campaign.phase %>">
+  <div><%= phase_icons[@campaign.phase]&.html_safe %></div>
+  <div class="status-text"><strong><%= @campaign.phase_label %>:</strong> <%= phase_descriptions[@campaign.phase] %></div>
+</div>
 
-  <%# What's Next %>
-  <div class="card">
-    <h3>Next Steps</h3>
-    <% if @incomplete_items.any? %>
-      <% @incomplete_items.first(4).each_with_index do |item, i| %>
-        <div class="tip-card">
-          <span class="tip-num"><%= i + 1 %></span>
-          <div class="tip-text"><strong><%= item.title %></strong></div>
+<%# ── CAMPAIGN BRIEF (always visible) ── %>
+<% if @campaign.brief.present? %>
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Campaign Brief</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;"><%= @campaign.brief %></div>
+  </div>
+<% end %>
+
+<%# ── KEY DATES BAR ── %>
+<% if @campaign.launch_date.present? || @campaign.content_deadline.present? || @campaign.review_deadline.present? %>
+  <div class="key-dates">
+    <% if @campaign.launch_date.present? %>
+      <% days = (@campaign.launch_date - Date.today).to_i %>
+      <div class="key-date" style="border-left:3px solid var(--accent);">
+        <div class="kd-label">Launch Date</div>
+        <div class="kd-value"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div>
+        <div class="kd-countdown" style="color:<%= days > 14 ? '#16A34A' : (days > 0 ? '#D97706' : 'var(--text-muted)') %>;"><%= days > 0 ? "#{days} days away" : (days == 0 ? 'Today!' : "#{days.abs} days ago") %></div>
+      </div>
+    <% end %>
+    <% if @campaign.content_deadline.present? %>
+      <% days_cd = (@campaign.content_deadline - Date.today).to_i %>
+      <div class="key-date" style="border-left:3px solid #F59E0B;">
+        <div class="kd-label">Content Deadline</div>
+        <div class="kd-value"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div>
+        <div class="kd-countdown" style="color:<%= days_cd > 7 ? '#16A34A' : (days_cd > 0 ? '#D97706' : '#EF4444') %>;"><%= days_cd > 0 ? "#{days_cd} days left" : (days_cd == 0 ? 'Due today' : "#{days_cd.abs} days overdue") %></div>
+      </div>
+    <% end %>
+    <% if @campaign.review_deadline.present? %>
+      <% days_rd = (@campaign.review_deadline - Date.today).to_i %>
+      <div class="key-date" style="border-left:3px solid #8B5CF6;">
+        <div class="kd-label">Review Deadline</div>
+        <div class="kd-value"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div>
+        <div class="kd-countdown" style="color:<%= days_rd > 7 ? '#16A34A' : (days_rd > 0 ? '#D97706' : '#EF4444') %>;"><%= days_rd > 0 ? "#{days_rd} days left" : (days_rd == 0 ? 'Due today' : "#{days_rd.abs} days overdue") %></div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE: SETUP (current) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% if @campaign.setup? %>
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="margin:0;">Review & Confirm</h3>
+      <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><%= confirmed_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
+    </div>
+
+    <%# ── Brief ── %>
+    <% if @campaign.brief.present? || @campaign.launch_date.present? %>
+      <% brief_conf = @confirmations['brief'] %>
+      <% brief_confirmed = brief_conf&.persisted? && !brief_conf&.has_changes_requested? %>
+      <% brief_changes = brief_conf&.has_changes_requested? %>
+      <div class="confirm-section <%= brief_confirmed ? 'confirmed' : (brief_changes ? 'changes-requested' : 'needs-review') %>">
+        <div class="confirm-header">
+          <h4>
+            <% if brief_confirmed %><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><% end %>
+            Campaign Brief
+            <span class="team-label">Set by your team</span>
+          </h4>
+          <% if brief_confirmed %>
+            <span class="confirm-status st-confirmed">Confirmed</span>
+          <% elsif brief_changes %>
+            <span class="confirm-status st-changes">Changes Requested</span>
+          <% else %>
+            <span class="confirm-status st-pending">Needs Review</span>
+          <% end %>
         </div>
-      <% end %>
-    <% else %>
-      <div style="text-align:center;padding:32px;color:var(--text-muted);">
-        <div style="font-size:36px;margin-bottom:8px;">&#127881;</div>
-        All items complete!
+        <div class="confirm-data">
+          <% if @campaign.brief.present? %>
+            <div class="data-label">Brief</div>
+            <div class="data-value" style="white-space:pre-wrap;"><%= @campaign.brief %></div>
+          <% end %>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+            <% if @campaign.launch_date.present? %><div><div class="data-label">Launch Date</div><div class="data-value"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div></div><% end %>
+            <% if @campaign.content_deadline.present? %><div><div class="data-label">Content Deadline</div><div class="data-value"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div></div><% end %>
+            <% if @campaign.review_deadline.present? %><div><div class="data-label">Review Deadline</div><div class="data-value"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div></div><% end %>
+          </div>
+        </div>
+        <% if brief_confirmed %>
+          <div class="confirm-meta">Confirmed by you on <%= brief_conf.confirmed_at.strftime('%b %d, %Y') %></div>
+        <% elsif brief_changes %>
+          <div class="confirm-note"><div class="note-label">Your change request</div><%= brief_conf.notes %></div>
+          <div class="confirm-meta">Submitted <%= time_ago_in_words(brief_conf.confirmed_at) %> ago</div>
+        <% else %>
+          <div class="confirm-actions">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'brief'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="brief">
+                <textarea name="notes" rows="2" placeholder="Describe what needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Links ── %>
+    <% if @campaign.signed_editions_url.present? %>
+      <% links_conf = @confirmations['links'] %>
+      <% links_ok = links_conf&.persisted? && !links_conf&.has_changes_requested? %>
+      <% links_chg = links_conf&.has_changes_requested? %>
+      <div class="confirm-section <%= links_ok ? 'confirmed' : (links_chg ? 'changes-requested' : 'needs-review') %>">
+        <div class="confirm-header">
+          <h4>
+            <% if links_ok %><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><% end %>
+            Links & URLs
+            <span class="team-label">Set by your team</span>
+          </h4>
+          <% if links_ok %><span class="confirm-status st-confirmed">Confirmed</span>
+          <% elsif links_chg %><span class="confirm-status st-changes">Changes Requested</span>
+          <% else %><span class="confirm-status st-pending">Needs Review</span><% end %>
+        </div>
+        <div class="confirm-data">
+          <div class="data-label">Signed Editions URL</div>
+          <div class="data-value"><a href="<%= @campaign.signed_editions_url %>" target="_blank" style="color:var(--accent);word-break:break-all;"><%= @campaign.signed_editions_url %></a></div>
+        </div>
+        <% if links_ok %>
+          <div class="confirm-meta">Confirmed by you on <%= links_conf.confirmed_at.strftime('%b %d, %Y') %></div>
+        <% elsif links_chg %>
+          <div class="confirm-note"><div class="note-label">Your change request</div><%= links_conf.notes %></div>
+          <div class="confirm-meta">Submitted <%= time_ago_in_words(links_conf.confirmed_at) %> ago</div>
+        <% else %>
+          <div class="confirm-actions">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'links'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="links">
+                <textarea name="notes" rows="2" placeholder="e.g. Can you change it to the paperback edition link?" required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Ad Access ── %>
+    <% if @campaign.ad_access_notes.present? || @campaign.facebook_access? || @campaign.instagram_access? || @campaign.tiktok_access? %>
+      <% ad_conf = @confirmations['ad_access'] %>
+      <% ad_ok = ad_conf&.persisted? && !ad_conf&.has_changes_requested? %>
+      <% ad_chg = ad_conf&.has_changes_requested? %>
+      <div class="confirm-section <%= ad_ok ? 'confirmed' : (ad_chg ? 'changes-requested' : 'needs-review') %>">
+        <div class="confirm-header">
+          <h4>
+            <% if ad_ok %><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><% end %>
+            Ad Access
+            <span class="team-label">Set by your team</span>
+          </h4>
+          <% if ad_ok %><span class="confirm-status st-confirmed">Confirmed</span>
+          <% elsif ad_chg %><span class="confirm-status st-changes">Changes Requested</span>
+          <% else %><span class="confirm-status st-pending">Needs Review</span><% end %>
+        </div>
+        <div class="confirm-data">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <% if @campaign.facebook_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(59,89,152,0.08);color:#3B5998;">Facebook</span><% end %>
+            <% if @campaign.instagram_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(225,48,108,0.08);color:#E1306C;">Instagram</span><% end %>
+            <% if @campaign.tiktok_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(0,0,0,0.06);color:#000;">TikTok</span><% end %>
+          </div>
+          <% if @campaign.ad_access_notes.present? %>
+            <div class="data-label">Instructions from your team</div>
+            <div class="data-value" style="white-space:pre-wrap;"><%= @campaign.ad_access_notes %></div>
+          <% end %>
+        </div>
+        <% if ad_ok %>
+          <div class="confirm-meta">Confirmed by you on <%= ad_conf.confirmed_at.strftime('%b %d, %Y') %></div>
+        <% elsif ad_chg %>
+          <div class="confirm-note"><div class="note-label">Your change request</div><%= ad_conf.notes %></div>
+          <div class="confirm-meta">Submitted <%= time_ago_in_words(ad_conf.confirmed_at) %> ago</div>
+        <% else %>
+          <div class="confirm-actions">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'ad_access'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="ad_access">
+                <textarea name="notes" rows="2" placeholder="Describe what needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Logistics ── %>
+    <% if @campaign.bookplate_address.present? || @campaign.management_emails.present? || @campaign.bookplate_design.present? %>
+      <% log_conf = @confirmations['logistics'] %>
+      <% log_ok = log_conf&.persisted? && !log_conf&.has_changes_requested? %>
+      <% log_chg = log_conf&.has_changes_requested? %>
+      <div class="confirm-section <%= log_ok ? 'confirmed' : (log_chg ? 'changes-requested' : 'needs-review') %>">
+        <div class="confirm-header">
+          <h4>
+            <% if log_ok %><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><% end %>
+            Logistics
+            <span class="team-label">Set by your team</span>
+          </h4>
+          <% if log_ok %><span class="confirm-status st-confirmed">Confirmed</span>
+          <% elsif log_chg %><span class="confirm-status st-changes">Changes Requested</span>
+          <% else %><span class="confirm-status st-pending">Needs Review</span><% end %>
+        </div>
+        <div class="confirm-data">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <% if @campaign.bookplate_address.present? %><div><div class="data-label">Shipping Address</div><div class="data-value" style="white-space:pre-wrap;"><%= @campaign.bookplate_address %></div></div><% end %>
+            <% if @campaign.management_emails.present? %><div><div class="data-label">Management Emails</div><div class="data-value"><%= @campaign.management_emails %></div></div><% end %>
+          </div>
+          <% if @campaign.bookplate_design.present? %><div style="margin-top:8px;"><div class="data-label">Bookplate Design</div><div class="data-value">Uploaded</div></div><% end %>
+        </div>
+        <% if log_ok %>
+          <div class="confirm-meta">Confirmed by you on <%= log_conf.confirmed_at.strftime('%b %d, %Y') %></div>
+        <% elsif log_chg %>
+          <div class="confirm-note"><div class="note-label">Your change request</div><%= log_conf.notes %></div>
+          <div class="confirm-meta">Submitted <%= time_ago_in_words(log_conf.confirmed_at) %> ago</div>
+        <% else %>
+          <div class="confirm-actions">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'logistics'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="logistics">
+                <textarea name="notes" rows="2" placeholder="Describe what needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
     <% end %>
   </div>
 
-  <%# Live Events / Upcoming %>
-  <div class="card">
-    <h3>Live Events</h3>
-    <% if @upcoming_events.any? %>
-      <% @upcoming_events.each do |event| %>
-        <div style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;">
-          <div style="font-size:14px;font-weight:600;"><%= event.title %></div>
-          <div class="text-muted" style="font-size:12px;margin-top:2px;"><%= event.scheduled_at&.strftime('%b %d at %l:%M %p') %></div>
-          <div style="margin-top:8px;">
-            <%= button_to 'Go Live', go_live_portal_campaign_live_event_path(@campaign, event), method: :patch, class: 'btn btn-sm', style: 'background:#e94560;color:#fff;border:none;box-shadow:0 2px 8px rgba(233,69,96,0.3);', form: { style: 'display:inline' }, data: { confirm: 'Go live now?' } %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE: CONTENT (current) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% elsif @campaign.content? %>
+  <%# From Your Team — Deliverables %>
+  <% if @campaign.deliverables_enabled? && @pending_deliverables&.any? %>
+    <div class="card content-section">
+      <h4>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        From Your Team
+        <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:rgba(217,119,6,0.08);color:#D97706;"><%= @pending_deliverables.count %></span>
+      </h4>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Review and approve these items from your team.</p>
+      <% @pending_deliverables.each do |del| %>
+        <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
+          <div class="del-row-icon" style="background:rgba(217,119,6,0.08);color:#D97706;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="del-row-info">
+            <h5><%= del.title %></h5>
+            <div class="meta"><%= del.category_label %> · <%= time_ago_in_words(del.created_at) %> ago</div>
+          </div>
+          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(217,119,6,0.08);color:#D97706;text-transform:uppercase;"><%= del.revised? ? 'Revised' : 'Review' %></span>
+        <% end %>
+      <% end %>
+      <%= link_to 'View All Deliverables', portal_campaign_deliverables_path(@campaign), style: 'font-size:13px;color:var(--accent);margin-top:8px;display:inline-block;' %>
+    </div>
+  <% end %>
+
+  <%# We Need From You — Content uploads %>
+  <% if @campaign.asset_uploads_enabled? %>
+    <div class="card content-section">
+      <h4>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        We Need From You
+      </h4>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Upload the content items below to keep your campaign on track.</p>
+      <% if @content_items&.any? %>
+        <% @content_items.each do |item| %>
+          <div class="checklist-mini-row">
+            <div class="check-dot <%= 'done' if item.complete? %>">
+              <% if item.complete? %><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><% end %>
+            </div>
+            <span style="flex:1;color:<%= item.complete? ? 'var(--text-muted)' : 'var(--text-primary)' %>;<%= 'text-decoration:line-through;' if item.complete? %>"><%= item.title %></span>
+          </div>
+        <% end %>
+      <% end %>
+      <div style="margin-top:12px;">
+        <%= link_to portal_campaign_campaign_assets_path(@campaign), class: 'btn btn-primary btn-sm' do %>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Upload Assets
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE: REVIEW (current) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% elsif @campaign.review? %>
+  <%# Outstanding Items %>
+  <% if @all_incomplete.any? %>
+    <div class="card" style="margin-bottom:16px;">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        Remaining Items
+        <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:rgba(245,158,11,0.08);color:#D97706;"><%= @all_incomplete.count %></span>
+      </h4>
+      <% @all_incomplete.group_by(&:category).each do |cat, items| %>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:10px 0 6px;"><%= cat.titleize %></div>
+        <% items.each do |item| %>
+          <div class="checklist-mini-row">
+            <div class="check-dot"></div>
+            <span style="flex:1;"><%= item.title %></span>
+            <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);background:rgba(0,0,0,0.04);padding:2px 6px;border-radius:4px;">Optional</span><% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Deliverables in revision %>
+  <% if @campaign.deliverables_enabled? && @revision_deliverables&.any? %>
+    <div class="card" style="margin-bottom:16px;border-left:3px solid #EF4444;">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Deliverables Needing Revision</h4>
+      <% @revision_deliverables.each do |del| %>
+        <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
+          <div class="del-row-icon" style="background:rgba(239,68,68,0.08);color:#EF4444;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="del-row-info">
+            <h5><%= del.title %></h5>
+            <div class="meta">Revision requested · <%= time_ago_in_words(del.updated_at) %> ago</div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Landing Page %>
+  <% if @campaign.landing_page_enabled? && @landing_page %>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h4 style="font-size:14px;font-weight:700;">Landing Page</h4>
+        <% if @landing_page.published? %>
+          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.08);color:#16A34A;text-transform:uppercase;">Published</span>
+        <% else %>
+          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(245,158,11,0.08);color:#D97706;text-transform:uppercase;">Draft</span>
+        <% end %>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <%= link_to portal_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm' do %>Preview<% end %>
+        <% if @landing_page.published? %>
+          <%= link_to public_page_path(@landing_page.slug), target: '_blank', class: 'btn btn-secondary btn-sm' do %>View Live<% end %>
+        <% else %>
+          <%= link_to builder_portal_campaign_landing_page_path(@campaign), class: 'btn btn-primary btn-sm' do %>Open Builder<% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE: LIVE (current) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% elsif @campaign.live? %>
+  <%# Stats %>
+  <div class="live-stats">
+    <% if @campaign.landing_page_enabled? %>
+      <div class="live-stat"><div class="ls-num"><%= @submission_count %></div><div class="ls-label">Submissions</div></div>
+    <% end %>
+    <div class="live-stat"><div class="ls-num"><%= @assets_count %></div><div class="ls-label">Assets</div></div>
+    <div class="live-stat"><div class="ls-num"><%= @campaign.live_events.where(status: :ended).count %></div><div class="ls-label">Streams</div></div>
+    <% if @campaign.personal_videos_enabled? %>
+      <div class="live-stat"><div class="ls-num"><%= @personal_video_count %>/<%= @personal_video_total %></div><div class="ls-label">Videos Sent</div></div>
+    <% end %>
+  </div>
+
+  <%# Quick Tools %>
+  <div class="card" style="margin-bottom:16px;">
+    <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Your Tools</h4>
+    <% if @campaign.landing_page_enabled? && @landing_page %>
+      <%= link_to portal_campaign_landing_page_path(@campaign), class: 'toolkit-row' do %>
+        <div class="tk-icon" style="background:rgba(79,70,229,0.1);color:var(--accent);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></div>
+        <span class="tk-title">Landing Page</span>
+        <% if @landing_page.published? %><span style="font-size:11px;font-weight:600;color:#16A34A;">Live</span><% end %>
+        <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    <% end %>
+    <% if @campaign.live_events_enabled? %>
+      <%= link_to studio_portal_campaign_live_events_path(@campaign), class: 'toolkit-row' do %>
+        <div class="tk-icon" style="background:rgba(233,69,96,0.1);color:#e94560;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg></div>
+        <span class="tk-title">Go Live Studio</span>
+        <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    <% end %>
+    <% if @campaign.social_tools_enabled? %>
+      <%= link_to portal_campaign_social_posts_path(@campaign), class: 'toolkit-row' do %>
+        <div class="tk-icon" style="background:rgba(59,130,246,0.1);color:#3B82F6;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>
+        <span class="tk-title">Social Posts</span>
+        <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    <% end %>
+    <% if @campaign.asset_uploads_enabled? %>
+      <%= link_to portal_campaign_campaign_assets_path(@campaign), class: 'toolkit-row' do %>
+        <div class="tk-icon" style="background:rgba(34,197,94,0.1);color:#22C55E;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <span class="tk-title">Content & Assets</span>
+        <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    <% end %>
+    <% if @campaign.personal_videos_enabled? %>
+      <%= link_to recorder_portal_campaign_live_events_path(@campaign), class: 'toolkit-row' do %>
+        <div class="tk-icon" style="background:rgba(168,85,247,0.1);color:#A855F7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg></div>
+        <span class="tk-title">Personal Videos</span>
+        <span style="font-size:11px;color:var(--text-muted);"><%= @personal_video_count %>/<%= @personal_video_total %></span>
+        <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Recent Submissions %>
+  <% if @campaign.landing_page_enabled? && @recent_submissions.any? %>
+    <div class="card" style="margin-bottom:16px;">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Recent Submissions</h4>
+      <% @recent_submissions.each do |sub| %>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-size:13px;font-weight:600;"><%= sub.email %></div>
+            <div style="font-size:11px;color:var(--text-muted);"><%= time_ago_in_words(sub.created_at) %> ago</div>
           </div>
         </div>
       <% end %>
-    <% else %>
-      <div style="text-align:center;padding:20px;">
-        <div style="font-size:32px;margin-bottom:8px;">&#127909;</div>
-        <p class="text-muted" style="font-size:13px;margin-bottom:12px;">No events scheduled</p>
-        <%= link_to studio_portal_campaign_live_events_path(@campaign), class: 'btn btn-secondary btn-sm' do %>Open Studio<% end %>
-      </div>
-    <% end %>
-  </div>
-</div>
+    </div>
+  <% end %>
 
-<%# ── CAMPAIGN CHECKLIST (collapsed by default) ── %>
-<details class="card" style="cursor:pointer;margin-top:4px;">
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE: WRAP UP (current) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% elsif @campaign.wrap_up? %>
+  <div class="card" style="margin-bottom:16px;">
+    <div style="text-align:center;padding:24px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="48" height="48" style="margin-bottom:12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;">Campaign Complete</h3>
+      <p style="font-size:14px;color:var(--text-secondary);">Great work! Here's a summary of your campaign.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-top:16px;">
+      <div class="live-stat"><div class="ls-num"><%= @submission_count %></div><div class="ls-label">Total Leads</div></div>
+      <div class="live-stat"><div class="ls-num"><%= @assets_count %></div><div class="ls-label">Assets Created</div></div>
+      <div class="live-stat"><div class="ls-num"><%= @campaign.live_events.where(status: :ended).count %></div><div class="ls-label">Live Events</div></div>
+      <% if @campaign.personal_videos_enabled? %>
+        <div class="live-stat"><div class="ls-num"><%= @personal_video_count %></div><div class="ls-label">Videos Sent</div></div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @campaign.royalties_enabled? %>
+    <div class="card" style="margin-bottom:16px;">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">Royalties</h4>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">View your earnings and payment history.</p>
+      <%= link_to 'View Royalties', portal_royalties_path, class: 'btn btn-primary btn-sm' %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── PHASE ADVANCEMENT BAR ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% unless %w[live wrap_up].include?(@campaign.phase) %>
+  <% if @campaign.can_advance? %>
+    <% next_phase_name = Campaign.phases.key(Campaign.phases[@campaign.phase] + 1)&.titleize %>
+    <div class="advance-bar ready">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#16A34A;">All clear — ready to advance</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Move to the <%= next_phase_name %> phase</div>
+      </div>
+      <%= button_to "Move to #{next_phase_name}", advance_phase_portal_campaign_path(@campaign), method: :patch, class: 'advance-btn' %>
+    </div>
+  <% elsif @blockers.any? %>
+    <div class="advance-bar blocked">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#D97706;"><%= @blockers.count %> item<%= 's' if @blockers.count != 1 %> remaining</div>
+        <ul style="margin:4px 0 0;padding-left:18px;">
+          <% @blockers.each do |b| %>
+            <li style="font-size:12px;color:var(--text-secondary);margin-bottom:1px;"><%= b %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── COMPLETED PHASES (collapsed) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% Campaign.phases.each do |name, idx| %>
+  <% next unless idx < @current_phase_idx %>
+  <details class="phase-card" style="margin-bottom:8px;">
+    <summary class="phase-card-header" style="list-style:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h3><%= name.titleize %></h3>
+      <span class="phase-badge" style="background:rgba(34,197,94,0.08);color:#16A34A;">Complete</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="phase-card-body">
+      <% case name %>
+      <% when 'setup' %>
+        <% @campaign.confirmable_sections.each do |s| %>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span><%= s.titleize %> — confirmed</span>
+          </div>
+        <% end %>
+      <% when 'content' %>
+        <div style="font-size:13px;color:var(--text-muted);">All content uploaded and deliverables reviewed.</div>
+      <% when 'review' %>
+        <div style="font-size:13px;color:var(--text-muted);">All items approved and landing page published.</div>
+      <% end %>
+    </div>
+  </details>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── FUTURE PHASES (preview) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% Campaign.phases.each do |name, idx| %>
+  <% next unless idx > @current_phase_idx %>
+  <% preview = phase_previews[name] %>
+  <% next unless preview %>
+  <div class="future-preview">
+    <div class="lock-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-secondary);"><%= name.titleize %></div>
+      <div style="font-size:12px;color:var(--text-muted);"><%= preview %></div>
+    </div>
+  </div>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── FULL CHECKLIST (collapsed) ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<details class="card" style="cursor:pointer;margin-top:16px;">
   <summary style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);list-style:none;display:flex;align-items:center;justify-content:space-between;">
     Full Campaign Checklist
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -335,305 +805,121 @@
   </div>
 </details>
 
-<%# ══════════════════════════════════════════════════════════ %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<%# ── ACTIVITY TIMELINE ── %>
+<%# ══════════════════════════════════════════════════════════════ %>
+<% if @activities.any? %>
+<details class="card" style="cursor:pointer;margin-top:16px;">
+  <summary style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);list-style:none;display:flex;align-items:center;justify-content:space-between;">
+    Recent Activity
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </summary>
+  <div style="margin-top:16px;max-height:400px;overflow-y:auto;">
+    <% @activities.group_by { |a| a.created_at.to_date }.each do |date, day_activities| %>
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;">
+        <%= date == Date.today ? 'Today' : date == Date.yesterday ? 'Yesterday' : date.strftime('%B %d, %Y') %>
+      </div>
+      <% day_activities.each do |activity| %>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;">
+            <%= activity.user_initials %>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--text-primary);"><%= activity.human_description %></div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+              <%= activity.user&.first_name || 'System' %> &middot; <%= activity.created_at.strftime('%-I:%M %p') %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</details>
+<% end %>
+
+<%# ══════════════════════════════════════════════════════════════ %>
 <%# ── ONBOARDING POPUP (first-time only) ── %>
-<%# ══════════════════════════════════════════════════════════ %>
+<%# ══════════════════════════════════════════════════════════════ %>
 <% unless @campaign.onboarding_completed? %>
 <style>
-  .onboard-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: obFadeIn 0.3s ease;
-  }
+  .onboard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 9999; display: flex; align-items: center; justify-content: center; animation: obFadeIn 0.3s ease; }
   @keyframes obFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  .onboard-modal {
-    background: #fff;
-    border-radius: 20px;
-    width: 680px;
-    max-width: 94vw;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
-    animation: obSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    position: relative;
-  }
+  .onboard-modal { background: #fff; border-radius: 20px; width: 680px; max-width: 94vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,0.25); animation: obSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1); position: relative; }
   @keyframes obSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-
-  .onboard-modal .ob-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0,0,0,0.05);
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    z-index: 2;
-  }
+  .onboard-modal .ob-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(0,0,0,0.05); color: var(--text-muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; z-index: 2; }
   .onboard-modal .ob-close:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); }
-
-  /* Step 1: Video */
-  .ob-video-step {
-    padding: 40px 40px 32px;
-    text-align: center;
-  }
-  .ob-video-step h2 {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
-  }
-  .ob-video-step .ob-sub {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-    line-height: 1.5;
-  }
-  .ob-video-placeholder {
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .ob-video-placeholder::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(79,70,229,0.15), transparent 70%);
-  }
-  .ob-video-placeholder .play-circle {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-    z-index: 1;
-    transition: all 0.2s;
-    cursor: pointer;
-  }
+  .ob-video-step { padding: 40px 40px 32px; text-align: center; }
+  .ob-video-step h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .ob-video-step .ob-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+  .ob-video-placeholder { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: rgba(255,255,255,0.5); margin-bottom: 24px; position: relative; overflow: hidden; }
+  .ob-video-placeholder::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(79,70,229,0.15), transparent 70%); }
+  .ob-video-placeholder .play-circle { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; z-index: 1; transition: all 0.2s; cursor: pointer; }
   .ob-video-placeholder .play-circle:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
   .ob-video-placeholder .play-circle svg { width: 24px; height: 24px; fill: #fff; margin-left: 3px; }
   .ob-video-placeholder .vid-label { font-size: 13px; z-index: 1; }
-
-  .ob-next-btn {
-    padding: 12px 32px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-    box-shadow: 0 2px 12px rgba(79,70,229,0.3);
-  }
+  .ob-next-btn { padding: 12px 32px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; box-shadow: 0 2px 12px rgba(79,70,229,0.3); }
   .ob-next-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(79,70,229,0.4); }
-
-  /* Step 2: Examples */
-  .ob-examples-step {
-    padding: 40px 40px 32px;
-  }
-  .ob-examples-step h2 {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-  }
-  .ob-examples-step .ob-sub {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-    line-height: 1.5;
-  }
-
+  .ob-examples-step { padding: 40px 40px 32px; }
+  .ob-examples-step h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .ob-examples-step .ob-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
   .example-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
-  .example-card {
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
+  .example-card { border: 2px solid var(--border); border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; }
   .example-card:hover { border-color: rgba(79,70,229,0.3); background: var(--accent-wash); }
   .example-card.selected { border-color: var(--accent); background: rgba(79,70,229,0.04); }
-  .example-card.selected::after {
-    content: '';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--accent);
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
-    background-size: 12px;
-    background-repeat: no-repeat;
-    background-position: center;
-  }
-  .example-card .ex-cover {
-    width: 100%;
-    aspect-ratio: 3/2;
-    background: linear-gradient(135deg, #f0f0f0, #e5e5e5);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 12px;
-  }
+  .example-card.selected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E"); background-size: 12px; background-repeat: no-repeat; background-position: center; }
+  .example-card .ex-cover { width: 100%; aspect-ratio: 3/2; background: linear-gradient(135deg, #f0f0f0, #e5e5e5); border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; }
   .example-card .ex-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
   .example-card .ex-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
   .example-card .ex-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-top: 6px; }
-
-  .ob-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .ob-steps-dots {
-    display: flex;
-    gap: 6px;
-  }
-  .ob-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--border-strong);
-    transition: all 0.3s;
-  }
+  .ob-footer { display: flex; align-items: center; justify-content: space-between; }
+  .ob-steps-dots { display: flex; gap: 6px; }
+  .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); transition: all 0.3s; }
   .ob-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+  @media (max-width: 768px) { .example-grid { grid-template-columns: 1fr; } .ob-video-step, .ob-examples-step { padding: 24px 20px; } .ob-video-step h2, .ob-examples-step h2 { font-size: 20px; } }
 </style>
 
 <%
-  # Example campaigns by category
   cat = @campaign.example_category.presence || 'general'
   examples = case cat
   when 'political'
-    [
-      { title: 'Democracy Reborn', desc: 'Targeted voter outreach with signed editions for donors and townhall live events.', tag: 'Political Non-Fiction' },
-      { title: 'The Senator\'s Playbook', desc: 'Pre-order campaign with bundled merch and rally-style live signings.', tag: 'Political Memoir' },
-      { title: 'Red State, Blue State', desc: 'Bi-partisan book club with social media blitz and retail push.', tag: 'Political Analysis' },
-      { title: 'Campaign Trail Diaries', desc: 'Behind-the-scenes launch with exclusive signed first editions.', tag: 'Political Memoir' },
-    ]
+    [{ title: 'Democracy Reborn', desc: 'Targeted voter outreach with signed editions for donors and townhall live events.', tag: 'Political Non-Fiction' }, { title: "The Senator's Playbook", desc: 'Pre-order campaign with bundled merch and rally-style live signings.', tag: 'Political Memoir' }, { title: 'Red State, Blue State', desc: 'Bi-partisan book club with social media blitz and retail push.', tag: 'Political Analysis' }, { title: 'Campaign Trail Diaries', desc: 'Behind-the-scenes launch with exclusive signed first editions.', tag: 'Political Memoir' }]
   when 'romance'
-    [
-      { title: 'Summer Hearts', desc: 'BookTok-first launch with aesthetic content, AR bookmarks, and live reading.', tag: 'Contemporary Romance' },
-      { title: 'The Duke\'s Secret', desc: 'Historical romance with period-themed signing events and box sets.', tag: 'Historical Romance' },
-      { title: 'Tangled Tides', desc: 'Dark romance with exclusive annotated editions and midnight release.', tag: 'Dark Romance' },
-      { title: 'Love in Bloom', desc: 'Cozy romance with bookstore partnerships and floral-themed branding.', tag: 'Cozy Romance' },
-    ]
+    [{ title: 'Summer Hearts', desc: 'BookTok-first launch with aesthetic content, AR bookmarks, and live reading.', tag: 'Contemporary Romance' }, { title: "The Duke's Secret", desc: 'Historical romance with period-themed signing events and box sets.', tag: 'Historical Romance' }, { title: 'Tangled Tides', desc: 'Dark romance with exclusive annotated editions and midnight release.', tag: 'Dark Romance' }, { title: 'Love in Bloom', desc: 'Cozy romance with bookstore partnerships and floral-themed branding.', tag: 'Cozy Romance' }]
   when 'thriller'
-    [
-      { title: 'The Last Witness', desc: 'Mystery-box unboxing campaign with clue-based social teasers.', tag: 'Psychological Thriller' },
-      { title: 'Blackout Protocol', desc: 'Tech thriller with countdown launch, encrypted ARG, and live Q&A.', tag: 'Tech Thriller' },
-      { title: 'Cold Trail', desc: 'True crime crossover with podcast tie-ins and evidence-style merch.', tag: 'Crime Thriller' },
-      { title: 'The Vanishing', desc: 'Suspense launch with chapter-a-day reveals and exclusive signed editions.', tag: 'Suspense' },
-    ]
+    [{ title: 'The Last Witness', desc: 'Mystery-box unboxing campaign with clue-based social teasers.', tag: 'Psychological Thriller' }, { title: 'Blackout Protocol', desc: 'Tech thriller with countdown launch, encrypted ARG, and live Q&A.', tag: 'Tech Thriller' }, { title: 'Cold Trail', desc: 'True crime crossover with podcast tie-ins and evidence-style merch.', tag: 'Crime Thriller' }, { title: 'The Vanishing', desc: 'Suspense launch with chapter-a-day reveals and exclusive signed editions.', tag: 'Suspense' }]
   when 'fantasy'
-    [
-      { title: 'Throne of Embers', desc: 'Epic fantasy with map poster bundles, character art reveals, and cosplay events.', tag: 'Epic Fantasy' },
-      { title: 'The Fae Accord', desc: 'Romantasy with exclusive sprayed edges, fairy light signing events.', tag: 'Romantasy' },
-      { title: 'Starforge', desc: 'Sci-fi fantasy with holographic covers and virtual launch party.', tag: 'Science Fantasy' },
-      { title: 'Grimwood Rising', desc: 'Dark fantasy with hand-signed bookplates and lore-based social content.', tag: 'Dark Fantasy' },
-    ]
+    [{ title: 'Throne of Embers', desc: 'Epic fantasy with map poster bundles, character art reveals, and cosplay events.', tag: 'Epic Fantasy' }, { title: 'The Fae Accord', desc: 'Romantasy with exclusive sprayed edges, fairy light signing events.', tag: 'Romantasy' }, { title: 'Starforge', desc: 'Sci-fi fantasy with holographic covers and virtual launch party.', tag: 'Science Fantasy' }, { title: 'Grimwood Rising', desc: 'Dark fantasy with hand-signed bookplates and lore-based social content.', tag: 'Dark Fantasy' }]
   when 'nonfiction'
-    [
-      { title: 'The Resilience Code', desc: 'Self-help launch with keynote-style live events and workbook bundles.', tag: 'Self-Help' },
-      { title: 'Untold America', desc: 'History book with museum partnerships and documentary-style social content.', tag: 'History' },
-      { title: 'Kitchen Roots', desc: 'Cookbook with live cooking demos, recipe card bundles, and grocery collabs.', tag: 'Food & Cooking' },
-      { title: 'Mind Over Market', desc: 'Business book with LinkedIn blitz, webinar series, and executive bundles.', tag: 'Business' },
-    ]
+    [{ title: 'The Resilience Code', desc: 'Self-help launch with keynote-style live events and workbook bundles.', tag: 'Self-Help' }, { title: 'Untold America', desc: 'History book with museum partnerships and documentary-style social content.', tag: 'History' }, { title: 'Kitchen Roots', desc: 'Cookbook with live cooking demos, recipe card bundles, and grocery collabs.', tag: 'Food & Cooking' }, { title: 'Mind Over Market', desc: 'Business book with LinkedIn blitz, webinar series, and executive bundles.', tag: 'Business' }]
   when 'business'
-    [
-      { title: 'Scale or Fail', desc: 'Startup launch with conference keynotes, bulk corporate orders, and podcast tour.', tag: 'Entrepreneurship' },
-      { title: 'The Leadership Shift', desc: 'Executive book with LinkedIn campaign, signed CEO editions, and webinar.', tag: 'Leadership' },
-      { title: 'Data-Driven', desc: 'Tech business with product hunt launch, newsletter partnerships, and bulk deals.', tag: 'Technology' },
-      { title: 'The Funding Playbook', desc: 'VC/startup with investor dinner events and exclusive audiobook early access.', tag: 'Finance' },
-    ]
+    [{ title: 'Scale or Fail', desc: 'Startup launch with conference keynotes, bulk corporate orders, and podcast tour.', tag: 'Entrepreneurship' }, { title: 'The Leadership Shift', desc: 'Executive book with LinkedIn campaign, signed CEO editions, and webinar.', tag: 'Leadership' }, { title: 'Data-Driven', desc: 'Tech business with product hunt launch, newsletter partnerships, and bulk deals.', tag: 'Technology' }, { title: 'The Funding Playbook', desc: 'VC/startup with investor dinner events and exclusive audiobook early access.', tag: 'Finance' }]
   when 'children'
-    [
-      { title: 'Captain Sparkle', desc: 'Kids book with school visits, coloring sheet downloads, and storytime lives.', tag: 'Picture Book' },
-      { title: 'The Magic Treehouse Club', desc: 'Middle grade with scavenger hunt launch, bookmarks, and library events.', tag: 'Middle Grade' },
-      { title: 'Dino Detectives', desc: 'Activity book with dinosaur-themed events, stamp-signed copies, and class sets.', tag: 'Activity Book' },
-      { title: 'Starlight Stories', desc: 'Bedtime stories with lullaby playlist, glow-in-dark cover, and pajama party event.', tag: 'Bedtime' },
-    ]
+    [{ title: 'Captain Sparkle', desc: 'Kids book with school visits, coloring sheet downloads, and storytime lives.', tag: 'Picture Book' }, { title: 'The Magic Treehouse Club', desc: 'Middle grade with scavenger hunt launch, bookmarks, and library events.', tag: 'Middle Grade' }, { title: 'Dino Detectives', desc: 'Activity book with dinosaur-themed events, stamp-signed copies, and class sets.', tag: 'Activity Book' }, { title: 'Starlight Stories', desc: 'Bedtime stories with lullaby playlist, glow-in-dark cover, and pajama party event.', tag: 'Bedtime' }]
   when 'ya'
-    [
-      { title: 'Neon Hearts', desc: 'YA contemporary with BookTok campaign, annotated editions, and Discord server.', tag: 'YA Contemporary' },
-      { title: 'The Uprising', desc: 'YA dystopia with resistance-themed merch and countdown social campaign.', tag: 'YA Dystopia' },
-      { title: 'Hex Academy', desc: 'YA fantasy with house-sorting quiz, exclusive pins, and midnight release.', tag: 'YA Fantasy' },
-      { title: 'Last Summer Before', desc: 'YA romance with playlist collab, aesthetic reels, and beach-themed signing.', tag: 'YA Romance' },
-    ]
-  else # general
-    [
-      { title: 'Bestseller Blueprint', desc: 'Full-funnel launch with landing page, signed editions, and social blitz.', tag: 'General Fiction' },
-      { title: 'The Author\'s Edge', desc: 'Multi-platform campaign with live events, retailer push, and ad creative.', tag: 'Non-Fiction' },
-      { title: 'Readers First', desc: 'Community-driven launch with ARC readers, book clubs, and pre-order incentives.', tag: 'Any Genre' },
-      { title: 'Launch & Scale', desc: 'Data-driven campaign with A/B tested ads, landing page optimization, and retargeting.', tag: 'Any Genre' },
-    ]
+    [{ title: 'Neon Hearts', desc: 'YA contemporary with BookTok campaign, annotated editions, and Discord server.', tag: 'YA Contemporary' }, { title: 'The Uprising', desc: 'YA dystopia with resistance-themed merch and countdown social campaign.', tag: 'YA Dystopia' }, { title: 'Hex Academy', desc: 'YA fantasy with house-sorting quiz, exclusive pins, and midnight release.', tag: 'YA Fantasy' }, { title: 'Last Summer Before', desc: 'YA romance with playlist collab, aesthetic reels, and beach-themed signing.', tag: 'YA Romance' }]
+  else
+    [{ title: 'Bestseller Blueprint', desc: 'Full-funnel launch with landing page, signed editions, and social blitz.', tag: 'General Fiction' }, { title: "The Author's Edge", desc: 'Multi-platform campaign with live events, retailer push, and ad creative.', tag: 'Non-Fiction' }, { title: 'Readers First', desc: 'Community-driven launch with ARC readers, book clubs, and pre-order incentives.', tag: 'Any Genre' }, { title: 'Launch & Scale', desc: 'Data-driven campaign with A/B tested ads, landing page optimization, and retargeting.', tag: 'Any Genre' }]
   end
 %>
 
 <div class="onboard-overlay" id="onboardOverlay">
   <div class="onboard-modal">
     <button class="ob-close" onclick="closeOnboarding()" title="Skip">&times;</button>
-
-    <%# ── Step 1: Welcome Video ── %>
     <div class="ob-video-step" id="obStep1">
       <h2>Welcome to Launch</h2>
       <div class="ob-sub">A quick message from our CEO about how we'll help you launch your book.</div>
-
       <div class="ob-video-placeholder">
-        <div class="play-circle" onclick="playVideo()">
-          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-        </div>
+        <div class="play-circle" onclick="playVideo()"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
         <div class="vid-label">CEO Welcome Video</div>
       </div>
-
       <div class="ob-footer">
-        <div class="ob-steps-dots">
-          <div class="ob-dot active"></div>
-          <div class="ob-dot"></div>
-        </div>
+        <div class="ob-steps-dots"><div class="ob-dot active"></div><div class="ob-dot"></div></div>
         <button class="ob-next-btn" onclick="goToStep2()">Next</button>
       </div>
     </div>
-
-    <%# ── Step 2: Campaign Examples ── %>
     <div class="ob-examples-step" id="obStep2" style="display:none;">
       <h2>Set up your campaign like...</h2>
       <div class="ob-sub">Here are some successful campaigns similar to yours. Pick one that inspires you, or skip to start from scratch.</div>
-
       <div class="example-grid">
         <% examples.each_with_index do |ex, i| %>
           <div class="example-card" onclick="selectExample(this)" data-idx="<%= i %>">
@@ -644,17 +930,11 @@
           </div>
         <% end %>
       </div>
-
       <div class="ob-footer">
-        <div class="ob-steps-dots">
-          <div class="ob-dot"></div>
-          <div class="ob-dot active"></div>
-        </div>
+        <div class="ob-steps-dots"><div class="ob-dot"></div><div class="ob-dot active"></div></div>
         <div style="display:flex;gap:10px;">
           <button class="ob-next-btn" style="background:var(--surface);color:var(--text-primary);border:1px solid var(--border-strong);box-shadow:var(--shadow-sm);" onclick="closeOnboarding()">Skip</button>
-          <%= button_to complete_onboarding_portal_campaign_path(@campaign), method: :patch, class: 'ob-next-btn', form: { style: 'display:inline', id: 'onboardForm' } do %>
-            Get Started
-          <% end %>
+          <%= button_to complete_onboarding_portal_campaign_path(@campaign), method: :patch, class: 'ob-next-btn', form: { style: 'display:inline', id: 'onboardForm' } do %>Get Started<% end %>
         </div>
       </div>
     </div>
@@ -663,39 +943,10 @@
 
 <script>
 (function() {
-  window.goToStep2 = function() {
-    document.getElementById('obStep1').style.display = 'none';
-    document.getElementById('obStep2').style.display = '';
-  };
-
-  window.selectExample = function(card) {
-    document.querySelectorAll('.example-card').forEach(function(c) { c.classList.remove('selected'); });
-    card.classList.add('selected');
-  };
-
-  window.playVideo = function() {
-    // Placeholder — will eventually load actual video
-    var placeholder = document.querySelector('.ob-video-placeholder');
-    placeholder.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:14px;z-index:1;">Video player will be embedded here</div>';
-  };
-
-  window.closeOnboarding = function() {
-    var overlay = document.getElementById('onboardOverlay');
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.2s ease';
-    setTimeout(function() { overlay.remove(); }, 200);
-    // Mark onboarding complete via AJAX
-    var form = document.getElementById('onboardForm');
-    if (form) {
-      fetch(form.action, {
-        method: 'PATCH',
-        headers: {
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-          'Accept': 'text/html'
-        }
-      });
-    }
-  };
+  window.goToStep2 = function() { document.getElementById('obStep1').style.display = 'none'; document.getElementById('obStep2').style.display = ''; };
+  window.selectExample = function(card) { document.querySelectorAll('.example-card').forEach(function(c) { c.classList.remove('selected'); }); card.classList.add('selected'); };
+  window.playVideo = function() { var p = document.querySelector('.ob-video-placeholder'); p.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:14px;z-index:1;">Video player will be embedded here</div>'; };
+  window.closeOnboarding = function() { var o = document.getElementById('onboardOverlay'); o.style.opacity = '0'; o.style.transition = 'opacity 0.2s ease'; setTimeout(function() { o.remove(); }, 200); var f = document.getElementById('onboardForm'); if (f) { fetch(f.action, { method: 'PATCH', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'text/html' } }); } };
 })();
 </script>
 <% end %>

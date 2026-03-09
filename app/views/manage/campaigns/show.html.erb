@@ -1,6 +1,7 @@
 <% content_for :page_title, @campaign.title %>
 <% content_for :page_actions do %>
   <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-primary btn-sm' %>
+  <%= button_to 'Duplicate', duplicate_manage_campaign_path(@campaign), method: :post, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline' }, data: { confirm: 'Duplicate this campaign for a new project?' } %>
   <%= link_to 'All Campaigns', manage_campaigns_path, class: 'btn btn-secondary btn-sm' %>
 <% end %>
 
@@ -34,6 +35,207 @@
   <div class="stat-card">
     <div class="label">Pending Review</div>
     <div class="value"><%= @pending_assets.count %></div>
+  </div>
+</div>
+
+<%# ── Campaign Phase ── %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <h3>Campaign Phase</h3>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <% if @campaign.can_advance? %>
+        <%= button_to "Advance to #{Campaign.phases.key(Campaign.phases[@campaign.phase] + 1)&.titleize}", advance_phase_manage_campaign_path(@campaign), method: :patch, class: 'btn btn-primary btn-sm', form: { style: 'display:inline;' } %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Phase progress bar %>
+  <div style="display:flex;gap:4px;margin-bottom:16px;">
+    <% Campaign.phases.each do |name, idx| %>
+      <% current_idx = Campaign.phases[@campaign.phase] %>
+      <% is_current = name == @campaign.phase %>
+      <% is_past = idx < current_idx %>
+      <% is_future = idx > current_idx %>
+      <div style="flex:1;text-align:center;">
+        <div style="height:6px;border-radius:3px;margin-bottom:6px;background:<%= is_past ? '#16A34A' : (is_current ? 'var(--accent)' : 'var(--border)') %>;"></div>
+        <div style="font-size:11px;font-weight:<%= is_current ? '700' : '500' %>;color:<%= is_current ? 'var(--accent)' : (is_past ? '#16A34A' : 'var(--text-muted)') %>;text-transform:uppercase;letter-spacing:0.3px;"><%= name.titleize %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Blockers %>
+  <% blockers = @campaign.phase_blockers %>
+  <% if blockers.any? %>
+    <div style="padding:12px 16px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.15);border-radius:8px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:6px;">Blockers for advancing past <%= @campaign.phase.titleize %></div>
+      <ul style="margin:0;padding-left:18px;">
+        <% blockers.each do |b| %>
+          <li style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;"><%= b %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% elsif !%w[live wrap_up].include?(@campaign.phase) %>
+    <div style="padding:10px 16px;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.15);border-radius:8px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:#16A34A;">All clear — ready to advance</div>
+    </div>
+  <% end %>
+
+  <%# Manual phase override %>
+  <details style="margin-top:4px;">
+    <summary style="font-size:12px;color:var(--text-muted);cursor:pointer;">Manual phase override</summary>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+      <% Campaign.phases.each_key do |name| %>
+        <% if name != @campaign.phase %>
+          <%= button_to name.titleize, set_phase_manage_campaign_path(@campaign, phase: name), method: :patch, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline;' }, data: { confirm: "Override phase to #{name.titleize}?" } %>
+        <% else %>
+          <span style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;background:var(--accent-wash);color:var(--accent);"><%= name.titleize %> (current)</span>
+        <% end %>
+      <% end %>
+    </div>
+  </details>
+</div>
+
+<%# ── Campaign Brief & Dates ── %>
+<% if @campaign.brief.present? || @campaign.launch_date.present? || @campaign.content_deadline.present? %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h3>Campaign Brief</h3>
+    <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+  </div>
+  <% if @campaign.brief.present? %>
+    <div style="font-size:14px;line-height:1.7;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:16px;padding:16px;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.brief %></div>
+  <% end %>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+    <% if @campaign.launch_date.present? %>
+      <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid var(--accent);">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Launch Date</div>
+        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div>
+        <% days_until = (@campaign.launch_date - Date.today).to_i %>
+        <div style="font-size:11px;color:<%= days_until > 14 ? '#16A34A' : (days_until > 0 ? '#D97706' : 'var(--text-muted)') %>;margin-top:2px;">
+          <%= days_until > 0 ? "#{days_until} days away" : (days_until == 0 ? 'Today!' : "#{days_until.abs} days ago") %>
+        </div>
+      </div>
+    <% end %>
+    <% if @campaign.content_deadline.present? %>
+      <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid #F59E0B;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Content Deadline</div>
+        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div>
+        <% days_until_cd = (@campaign.content_deadline - Date.today).to_i %>
+        <div style="font-size:11px;color:<%= days_until_cd > 7 ? '#16A34A' : (days_until_cd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
+          <%= days_until_cd > 0 ? "#{days_until_cd} days left" : (days_until_cd == 0 ? 'Due today' : "#{days_until_cd.abs} days overdue") %>
+        </div>
+      </div>
+    <% end %>
+    <% if @campaign.review_deadline.present? %>
+      <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid #8B5CF6;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Review Deadline</div>
+        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div>
+        <% days_until_rd = (@campaign.review_deadline - Date.today).to_i %>
+        <div style="font-size:11px;color:<%= days_until_rd > 7 ? '#16A34A' : (days_until_rd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
+          <%= days_until_rd > 0 ? "#{days_until_rd} days left" : (days_until_rd == 0 ? 'Due today' : "#{days_until_rd.abs} days overdue") %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+<% end %>
+
+<%# ── Pre-filled Details (Links, Ad Access, Logistics) ── %>
+<% has_details = [@campaign.signed_editions_url, @campaign.ad_access_notes, @campaign.bookplate_address, @campaign.management_emails].any?(&:present?) %>
+<% if has_details %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h3>Pre-filled Details</h3>
+    <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <% if @campaign.signed_editions_url.present? %>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Signed Editions URL</div>
+        <a href="<%= @campaign.signed_editions_url %>" target="_blank" style="font-size:13px;color:var(--accent);word-break:break-all;"><%= @campaign.signed_editions_url %></a>
+      </div>
+    <% end %>
+    <% if @campaign.management_emails.present? %>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Management Emails</div>
+        <div style="font-size:13px;"><%= @campaign.management_emails %></div>
+      </div>
+    <% end %>
+    <% if @campaign.bookplate_address.present? %>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Bookplate Address</div>
+        <div style="font-size:13px;white-space:pre-wrap;"><%= @campaign.bookplate_address %></div>
+      </div>
+    <% end %>
+    <% if @campaign.bookplate_design.present? %>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Bookplate Design</div>
+        <div style="font-size:13px;">Uploaded</div>
+      </div>
+    <% end %>
+  </div>
+  <% if @campaign.ad_access_notes.present? %>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;">Ad Access Instructions</div>
+      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.ad_access_notes %></div>
+    </div>
+  <% end %>
+</div>
+<% end %>
+
+<%# ── Creator Confirmations Status ── %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h3>Creator Confirmations</h3>
+    <% conf_count = @campaign.confirmable_sections.count { |s| @confirmations[s]&.persisted? && !@confirmations[s]&.has_changes_requested? } %>
+    <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><%= conf_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:10px;">
+    <% @campaign.confirmable_sections.each do |section| %>
+      <% conf = @confirmations[section] %>
+      <div style="padding:14px;border-radius:10px;border:1px solid <%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)') : 'var(--border)' %>;background:<%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.02)' : 'rgba(34,197,94,0.02)') : 'var(--surface)' %>;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <% if conf&.persisted? && !conf.has_changes_requested? %>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <% elsif conf&.has_changes_requested? %>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <% else %>
+            <span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border-strong);display:inline-block;"></span>
+          <% end %>
+          <span style="font-size:14px;font-weight:600;"><%= section.titleize %></span>
+        </div>
+        <% if conf&.persisted? && !conf.has_changes_requested? %>
+          <div style="font-size:12px;color:#16A34A;font-weight:500;">Confirmed <%= conf.confirmed_at.strftime('%b %d') %></div>
+        <% elsif conf&.has_changes_requested? %>
+          <div style="font-size:12px;color:#D97706;font-weight:600;">Changes Requested</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;background:rgba(245,158,11,0.04);padding:6px 8px;border-radius:6px;"><%= conf.notes %></div>
+        <% else %>
+          <div style="font-size:12px;color:var(--text-muted);">Awaiting creator review</div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# ── Campaign Type & Features ── %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h3>Campaign Type & Features</h3>
+    <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <% type_config = Campaign::CAMPAIGN_TYPES[@campaign.campaign_type] || Campaign::CAMPAIGN_TYPES['full'] %>
+    <span style="padding:5px 14px;border-radius:8px;font-size:13px;font-weight:700;background:var(--accent-wash);color:var(--accent);"><%= type_config[:label] %></span>
+    <span style="font-size:13px;color:var(--text-secondary);"><%= type_config[:description] %></span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));gap:8px;">
+    <% Campaign::FEATURE_FLAGS.each do |flag| %>
+      <% enabled = @campaign.send("#{flag}_enabled?") %>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:<%= enabled ? 'rgba(34,197,94,0.04)' : 'var(--page-bg)' %>;">
+        <span style="width:8px;height:8px;border-radius:50%;background:<%= enabled ? '#16A34A' : '#D1D5DB' %>;flex-shrink:0;"></span>
+        <span style="font-size:13px;font-weight:500;color:<%= enabled ? 'var(--text-primary)' : 'var(--text-muted)' %>;"><%= flag.titleize %></span>
+      </div>
+    <% end %>
   </div>
 </div>
 
@@ -91,6 +293,36 @@
       </div>
     <% end %>
   </div>
+
+  <!-- Deliverables -->
+  <% if @campaign.deliverables_enabled? %>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3>Deliverables</h3>
+        <%= link_to 'Manage', manage_campaign_admin_deliverables_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+      </div>
+      <% revisions = @campaign.admin_deliverables.needs_revision %>
+      <% pending_del = @campaign.admin_deliverables.pending %>
+      <% if revisions.any? %>
+        <div style="padding:10px 14px;background:rgba(239,68,68,0.04);border-left:3px solid #EF4444;border-radius:0 8px 8px 0;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;color:#EF4444;"><%= revisions.count %> revision<%= 's' if revisions.count != 1 %> requested</div>
+          <% revisions.limit(3).each do |del| %>
+            <div style="font-size:13px;margin-top:4px;">
+              <%= link_to del.title, manage_campaign_admin_deliverable_path(@campaign, del), style: 'color:var(--text-primary);font-weight:500;' %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <div style="display:flex;gap:16px;font-size:13px;">
+        <span><strong><%= @campaign.admin_deliverables.count %></strong> total</span>
+        <span style="color:#D97706;"><strong><%= pending_del.count %></strong> awaiting review</span>
+        <span style="color:#16A34A;"><strong><%= @campaign.admin_deliverables.approved.count %></strong> approved</span>
+      </div>
+      <div style="margin-top:12px;">
+        <%= link_to 'New Deliverable', new_manage_campaign_admin_deliverable_path(@campaign), class: 'btn btn-primary btn-sm' %>
+      </div>
+    </div>
+  <% end %>
 
   <!-- Assets Pending Review -->
   <div>
@@ -159,10 +391,10 @@
             </div>
           </div>
           <script>document.addEventListener('click',function(e){if(!document.getElementById('generateDropdown').contains(e.target))document.getElementById('generateMenu').style.display='none';});</script>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="openWizard()" style="display:inline-flex;align-items:center;gap:4px;">
+          <%= link_to wizard_manage_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm', style: 'display:inline-flex;align-items:center;gap:4px;' do %>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             Page Wizard
-          </button>
+          <% end %>
           <% if @landing_page.page_submissions.any? %>
             <%= link_to manage_campaign_page_submissions_path(@campaign), class: 'btn btn-secondary btn-sm' do %>
               Submissions (<%= @landing_page.page_submissions.count %>)
@@ -213,6 +445,39 @@
       </div>
     <% end %>
   </div>
+</div>
+
+<%# ── Activity Feed ── %>
+<div class="card" style="margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <h3>Activity Feed</h3>
+    <span style="font-size:12px;color:var(--text-muted);"><%= @activities.size %> events</span>
+  </div>
+
+  <% if @activities.any? %>
+    <div style="max-height:500px;overflow-y:auto;">
+      <% @activities.group_by { |a| a.created_at.to_date }.each do |date, day_activities| %>
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+          <%= date == Date.today ? 'Today' : date == Date.yesterday ? 'Yesterday' : date.strftime('%B %d, %Y') %>
+        </div>
+        <% day_activities.each do |activity| %>
+          <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
+            <div style="width:28px;height:28px;border-radius:50%;background:<%= activity.user&.admin? ? 'var(--accent-wash)' : 'rgba(34,197,94,0.08)' %>;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:<%= activity.user&.admin? ? 'var(--accent)' : '#16A34A' %>;flex-shrink:0;">
+              <%= activity.user_initials %>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--text-primary);"><%= activity.human_description %></div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                <%= activity.user&.first_name || 'System' %> &middot; <%= activity.created_at.strftime('%-I:%M %p') %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">No activity recorded yet.</div>
+  <% end %>
 </div>
 
 <%# ── Page Wizard Modal ── %>

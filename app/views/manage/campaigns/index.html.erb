@@ -1,63 +1,194 @@
 <% content_for :page_title, 'Campaigns' %>
 <% content_for :page_actions do %>
-  <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary' %>
+  <div style="display:flex;gap:8px;">
+    <% if @view_mode == 'deliverables' %>
+      <%= link_to 'Campaign List', manage_campaigns_path, class: 'btn btn-secondary btn-sm' %>
+    <% else %>
+      <%= link_to 'Deliverables View', manage_campaigns_path(view: 'deliverables'), class: 'btn btn-secondary btn-sm' %>
+    <% end %>
+    <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary btn-sm' %>
+  </div>
 <% end %>
 
 <style>
   .progress-bar-wrap { background: var(--border); border-radius: 20px; height: 6px; overflow: hidden; width: 120px; display: inline-block; vertical-align: middle; }
   .progress-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
   .progress-text { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+  .bulk-bar { display:none; padding:12px 16px; background:var(--accent-wash); border:1px solid rgba(0,50,98,0.1); border-radius:10px; margin-bottom:16px; align-items:center; gap:12px; }
+  .bulk-bar.visible { display:flex; }
 </style>
 
-<div class="card">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Author</th>
-          <th>Campaign</th>
-          <th>Progress</th>
-          <th>Assets Pending</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @campaigns.each do |campaign| %>
-          <tr>
-            <td style="font-weight:500;"><%= campaign.author.full_name %></td>
-            <td><%= campaign.title %></td>
-            <td>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" style="width:<%= campaign.progress_percentage %>%"></div>
-              </div>
-              <span class="progress-text"><%= campaign.progress_percentage %>%</span>
-            </td>
-            <td>
-              <% pending = campaign.campaign_assets.pending.count %>
-              <% if pending > 0 %>
-                <span class="status-badge status-pending"><%= pending %> pending</span>
-              <% else %>
-                <span class="text-muted">—</span>
-              <% end %>
-            </td>
-            <td><span class="status-badge status-<%= campaign.status %>"><%= campaign.status.titleize %></span></td>
-            <td class="text-muted"><%= campaign.created_at.strftime('%b %d, %Y') %></td>
-            <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-  <%= paginate @campaigns %>
-</div>
-
-<% if @campaigns.empty? %>
+<% if @view_mode == 'deliverables' %>
+  <%# ── Deliverables View ── %>
   <div class="card">
-    <div class="empty-state">
-      <h3>No campaigns yet</h3>
-      <p>Campaigns are auto-created when you approve a submission.</p>
+    <h3>All Pending Deliverables</h3>
+    <% if @pending_deliverables.any? %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Deliverable</th>
+              <th>Campaign</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @pending_deliverables.each do |del| %>
+              <tr>
+                <td style="font-weight:500;"><%= del.title %></td>
+                <td class="text-secondary"><%= del.campaign&.title %></td>
+                <td><%= del.category&.titleize %></td>
+                <td><span class="status-badge status-<%= del.status.to_s.include?('revision') ? 'in_review' : 'pending' %>"><%= del.status.titleize %></span></td>
+                <td class="text-muted"><%= del.updated_at.strftime('%b %d') %></td>
+                <td><%= link_to 'View', manage_campaign_admin_deliverable_path(del.campaign, del), class: 'btn btn-secondary btn-sm' %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <p>No pending deliverables across any campaign.</p>
+      </div>
+    <% end %>
+  </div>
+
+<% else %>
+  <%# ── Campaign List View ── %>
+
+  <%# Bulk Actions Bar %>
+  <div class="bulk-bar" id="bulkBar">
+    <span style="font-size:13px;font-weight:600;" id="bulkCount">0 selected</span>
+    <form action="<%= bulk_advance_manage_campaigns_path %>" method="post" style="display:inline;" id="bulkAdvanceForm">
+      <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+      <div id="bulkAdvanceInputs"></div>
+      <button type="submit" class="btn btn-primary btn-sm" data-confirm="Advance selected campaigns?">Advance Phase</button>
+    </form>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="openBulkMessage()">Send Message</button>
+  </div>
+
+  <%# Bulk Message Modal %>
+  <div id="bulkMsgOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;box-shadow:var(--shadow-lg);">
+      <h3 style="margin-bottom:16px;">Send Bulk Message</h3>
+      <form action="<%= bulk_message_manage_campaigns_path %>" method="post">
+        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+        <div id="bulkMsgInputs"></div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea name="message_body" rows="4" placeholder="Type your message to all selected creators..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeBulkMessage()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </form>
     </div>
   </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>Author</th>
+            <th>Campaign</th>
+            <th>Phase</th>
+            <th>Progress</th>
+            <th>Assets Pending</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @campaigns.each do |campaign| %>
+            <tr>
+              <td><input type="checkbox" class="campaign-cb" value="<%= campaign.id %>" onchange="updateBulkBar()"></td>
+              <td style="font-weight:500;"><%= campaign.author.full_name %></td>
+              <td><%= campaign.title %></td>
+              <td><span class="status-badge status-<%= campaign.phase == 'live' ? 'approved' : 'submitted' %>" style="font-size:11px;"><%= campaign.phase_label %></span></td>
+              <td>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill" style="width:<%= campaign.progress_percentage %>%"></div>
+                </div>
+                <span class="progress-text"><%= campaign.progress_percentage %>%</span>
+              </td>
+              <td>
+                <% pending = campaign.campaign_assets.pending.count %>
+                <% if pending > 0 %>
+                  <span class="status-badge status-pending"><%= pending %> pending</span>
+                <% else %>
+                  <span class="text-muted">—</span>
+                <% end %>
+              </td>
+              <td><span class="status-badge status-<%= campaign.status %>"><%= campaign.status.titleize %></span></td>
+              <td class="text-muted"><%= campaign.created_at.strftime('%b %d, %Y') %></td>
+              <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @campaigns %>
+  </div>
+
+  <% if @campaigns.empty? %>
+    <div class="card">
+      <div class="empty-state">
+        <h3>No campaigns yet</h3>
+        <p>Create your first campaign to get started.</p>
+      </div>
+    </div>
+  <% end %>
+
+  <script>
+  (function() {
+    function getSelected() {
+      return Array.from(document.querySelectorAll('.campaign-cb:checked')).map(function(cb) { return cb.value; });
+    }
+
+    window.updateBulkBar = function() {
+      var ids = getSelected();
+      var bar = document.getElementById('bulkBar');
+      bar.classList.toggle('visible', ids.length > 0);
+      document.getElementById('bulkCount').textContent = ids.length + ' selected';
+
+      // Update form inputs
+      var advDiv = document.getElementById('bulkAdvanceInputs');
+      advDiv.innerHTML = '';
+      ids.forEach(function(id) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'campaign_ids[]'; inp.value = id;
+        advDiv.appendChild(inp);
+      });
+    };
+
+    window.toggleSelectAll = function(master) {
+      document.querySelectorAll('.campaign-cb').forEach(function(cb) { cb.checked = master.checked; });
+      updateBulkBar();
+    };
+
+    window.openBulkMessage = function() {
+      var ids = getSelected();
+      var overlay = document.getElementById('bulkMsgOverlay');
+      var inputsDiv = document.getElementById('bulkMsgInputs');
+      inputsDiv.innerHTML = '';
+      ids.forEach(function(id) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'campaign_ids[]'; inp.value = id;
+        inputsDiv.appendChild(inp);
+      });
+      overlay.style.display = 'flex';
+    };
+
+    window.closeBulkMessage = function() {
+      document.getElementById('bulkMsgOverlay').style.display = 'none';
+    };
+  })();
+  </script>
 <% end %>

@@ -28,6 +28,17 @@ Rails.application.routes.draw do
       end
     end
 
+    # Notifications
+    resources :notifications, only: [:index] do
+      member do
+        patch :mark_read
+      end
+      collection do
+        patch :mark_all_read
+        get :recent
+      end
+    end
+
     # Campaign system
     resources :campaigns, only: [:show] do
       member do
@@ -38,13 +49,21 @@ Rails.application.routes.draw do
         get  :logistics
         patch :update_logistics
         patch :complete_onboarding
+        patch :advance_phase
       end
       resources :campaign_assets, only: [:index, :create, :destroy] do
         member do
           post :send_video
         end
       end
-      resources :social_posts, only: [:index]
+      resources :social_posts, only: [:index] do
+        collection do
+          post :schedule
+        end
+      end
+      resources :scheduled_posts, only: [:show, :update, :destroy]
+      resources :social_calendar, only: [:index]
+      resources :social_performance, only: [:index]
       resources :personal_videos, only: [:create] do
         collection { get :queue_data }
       end
@@ -61,10 +80,50 @@ Rails.application.routes.draw do
       resource :landing_page, only: [:show, :update] do
         member do
           get  :builder
+          get  :wizard
           patch :generate
+          patch :wizard_generate
           patch :publish
           patch :unpublish
           patch :request_build
+        end
+      end
+
+      # Fan CRM
+      resources :contacts, only: [:index, :show, :update] do
+        member do
+          post :add_tag
+          delete :remove_tag
+          post :add_note
+          post :enroll_drip
+        end
+        collection do
+          post :import
+        end
+      end
+
+      # Drip Campaigns
+      resources :drip_campaigns do
+        member do
+          patch :toggle_status
+          post :add_step
+          delete :remove_step
+          patch :update_step
+        end
+      end
+
+      # Referral Program
+      resources :referrals, only: [:index]
+
+      # Creator Confirmations
+      resources :confirmations, only: [:create]
+
+      # Deliverables (creator review)
+      resources :deliverables, only: [:index, :show] do
+        member do
+          patch :approve
+          patch :request_revision
+          post :add_note
         end
       end
     end
@@ -113,9 +172,16 @@ Rails.application.routes.draw do
 
     # Admin campaign management
     resources :campaigns, only: [:index, :show, :new, :create, :edit, :update] do
+      collection do
+        post :bulk_advance
+        post :bulk_message
+      end
       member do
         patch :toggle_checklist_item
         patch :update_settings
+        patch :set_phase
+        patch :advance_phase
+        post :duplicate
       end
       resources :campaign_assets, only: [] do
         member do
@@ -126,6 +192,7 @@ Rails.application.routes.draw do
       resource :landing_page, only: [:show, :update] do
         member do
           get :builder
+          get :wizard
           patch :generate
           patch :wizard_generate
           patch :toggle_notifications
@@ -133,6 +200,12 @@ Rails.application.routes.draw do
       end
       resources :page_submissions, only: [:index, :show]
       resources :live_events, only: [:index]
+      resources :admin_deliverables do
+        member do
+          patch :revise
+          post :add_note
+        end
+      end
     end
   end
 

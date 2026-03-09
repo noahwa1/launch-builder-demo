@@ -3,10 +3,29 @@
   <%= link_to 'Back', manage_campaign_path(@campaign), class: 'btn btn-secondary' %>
 <% end %>
 
+<style>
+  .form-section { margin-bottom: 20px; }
+  .form-section h3 { margin-bottom: 4px; }
+  .form-section .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+  .form-section .form-group { margin-bottom: 14px; }
+  .form-section label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+  .form-section input[type="text"],
+  .form-section input[type="email"],
+  .form-section input[type="date"],
+  .form-section input[type="url"],
+  .form-section select,
+  .form-section textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: inherit; background: var(--surface);
+  }
+  .form-section textarea { resize: vertical; }
+  .form-section input:focus, .form-section select:focus, .form-section textarea:focus { outline: none; border-color: var(--accent); }
+</style>
+
 <%= form_tag manage_campaign_path(@campaign), method: :patch, multipart: true, style: 'max-width:760px;' do %>
 
-  <%# ── Author ── %>
-  <div class="card" style="margin-bottom:20px;">
+  <%# ══════ AUTHOR ══════ %>
+  <div class="card form-section">
     <h3>Author</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div class="form-group">
@@ -31,8 +50,8 @@
     <% end %>
   </div>
 
-  <%# ── Book Details ── %>
-  <div class="card" style="margin-bottom:20px;">
+  <%# ══════ BOOK DETAILS ══════ %>
+  <div class="card form-section">
     <h3>Book Details</h3>
     <div class="form-group">
       <label for="title">Title *</label>
@@ -70,11 +89,6 @@
         <% end %>
       </div>
     </div>
-  </div>
-
-  <%# ── Book ── %>
-  <div class="card" style="margin-bottom:20px;">
-    <h3>Book</h3>
     <div class="form-group">
       <label for="book_id">Link Existing Book</label>
       <select name="book_id" id="book_id">
@@ -86,19 +100,128 @@
     </div>
   </div>
 
-  <%# ── Campaign Settings ── %>
-  <div class="card" style="margin-bottom:20px;">
-    <h3>Campaign Settings</h3>
+  <%# ══════ BRIEF & DATES ══════ %>
+  <div class="card form-section">
+    <h3>Brief & Key Dates</h3>
+    <p class="section-desc">The campaign brief is shown to the creator. Key dates drive the timeline and phase system.</p>
     <div class="form-group">
-      <label for="example_category">Example Category</label>
-      <select name="example_category" id="example_category">
-        <option value="">None (default)</option>
-        <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
-          <option value="<%= cat %>" <%= 'selected' if @campaign.example_category == cat %>><%= cat.titleize %></option>
+      <label for="brief">Campaign Brief</label>
+      <textarea name="brief" id="brief" rows="5"><%= @campaign.brief %></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="launch_date">Launch Date</label>
+        <input type="date" name="launch_date" id="launch_date" value="<%= @campaign.launch_date %>">
+      </div>
+      <div class="form-group">
+        <label for="content_deadline">Content Deadline</label>
+        <input type="date" name="content_deadline" id="content_deadline" value="<%= @campaign.content_deadline %>">
+      </div>
+      <div class="form-group">
+        <label for="review_deadline">Review Deadline</label>
+        <input type="date" name="review_deadline" id="review_deadline" value="<%= @campaign.review_deadline %>">
+      </div>
+    </div>
+  </div>
+
+  <%# ══════ LINKS & RETAILERS ══════ %>
+  <div class="card form-section">
+    <h3>Links & Retailers</h3>
+    <p class="section-desc">Pre-fill retailer links and the signed editions URL.</p>
+    <div class="form-group">
+      <label for="signed_editions_url">Signed Editions URL</label>
+      <input type="url" name="signed_editions_url" id="signed_editions_url" value="<%= @campaign.signed_editions_url %>">
+    </div>
+  </div>
+
+  <%# ══════ AD ACCESS ══════ %>
+  <div class="card form-section">
+    <h3>Ad Access</h3>
+    <p class="section-desc">Instructions for the creator on granting ad access to their social accounts.</p>
+    <div class="form-group">
+      <label for="ad_access_notes">Ad Access Instructions</label>
+      <textarea name="ad_access_notes" id="ad_access_notes" rows="4"><%= @campaign.ad_access_notes %></textarea>
+    </div>
+  </div>
+
+  <%# ══════ LOGISTICS ══════ %>
+  <div class="card form-section">
+    <h3>Logistics</h3>
+    <p class="section-desc">Shipping and management contact info for bookplate fulfillment.</p>
+    <div class="form-group">
+      <label for="bookplate_address">Bookplate Shipping Address</label>
+      <textarea name="bookplate_address" id="bookplate_address" rows="3"><%= @campaign.bookplate_address %></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="management_emails">Management Emails</label>
+        <input type="text" name="management_emails" id="management_emails" value="<%= @campaign.management_emails %>">
+        <p class="text-muted" style="font-size:11px;margin-top:4px;">Comma-separated email addresses.</p>
+      </div>
+      <div class="form-group">
+        <label for="bookplate_design">Bookplate Design</label>
+        <input type="file" name="bookplate_design" id="bookplate_design" accept="image/*,.pdf">
+        <% if @campaign.bookplate_design.present? %>
+          <p class="text-muted" style="font-size:12px;margin-top:4px;">Current: <%= File.basename(@campaign.bookplate_design.url) rescue 'uploaded' %></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# ══════ CAMPAIGN TYPE & SETTINGS ══════ %>
+  <div class="card form-section">
+    <h3>Campaign Type & Features</h3>
+    <p class="section-desc">Choose a preset to start, then toggle individual features as needed.</p>
+
+    <div class="form-group">
+      <label for="campaign_type">Campaign Type</label>
+      <select name="campaign_type" id="campaign_type" onchange="applyCampaignType(this.value)" style="max-width:340px;">
+        <% Campaign::CAMPAIGN_TYPES.each do |key, config| %>
+          <option value="<%= key %>" <%= 'selected' if @campaign.campaign_type == key %>><%= config[:label] %> — <%= config[:description] %></option>
         <% end %>
       </select>
     </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;display:block;">FEATURE TOGGLES</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <% Campaign::FEATURE_FLAGS.each do |flag| %>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+            <input type="hidden" name="<%= flag %>_enabled" value="0">
+            <input type="checkbox" name="<%= flag %>_enabled" value="1" id="flag_<%= flag %>" style="width:auto;" <%= 'checked' if @campaign.send("#{flag}_enabled?") %>>
+            <%= flag.titleize %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+      <div class="form-group">
+        <label for="example_category">Example Category</label>
+        <select name="example_category" id="example_category" style="max-width:240px;">
+          <option value="">None (default)</option>
+          <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
+            <option value="<%= cat %>" <%= 'selected' if @campaign.example_category == cat %>><%= cat.titleize %></option>
+          <% end %>
+        </select>
+      </div>
+    </div>
   </div>
+
+  <script>
+    var campaignTypes = <%= raw Campaign::CAMPAIGN_TYPES.to_json %>;
+    function applyCampaignType(typeKey) {
+      var config = campaignTypes[typeKey];
+      if (!config) return;
+      var flags = config.flags;
+      for (var key in flags) {
+        var cleanKey = key.replace('_enabled', '');
+        var checkbox = document.getElementById('flag_' + cleanKey);
+        if (checkbox) checkbox.checked = flags[key];
+      }
+    }
+    window.applyCampaignType = applyCampaignType;
+  </script>
 
   <div style="display:flex;gap:12px;">
     <button type="submit" class="btn btn-primary">Save Changes</button>

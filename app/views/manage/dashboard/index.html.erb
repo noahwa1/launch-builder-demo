@@ -31,42 +31,100 @@
   </div>
 </div>
 
-<div class="two-col">
-  <!-- Recent Campaigns -->
-  <div class="card">
-    <h3>Recent Campaigns</h3>
-    <% if @recent_campaigns.any? %>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Campaign</th>
-              <th>Author</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @recent_campaigns.each do |campaign| %>
-              <tr>
-                <td style="font-weight:500;"><%= campaign.title %></td>
-                <td class="text-secondary"><%= campaign.author.full_name %></td>
-                <td><span class="status-badge status-<%= campaign.status %>"><%= campaign.status.titleize %></span></td>
-                <td class="text-muted"><%= campaign.created_at.strftime('%b %d') %></td>
-                <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+<%# ── Campaigns by Phase ── %>
+<div class="card" style="margin-bottom:20px;">
+  <h3>Campaigns by Phase</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <% Campaign.phases.each_key do |phase_name| %>
+      <% count = @campaigns_by_phase[phase_name] || 0 %>
+      <div style="flex:1;min-width:100px;text-align:center;padding:14px 12px;border-radius:10px;border:1px solid var(--border);background:<%= count > 0 ? 'var(--accent-wash)' : 'var(--page-bg)' %>;">
+        <div style="font-size:24px;font-weight:300;color:<%= count > 0 ? 'var(--accent)' : 'var(--text-muted)' %>;"><%= count %></div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-top:2px;"><%= phase_name.titleize %></div>
       </div>
-    <% else %>
-      <p class="text-muted" style="text-align:center;padding:24px;">No campaigns yet.</p>
     <% end %>
   </div>
+</div>
 
-  <!-- Recent Asset Uploads -->
+<div class="two-col">
+  <!-- Left column -->
   <div>
+    <%# ── Upcoming Deadlines ── %>
+    <div class="card">
+      <h3>Upcoming Deadlines</h3>
+      <% if @upcoming_deadlines.any? %>
+        <% @upcoming_deadlines.each do |c| %>
+          <% [[c.content_deadline, 'Content Deadline'], [c.review_deadline, 'Review Deadline'], [c.launch_date, 'Launch Date']].each do |date, label| %>
+            <% next unless date && date > Date.today %>
+            <% days = (date - Date.today).to_i %>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:13px;font-weight:500;"><%= c.title %></div>
+                <div style="font-size:12px;color:var(--text-muted);"><%= label %></div>
+              </div>
+              <div style="font-size:12px;font-weight:600;color:<%= days <= 3 ? '#DC2626' : days <= 7 ? '#D97706' : 'var(--text-secondary)' %>;">
+                <%= date.strftime('%b %d') %> <span style="font-weight:400;">(<%= days %>d)</span>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:16px;font-size:13px;">No upcoming deadlines.</p>
+      <% end %>
+    </div>
+
+    <!-- Recent Campaigns -->
+    <div class="card">
+      <h3>Recent Campaigns</h3>
+      <% if @recent_campaigns.any? %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Author</th>
+                <th>Phase</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_campaigns.each do |campaign| %>
+                <tr>
+                  <td style="font-weight:500;"><%= campaign.title %></td>
+                  <td class="text-secondary"><%= campaign.author.full_name %></td>
+                  <td><span class="status-badge status-<%= campaign.phase == 'live' ? 'live' : campaign.status %>"><%= campaign.phase_label %></span></td>
+                  <td class="text-muted"><%= campaign.created_at.strftime('%b %d') %></td>
+                  <td><%= link_to 'View', manage_campaign_path(campaign), class: 'btn btn-secondary btn-sm' %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-muted" style="text-align:center;padding:24px;">No campaigns yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <%# ── Deliverables Needing Action ── %>
+    <% if @revision_deliverables&.any? %>
+      <div class="card">
+        <h3>Deliverables Needing Revision</h3>
+        <% @revision_deliverables.each do |del| %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:500;"><%= del.title %></div>
+              <div class="text-muted" style="font-size:12px;"><%= del.campaign&.title %></div>
+            </div>
+            <%= link_to 'View', manage_campaign_admin_deliverable_path(del.campaign, del), class: 'btn btn-secondary btn-sm' %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Recent Asset Uploads -->
     <div class="card">
       <h3>Recent Asset Uploads</h3>
       <% if @recent_assets.any? %>
@@ -90,6 +148,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <%= link_to 'New Campaign', new_manage_campaign_path, class: 'btn btn-primary' %>
         <%= link_to 'View Messages', manage_portal_messages_path, class: 'btn btn-secondary' %>
+        <%= link_to 'Deliverables', manage_campaigns_path(view: 'deliverables'), class: 'btn btn-secondary' %>
         <%= link_to 'New Payment', new_manage_royalty_path, class: 'btn btn-secondary' %>
       </div>
     </div>

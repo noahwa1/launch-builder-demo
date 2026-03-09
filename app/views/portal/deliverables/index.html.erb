@@ -1,0 +1,86 @@
+<% content_for :page_title, 'Deliverables' %>
+<% content_for :page_actions do %>
+  <%= link_to 'Back to Hub', portal_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<style>
+  .del-section-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+  .del-section-title:first-child { margin-top: 0; }
+  .del-row {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    border-bottom: 1px solid var(--border); transition: background 0.1s;
+    text-decoration: none; color: inherit;
+  }
+  .del-row:hover { background: var(--accent-wash); }
+  .del-row:last-child { border-bottom: none; }
+  .del-row-icon {
+    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .del-row-info { flex: 1; }
+  .del-row-info h4 { font-size: 14px; font-weight: 600; }
+  .del-row-info .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .del-row-status {
+    padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .del-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #EF4444; color: #fff; width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+  }
+</style>
+
+<% if @pending.any? %>
+  <div class="card" style="border-left:3px solid #D97706;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span class="del-badge" style="background:#D97706;"><%= @pending.count %></span>
+      <h3 style="font-size:15px;font-weight:700;">Needs Your Review</h3>
+    </div>
+    <% @pending.each do |del| %>
+      <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
+        <div class="del-row-icon" style="background:rgba(217,119,6,0.08);color:#D97706;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="del-row-info">
+          <h4><%= del.title %></h4>
+          <div class="meta">
+            <span style="padding:1px 6px;border-radius:3px;background:rgba(0,0,0,0.04);font-size:10px;font-weight:600;text-transform:uppercase;"><%= del.category_label %></span>
+            · <%= time_ago_in_words(del.created_at) %> ago
+            <% if del.due_date.present? %>
+              · <span style="color:<%= del.due_date < Date.today ? '#EF4444' : 'var(--text-muted)' %>;">Due <%= del.due_date.strftime('%b %d') %></span>
+            <% end %>
+          </div>
+        </div>
+        <span class="del-row-status" style="background:rgba(217,119,6,0.08);color:#D97706;"><%= del.revised? ? 'Revised' : 'Review' %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="card" style="margin-top:4px;">
+  <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">All Deliverables</h3>
+  <% if @deliverables.any? %>
+    <% @deliverables.each do |del| %>
+      <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
+        <div class="del-row-icon" style="background:rgba(0,50,98,0.06);color:var(--accent);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="del-row-info">
+          <h4><%= del.title %></h4>
+          <div class="meta">
+            <span style="padding:1px 6px;border-radius:3px;background:rgba(0,0,0,0.04);font-size:10px;font-weight:600;text-transform:uppercase;"><%= del.category_label %></span>
+            · <%= time_ago_in_words(del.created_at) %> ago
+            <% if del.revision_count > 0 %> · v<%= del.revision_count + 1 %><% end %>
+          </div>
+        </div>
+        <span class="del-row-status" style="background:rgba(0,0,0,0.04);color:<%= del.status_color %>;"><%= del.status.titleize %></span>
+      <% end %>
+    <% end %>
+  <% else %>
+    <div style="text-align:center;padding:40px;color:var(--text-muted);">
+      <p style="font-size:14px;font-weight:600;">No deliverables yet</p>
+      <p style="font-size:13px;margin-top:4px;">When the team sends you content to review, it will appear here.</p>
+    </div>
+  <% end %>
+</div>

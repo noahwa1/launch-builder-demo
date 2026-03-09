@@ -1,0 +1,23 @@
+<% content_for :page_title, 'New Drip Campaign' %>
+<% content_for :page_actions do %>
+  <%= link_to '← Back', portal_campaign_drip_campaigns_path(@campaign), class: 'btn btn-secondary btn-sm' %>
+<% end %>
+
+<div class="card" style="max-width:560px;">
+  <h3 style="font-size:16px;font-weight:700;margin-bottom:20px;">Create Drip Campaign</h3>
+
+  <%= form_for @drip, url: portal_campaign_drip_campaigns_path(@campaign) do |f| %>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Campaign Name</label>
+        <%= f.text_field :name, placeholder: 'e.g. Welcome Sequence, Release Day Updates', style: 'width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;' %>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Trigger Event</label>
+        <%= f.select :trigger_event, DripCampaign::TRIGGER_EVENTS.map { |k,v| [v, k] }, {}, style: 'width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;' %>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:6px;">When this event occurs, contacts are automatically enrolled in this sequence.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" style="padding:12px;font-size:14px;">Create & Add Steps</button>
+    </div>
+  <% end %>
+</div>

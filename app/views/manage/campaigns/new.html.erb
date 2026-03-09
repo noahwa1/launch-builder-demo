@@ -3,17 +3,36 @@
   <%= link_to 'Back', manage_campaigns_path, class: 'btn btn-secondary' %>
 <% end %>
 
+<style>
+  .form-section { margin-bottom: 20px; }
+  .form-section h3 { margin-bottom: 4px; }
+  .form-section .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+  .form-section .form-group { margin-bottom: 14px; }
+  .form-section label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+  .form-section input[type="text"],
+  .form-section input[type="email"],
+  .form-section input[type="password"],
+  .form-section input[type="date"],
+  .form-section input[type="url"],
+  .form-section select,
+  .form-section textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; font-family: inherit; background: var(--surface);
+  }
+  .form-section textarea { resize: vertical; }
+  .form-section input:focus, .form-section select:focus, .form-section textarea:focus { outline: none; border-color: var(--accent); }
+  .section-divider { height: 1px; background: var(--border); margin: 24px 0; }
+</style>
+
 <%= form_tag manage_campaigns_path, method: :post, multipart: true, style: 'max-width:760px;' do %>
 
-  <%# ── Author ── %>
-  <div class="card" style="margin-bottom:20px;">
+  <%# ══════ AUTHOR ══════ %>
+  <div class="card form-section">
     <h3>Author</h3>
-
     <div style="display:flex;gap:8px;margin-bottom:16px;">
       <button type="button" class="btn btn-primary btn-sm" id="btn-new-author" onclick="toggleAuthorMode('new')">New Author</button>
       <button type="button" class="btn btn-secondary btn-sm" id="btn-existing-author" onclick="toggleAuthorMode('existing')">Existing Author</button>
     </div>
-
     <div id="new-author-fields">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div class="form-group">
@@ -34,7 +53,6 @@
         <input type="text" name="image" id="image" placeholder="https://...">
       </div>
     </div>
-
     <div id="existing-author-fields" style="display:none;">
       <div class="form-group">
         <label for="existing_author_id">Select Author</label>
@@ -48,10 +66,10 @@
     </div>
   </div>
 
-  <%# ── Creator Login ── %>
-  <div class="card" style="margin-bottom:20px;" id="creator-login-card">
+  <%# ══════ CREATOR LOGIN ══════ %>
+  <div class="card form-section" id="creator-login-card">
     <h3>Creator Login</h3>
-    <p class="text-muted" style="font-size:13px;margin-bottom:12px;">Creates a login the author can use to access the Creator Portal.</p>
+    <p class="section-desc">Creates a login the author can use to access the Creator Portal.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div class="form-group">
         <label for="creator_email">Email *</label>
@@ -64,8 +82,8 @@
     </div>
   </div>
 
-  <%# ── Book Details ── %>
-  <div class="card" style="margin-bottom:20px;">
+  <%# ══════ BOOK DETAILS ══════ %>
+  <div class="card form-section">
     <h3>Book Details</h3>
     <div class="form-group">
       <label for="title">Title *</label>
@@ -100,11 +118,6 @@
         <input type="file" name="cover" id="cover" accept="image/*">
       </div>
     </div>
-  </div>
-
-  <%# ── Book ── %>
-  <div class="card" style="margin-bottom:20px;">
-    <h3>Book</h3>
     <div class="form-group">
       <label for="book_id">Link Existing Book</label>
       <select name="book_id" id="book_id">
@@ -119,23 +132,141 @@
           ><%= book.title %><%= " (#{book.isbn})" if book.isbn.present? %></option>
         <% end %>
       </select>
-      <p class="text-muted" style="font-size:12px;margin-top:4px;">Optionally link this campaign to an existing book from the catalog.</p>
       <p id="book-autofill-note" style="display:none;font-size:12px;color:#16A34A;margin-top:6px;font-weight:500;"></p>
     </div>
   </div>
 
-  <%# ── Campaign Settings ── %>
-  <div class="card" style="margin-bottom:20px;">
-    <h3>Campaign Settings</h3>
+  <%# ══════ BRIEF & DATES ══════ %>
+  <div class="card form-section">
+    <h3>Brief & Key Dates</h3>
+    <p class="section-desc">The campaign brief is shown to the creator. Key dates drive the timeline and phase system.</p>
     <div class="form-group">
-      <label for="example_category">Example Category</label>
-      <select name="example_category" id="example_category">
-        <option value="">None (default)</option>
-        <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
-          <option value="<%= cat %>"><%= cat.titleize %></option>
+      <label for="brief">Campaign Brief</label>
+      <textarea name="brief" id="brief" rows="5" placeholder="Here's what we're doing, the timeline, and what we need from you..."></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="launch_date">Launch Date</label>
+        <input type="date" name="launch_date" id="launch_date">
+      </div>
+      <div class="form-group">
+        <label for="content_deadline">Content Deadline</label>
+        <input type="date" name="content_deadline" id="content_deadline">
+      </div>
+      <div class="form-group">
+        <label for="review_deadline">Review Deadline</label>
+        <input type="date" name="review_deadline" id="review_deadline">
+      </div>
+    </div>
+  </div>
+
+  <%# ══════ LINKS & RETAILERS ══════ %>
+  <div class="card form-section">
+    <h3>Links & Retailers</h3>
+    <p class="section-desc">Pre-fill retailer links and the signed editions URL so the creator doesn't have to hunt them down.</p>
+    <div class="form-group">
+      <label for="signed_editions_url">Signed Editions URL</label>
+      <input type="url" name="signed_editions_url" id="signed_editions_url" placeholder="https://...">
+    </div>
+  </div>
+
+  <%# ══════ AD ACCESS ══════ %>
+  <div class="card form-section">
+    <h3>Ad Access</h3>
+    <p class="section-desc">Instructions for the creator on granting ad access to their social accounts.</p>
+    <div class="form-group">
+      <label for="ad_access_notes">Ad Access Instructions</label>
+      <textarea name="ad_access_notes" id="ad_access_notes" rows="4" placeholder="We need access to your Facebook page at facebook.com/authorname — here's how to grant it..."></textarea>
+    </div>
+  </div>
+
+  <%# ══════ LOGISTICS ══════ %>
+  <div class="card form-section">
+    <h3>Logistics</h3>
+    <p class="section-desc">Shipping and management contact info for bookplate fulfillment.</p>
+    <div class="form-group">
+      <label for="bookplate_address">Bookplate Shipping Address</label>
+      <textarea name="bookplate_address" id="bookplate_address" rows="3" placeholder="123 Main St&#10;City, State, Zip"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label for="management_emails">Management Emails</label>
+        <input type="text" name="management_emails" id="management_emails" placeholder="manager@example.com, agent@example.com">
+        <p class="text-muted" style="font-size:11px;margin-top:4px;">Comma-separated email addresses.</p>
+      </div>
+      <div class="form-group">
+        <label for="bookplate_design">Bookplate Design</label>
+        <input type="file" name="bookplate_design" id="bookplate_design" accept="image/*,.pdf">
+      </div>
+    </div>
+  </div>
+
+  <%# ══════ CAMPAIGN TYPE & SETTINGS ══════ %>
+  <div class="card form-section">
+    <h3>Campaign Type & Features</h3>
+    <p class="section-desc">Choose a preset to start, then toggle individual features as needed.</p>
+
+    <div class="form-group">
+      <label for="campaign_type">Campaign Type</label>
+      <select name="campaign_type" id="campaign_type" onchange="applyCampaignType(this.value)" style="max-width:340px;">
+        <% Campaign::CAMPAIGN_TYPES.each do |key, config| %>
+          <option value="<%= key %>" <%= 'selected' if key == 'full' %>><%= config[:label] %> — <%= config[:description] %></option>
         <% end %>
       </select>
-      <p class="text-muted" style="font-size:12px;margin-top:4px;">Which example campaigns the creator sees during onboarding.</p>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;display:block;">FEATURE TOGGLES</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="landing_page_enabled" value="0">
+          <input type="checkbox" name="landing_page_enabled" value="1" id="flag_landing_page" checked style="width:auto;">
+          Landing Page
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="asset_uploads_enabled" value="0">
+          <input type="checkbox" name="asset_uploads_enabled" value="1" id="flag_asset_uploads" checked style="width:auto;">
+          Asset Uploads
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="deliverables_enabled" value="0">
+          <input type="checkbox" name="deliverables_enabled" value="1" id="flag_deliverables" checked style="width:auto;">
+          Deliverables Review
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="live_events_enabled" value="0">
+          <input type="checkbox" name="live_events_enabled" value="1" id="flag_live_events" checked style="width:auto;">
+          Live Events / Studio
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="personal_videos_enabled" value="0">
+          <input type="checkbox" name="personal_videos_enabled" value="1" id="flag_personal_videos" checked style="width:auto;">
+          Personal Videos
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="social_tools_enabled" value="0">
+          <input type="checkbox" name="social_tools_enabled" value="1" id="flag_social_tools" checked style="width:auto;">
+          Social Tools
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);padding:8px;border:1px solid var(--border);border-radius:8px;">
+          <input type="hidden" name="royalties_enabled" value="0">
+          <input type="checkbox" name="royalties_enabled" value="1" id="flag_royalties" checked style="width:auto;">
+          Royalties
+        </label>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+      <div class="form-group">
+        <label for="example_category">Example Category</label>
+        <select name="example_category" id="example_category" style="max-width:240px;">
+          <option value="">None (default)</option>
+          <% Campaign::EXAMPLE_CATEGORIES.each do |cat| %>
+            <option value="<%= cat %>"><%= cat.titleize %></option>
+          <% end %>
+        </select>
+        <p class="text-muted" style="font-size:11px;margin-top:4px;">Which examples the creator sees during onboarding.</p>
+      </div>
     </div>
   </div>
 
@@ -171,7 +302,6 @@
     }
   }
 
-  // Hide login card if existing author already has a user account
   document.getElementById('existing_author_id').addEventListener('change', checkExistingAuthorUser);
 
   function checkExistingAuthorUser() {
@@ -185,11 +315,25 @@
     }
   }
 
-  // Book auto-fill: populate Book Details when an existing book is selected
+  // Campaign type preset switcher
+  var campaignTypes = <%= raw Campaign::CAMPAIGN_TYPES.to_json %>;
+  function applyCampaignType(typeKey) {
+    var config = campaignTypes[typeKey];
+    if (!config) return;
+    var flags = config.flags;
+    for (var key in flags) {
+      var cleanKey = key.replace('_enabled', '');
+      var checkbox = document.getElementById('flag_' + cleanKey);
+      if (checkbox) checkbox.checked = flags[key];
+    }
+  }
+  window.applyCampaignType = applyCampaignType;
+  // Apply default on load
+  applyCampaignType('full');
+
   document.getElementById('book_id').addEventListener('change', function() {
     var selected = this.options[this.selectedIndex];
     var note = document.getElementById('book-autofill-note');
-
     if (this.value && selected.dataset.title) {
       document.getElementById('title').value = selected.dataset.title || '';
       document.getElementById('isbn').value = selected.dataset.isbn || '';
@@ -203,12 +347,6 @@
       note.textContent = 'Auto-filled from "' + selected.dataset.title + '"';
       note.style.display = '';
     } else {
-      // Clear auto-filled fields when "None" is selected
-      document.getElementById('title').value = '';
-      document.getElementById('isbn').value = '';
-      document.getElementById('book_description').value = '';
-      document.getElementById('release_date').value = '';
-      document.getElementById('genre').selectedIndex = 0;
       note.style.display = 'none';
     }
   });
