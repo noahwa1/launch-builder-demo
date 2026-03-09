@@ -1,6 +1,7 @@
 module Portal
   class ContactsController < BaseController
     before_action :set_campaign
+    before_action :require_fan_crm_enabled
     before_action :set_contact, only: [:show, :update, :add_tag, :remove_tag, :add_note, :enroll_drip]
 
     def index
@@ -79,6 +80,10 @@ module Portal
     end
 
     private
+
+    def require_fan_crm_enabled
+      require_feature!('fan_crm')
+    end
 
     def set_campaign
       @campaign = current_author.campaigns.find(params[:campaign_id])

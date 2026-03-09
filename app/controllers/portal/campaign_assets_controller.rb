@@ -1,6 +1,7 @@
 module Portal
   class CampaignAssetsController < BaseController
     before_action :set_campaign
+    before_action :require_asset_uploads_enabled
 
     def index
       @assets = @campaign.campaign_assets.order(created_at: :desc)
@@ -47,6 +48,10 @@ module Portal
     end
 
     private
+
+    def require_asset_uploads_enabled
+      require_feature!('asset_uploads')
+    end
 
     def set_campaign
       @campaign = current_author.campaigns.find(params[:campaign_id])

@@ -47,9 +47,7 @@ module Portal
     end
 
     def require_deliverables_enabled
-      unless @campaign.deliverables_enabled?
-        redirect_to portal_campaign_path(@campaign), alert: 'Deliverables are not available for this campaign.'
-      end
+      require_feature!('deliverables')
     end
   end
 end

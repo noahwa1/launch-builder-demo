@@ -1,6 +1,7 @@
 module Portal
   class SocialPostsController < BaseController
     before_action :set_campaign
+    before_action :require_social_tools_enabled
 
     def index
       @submission = @campaign.submission
@@ -30,6 +31,10 @@ module Portal
     end
 
     private
+
+    def require_social_tools_enabled
+      require_feature!('social_tools')
+    end
 
     def scheduled_post_params
       params.require(:scheduled_post).permit(:platform, :category, :body, :scheduled_at, :status, :image)

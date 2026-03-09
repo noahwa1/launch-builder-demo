@@ -197,8 +197,8 @@
 
 <%# ── LIVE NOW BAR ── %>
 <% if @current_live_event %>
-  <div style="background:linear-gradient(90deg,#e94560,#c0392b);border-radius:var(--radius-md);padding:14px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-    <div style="display:flex;align-items:center;gap:12px;font-weight:700;">
+  <div class="d-flex items-center justify-between mb-16 text-white rounded-md" style="background:linear-gradient(90deg,#e94560,#c0392b);padding:14px 24px;">
+    <div class="d-flex items-center gap-12 fw-700">
       <span style="width:10px;height:10px;background:#fff;border-radius:50%;animation:dotBlink 1.5s ease-in-out infinite;"></span>
       LIVE NOW — <%= @current_live_event.title %>
     </div>
@@ -252,9 +252,9 @@
 
 <%# ── CAMPAIGN BRIEF (always visible) ── %>
 <% if @campaign.brief.present? %>
-  <div class="card" style="margin-bottom:16px;">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Campaign Brief</h3>
-    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;"><%= @campaign.brief %></div>
+  <div class="card mb-16">
+    <h3 class="subheading" style="margin-bottom:8px;">Campaign Brief</h3>
+    <div class="text-base text-secondary lh-relaxed" style="white-space:pre-wrap;"><%= @campaign.brief %></div>
   </div>
 <% end %>
 
@@ -292,10 +292,10 @@
 <%# ── PHASE: SETUP (current) ── %>
 <%# ══════════════════════════════════════════════════════════════ %>
 <% if @campaign.setup? %>
-  <div class="card" style="margin-bottom:16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h3 style="margin:0;">Review & Confirm</h3>
-      <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><%= confirmed_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
+  <div class="card mb-16">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h3 class="mt-0 mb-0">Review & Confirm</h3>
+      <span class="text-md fw-600 text-muted"><%= confirmed_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
     </div>
 
     <%# ── Brief ── %>
@@ -324,6 +324,7 @@
             <div class="data-value" style="white-space:pre-wrap;"><%= @campaign.brief %></div>
           <% end %>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+
             <% if @campaign.launch_date.present? %><div><div class="data-label">Launch Date</div><div class="data-value"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div></div><% end %>
             <% if @campaign.content_deadline.present? %><div><div class="data-label">Content Deadline</div><div class="data-value"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div></div><% end %>
             <% if @campaign.review_deadline.present? %><div><div class="data-label">Review Deadline</div><div class="data-value"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div></div><% end %>
@@ -334,9 +335,19 @@
         <% elsif brief_changes %>
           <div class="confirm-note"><div class="note-label">Your change request</div><%= brief_conf.notes %></div>
           <div class="confirm-meta">Submitted <%= time_ago_in_words(brief_conf.confirmed_at) %> ago</div>
+          <div class="confirm-actions" style="margin-top:12px;">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'brief'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="brief">
+                <textarea name="notes" rows="2" placeholder="Describe what still needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes Again</button>
+              <% end %>
+            </div>
+          </div>
         <% else %>
           <div class="confirm-actions">
-            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'brief'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'brief'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
             <div class="confirm-changes-form">
               <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
                 <input type="hidden" name="section" value="brief">
@@ -367,16 +378,26 @@
         </div>
         <div class="confirm-data">
           <div class="data-label">Signed Editions URL</div>
-          <div class="data-value"><a href="<%= @campaign.signed_editions_url %>" target="_blank" style="color:var(--accent);word-break:break-all;"><%= @campaign.signed_editions_url %></a></div>
+          <div class="data-value"><a href="<%= @campaign.signed_editions_url %>" target="_blank" class="text-accent" style="word-break:break-all;"><%= @campaign.signed_editions_url %></a></div>
         </div>
         <% if links_ok %>
           <div class="confirm-meta">Confirmed by you on <%= links_conf.confirmed_at.strftime('%b %d, %Y') %></div>
         <% elsif links_chg %>
           <div class="confirm-note"><div class="note-label">Your change request</div><%= links_conf.notes %></div>
           <div class="confirm-meta">Submitted <%= time_ago_in_words(links_conf.confirmed_at) %> ago</div>
+          <div class="confirm-actions" style="margin-top:12px;">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'links'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="links">
+                <textarea name="notes" rows="2" placeholder="Describe what still needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes Again</button>
+              <% end %>
+            </div>
+          </div>
         <% else %>
           <div class="confirm-actions">
-            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'links'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'links'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
             <div class="confirm-changes-form">
               <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
                 <input type="hidden" name="section" value="links">
@@ -406,14 +427,14 @@
           <% else %><span class="confirm-status st-pending">Needs Review</span><% end %>
         </div>
         <div class="confirm-data">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-            <% if @campaign.facebook_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(59,89,152,0.08);color:#3B5998;">Facebook</span><% end %>
-            <% if @campaign.instagram_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(225,48,108,0.08);color:#E1306C;">Instagram</span><% end %>
-            <% if @campaign.tiktok_access? %><span style="padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(0,0,0,0.06);color:#000;">TikTok</span><% end %>
+          <div class="d-flex gap-8 flex-wrap mb-8">
+            <% if @campaign.facebook_access? %><span class="text-sm fw-600 rounded" style="padding:4px 10px;background:rgba(59,89,152,0.08);color:#3B5998;">Facebook</span><% end %>
+            <% if @campaign.instagram_access? %><span class="text-sm fw-600 rounded" style="padding:4px 10px;background:rgba(225,48,108,0.08);color:#E1306C;">Instagram</span><% end %>
+            <% if @campaign.tiktok_access? %><span class="text-sm fw-600 rounded" style="padding:4px 10px;background:rgba(0,0,0,0.06);color:#000;">TikTok</span><% end %>
           </div>
           <% if @campaign.ad_access_notes.present? %>
             <div class="data-label">Instructions from your team</div>
-            <div class="data-value" style="white-space:pre-wrap;"><%= @campaign.ad_access_notes %></div>
+            <div class="data-value" style="white-space:pre-wrap"><%= @campaign.ad_access_notes %></div>
           <% end %>
         </div>
         <% if ad_ok %>
@@ -421,9 +442,19 @@
         <% elsif ad_chg %>
           <div class="confirm-note"><div class="note-label">Your change request</div><%= ad_conf.notes %></div>
           <div class="confirm-meta">Submitted <%= time_ago_in_words(ad_conf.confirmed_at) %> ago</div>
+          <div class="confirm-actions" style="margin-top:12px;">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'ad_access'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="ad_access">
+                <textarea name="notes" rows="2" placeholder="Describe what still needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes Again</button>
+              <% end %>
+            </div>
+          </div>
         <% else %>
           <div class="confirm-actions">
-            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'ad_access'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'ad_access'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
             <div class="confirm-changes-form">
               <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
                 <input type="hidden" name="section" value="ad_access">
@@ -453,20 +484,30 @@
           <% else %><span class="confirm-status st-pending">Needs Review</span><% end %>
         </div>
         <div class="confirm-data">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <% if @campaign.bookplate_address.present? %><div><div class="data-label">Shipping Address</div><div class="data-value" style="white-space:pre-wrap;"><%= @campaign.bookplate_address %></div></div><% end %>
+          <div class="grid-2" style="gap:12px;">
+            <% if @campaign.bookplate_address.present? %><div><div class="data-label">Shipping Address</div><div class="data-value" style="white-space:pre-wrap"><%= @campaign.bookplate_address %></div></div><% end %>
             <% if @campaign.management_emails.present? %><div><div class="data-label">Management Emails</div><div class="data-value"><%= @campaign.management_emails %></div></div><% end %>
           </div>
-          <% if @campaign.bookplate_design.present? %><div style="margin-top:8px;"><div class="data-label">Bookplate Design</div><div class="data-value">Uploaded</div></div><% end %>
+          <% if @campaign.bookplate_design.present? %><div class="mt-8"><div class="data-label">Bookplate Design</div><div class="data-value">Uploaded</div></div><% end %>
         </div>
         <% if log_ok %>
           <div class="confirm-meta">Confirmed by you on <%= log_conf.confirmed_at.strftime('%b %d, %Y') %></div>
         <% elsif log_chg %>
           <div class="confirm-note"><div class="note-label">Your change request</div><%= log_conf.notes %></div>
           <div class="confirm-meta">Submitted <%= time_ago_in_words(log_conf.confirmed_at) %> ago</div>
+          <div class="confirm-actions" style="margin-top:12px;">
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'logistics'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
+            <div class="confirm-changes-form">
+              <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
+                <input type="hidden" name="section" value="logistics">
+                <textarea name="notes" rows="2" placeholder="Describe what still needs to change..." required></textarea>
+                <button type="submit" class="confirm-btn request">Request Changes Again</button>
+              <% end %>
+            </div>
+          </div>
         <% else %>
           <div class="confirm-actions">
-            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'logistics'), method: :post, class: 'confirm-btn approve', form: { style: 'display:inline;' } %>
+            <%= button_to 'Confirm', portal_campaign_confirmations_path(@campaign, section: 'logistics'), method: :post, class: 'confirm-btn approve', form: { class: 'd-inline' } %>
             <div class="confirm-changes-form">
               <%= form_tag portal_campaign_confirmations_path(@campaign), method: :post do %>
                 <input type="hidden" name="section" value="logistics">
@@ -490,9 +531,9 @@
       <h4>
         <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         From Your Team
-        <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:rgba(217,119,6,0.08);color:#D97706;"><%= @pending_deliverables.count %></span>
+        <span class="text-xs fw-700 bg-warning-light" style="padding:2px 8px;border-radius:10px;color:#D97706;"><%= @pending_deliverables.count %></span>
       </h4>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Review and approve these items from your team.</p>
+      <p class="text-md text-muted mb-12">Review and approve these items from your team.</p>
       <% @pending_deliverables.each do |del| %>
         <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
           <div class="del-row-icon" style="background:rgba(217,119,6,0.08);color:#D97706;">
@@ -502,32 +543,38 @@
             <h5><%= del.title %></h5>
             <div class="meta"><%= del.category_label %> · <%= time_ago_in_words(del.created_at) %> ago</div>
           </div>
-          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(217,119,6,0.08);color:#D97706;text-transform:uppercase;"><%= del.revised? ? 'Revised' : 'Review' %></span>
+          <span class="text-xs fw-700 text-upper rounded bg-warning-light" style="padding:4px 10px;color:#D97706;"><%= del.revised? ? 'Revised' : 'Review' %></span>
         <% end %>
       <% end %>
-      <%= link_to 'View All Deliverables', portal_campaign_deliverables_path(@campaign), style: 'font-size:13px;color:var(--accent);margin-top:8px;display:inline-block;' %>
+      <%= link_to 'View All Deliverables', portal_campaign_deliverables_path(@campaign), class: 'text-md text-accent d-inline-block mt-8' %>
     </div>
   <% end %>
 
-  <%# We Need From You — Content uploads %>
+  <%# Content uploads — soft ask %>
   <% if @campaign.asset_uploads_enabled? %>
+    <% completed_count = @content_items&.count(&:complete?) || 0 %>
+    <% total_count = @content_items&.size || 0 %>
     <div class="card content-section">
       <h4>
         <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        We Need From You
+        Your Content
+        <% if completed_count > 0 %>
+          <span class="text-xs fw-700 bg-success-light rounded-lg" style="padding:2px 8px;color:#16A34A;"><%= completed_count %>/<%= total_count %></span>
+        <% end %>
       </h4>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Upload the content items below to keep your campaign on track.</p>
+      <p class="text-md text-muted mb-12">Upload whatever you have ready — every piece helps your campaign. You can always add more later.</p>
       <% if @content_items&.any? %>
         <% @content_items.each do |item| %>
           <div class="checklist-mini-row">
             <div class="check-dot <%= 'done' if item.complete? %>">
               <% if item.complete? %><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><% end %>
             </div>
-            <span style="flex:1;color:<%= item.complete? ? 'var(--text-muted)' : 'var(--text-primary)' %>;<%= 'text-decoration:line-through;' if item.complete? %>"><%= item.title %></span>
+            <span class="flex-1" style="color:<%= item.complete? ? 'var(--text-muted)' : 'var(--text-primary)' %>;<%= 'text-decoration:line-through;' if item.complete? %>"><%= item.title %></span>
+            <% unless item.complete? %><span class="text-xs text-muted">Optional</span><% end %>
           </div>
         <% end %>
       <% end %>
-      <div style="margin-top:12px;">
+      <div class="mt-12 d-flex items-center gap-12">
         <%= link_to portal_campaign_campaign_assets_path(@campaign), class: 'btn btn-primary btn-sm' do %>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           Upload Assets
@@ -542,18 +589,18 @@
 <% elsif @campaign.review? %>
   <%# Outstanding Items %>
   <% if @all_incomplete.any? %>
-    <div class="card" style="margin-bottom:16px;">
-      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+    <div class="card mb-16">
+      <h4 class="subheading d-flex items-center gap-8">
         Remaining Items
-        <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:rgba(245,158,11,0.08);color:#D97706;"><%= @all_incomplete.count %></span>
+        <span class="text-xs fw-700 bg-warning-light" style="padding:2px 8px;border-radius:10px;color:#D97706;"><%= @all_incomplete.count %></span>
       </h4>
       <% @all_incomplete.group_by(&:category).each do |cat, items| %>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:10px 0 6px;"><%= cat.titleize %></div>
+        <div class="label-upper fw-700" style="margin:10px 0 6px;"><%= cat.titleize %></div>
         <% items.each do |item| %>
           <div class="checklist-mini-row">
             <div class="check-dot"></div>
-            <span style="flex:1;"><%= item.title %></span>
-            <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);background:rgba(0,0,0,0.04);padding:2px 6px;border-radius:4px;">Optional</span><% end %>
+            <span class="flex-1"><%= item.title %></span>
+            <% if item.optional? %><span class="text-muted rounded-sm" style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 6px;"><%= "Optional" %></span><% end %>
           </div>
         <% end %>
       <% end %>
@@ -562,8 +609,8 @@
 
   <%# Deliverables in revision %>
   <% if @campaign.deliverables_enabled? && @revision_deliverables&.any? %>
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #EF4444;">
-      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Deliverables Needing Revision</h4>
+    <div class="card mb-16" style="border-left:3px solid #EF4444;">
+      <h4 class="subheading">Deliverables Needing Revision</h4>
       <% @revision_deliverables.each do |del| %>
         <%= link_to portal_campaign_deliverable_path(@campaign, del), class: 'del-row' do %>
           <div class="del-row-icon" style="background:rgba(239,68,68,0.08);color:#EF4444;">
@@ -580,16 +627,16 @@
 
   <%# Landing Page %>
   <% if @campaign.landing_page_enabled? && @landing_page %>
-    <div class="card" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <h4 style="font-size:14px;font-weight:700;">Landing Page</h4>
+    <div class="card mb-16">
+      <div class="section-header">
+        <h4 class="text-base fw-700">Landing Page</h4>
         <% if @landing_page.published? %>
-          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.08);color:#16A34A;text-transform:uppercase;">Published</span>
+          <span class="text-xs fw-700 text-upper rounded bg-success-light" style="padding:4px 10px;color:#16A34A;">Published</span>
         <% else %>
-          <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(245,158,11,0.08);color:#D97706;text-transform:uppercase;">Draft</span>
+          <span class="text-xs fw-700 text-upper rounded bg-warning-light" style="padding:4px 10px;color:#D97706;">Draft</span>
         <% end %>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div class="d-flex gap-8">
         <%= link_to portal_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm' do %>Preview<% end %>
         <% if @landing_page.published? %>
           <%= link_to public_page_path(@landing_page.slug), target: '_blank', class: 'btn btn-secondary btn-sm' do %>View Live<% end %>
@@ -617,13 +664,13 @@
   </div>
 
   <%# Quick Tools %>
-  <div class="card" style="margin-bottom:16px;">
-    <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Your Tools</h4>
+  <div class="card mb-16">
+    <h4 class="subheading">Your Tools</h4>
     <% if @campaign.landing_page_enabled? && @landing_page %>
       <%= link_to portal_campaign_landing_page_path(@campaign), class: 'toolkit-row' do %>
         <div class="tk-icon" style="background:rgba(79,70,229,0.1);color:var(--accent);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></div>
         <span class="tk-title">Landing Page</span>
-        <% if @landing_page.published? %><span style="font-size:11px;font-weight:600;color:#16A34A;">Live</span><% end %>
+        <% if @landing_page.published? %><span class="text-xs fw-600 text-success">Live</span><% end %>
         <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       <% end %>
     <% end %>
@@ -652,7 +699,7 @@
       <%= link_to recorder_portal_campaign_live_events_path(@campaign), class: 'toolkit-row' do %>
         <div class="tk-icon" style="background:rgba(168,85,247,0.1);color:#A855F7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15.5 10-5 3V7l5 3Z"/><rect x="2" y="4" width="20" height="16" rx="4"/></svg></div>
         <span class="tk-title">Personal Videos</span>
-        <span style="font-size:11px;color:var(--text-muted);"><%= @personal_video_count %>/<%= @personal_video_total %></span>
+        <span class="text-xs text-muted"><%= @personal_video_count %>/<%= @personal_video_total %></span>
         <svg class="tk-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       <% end %>
     <% end %>
@@ -660,13 +707,13 @@
 
   <%# Recent Submissions %>
   <% if @campaign.landing_page_enabled? && @recent_submissions.any? %>
-    <div class="card" style="margin-bottom:16px;">
-      <h4 style="font-size:14px;font-weight:700;margin-bottom:12px;">Recent Submissions</h4>
+    <div class="card mb-16">
+      <h4 class="subheading">Recent Submissions</h4>
       <% @recent_submissions.each do |sub| %>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div class="list-row" style="padding:8px 0;">
           <div>
-            <div style="font-size:13px;font-weight:600;"><%= sub.email %></div>
-            <div style="font-size:11px;color:var(--text-muted);"><%= time_ago_in_words(sub.created_at) %> ago</div>
+            <div class="text-md fw-600"><%= sub.email %></div>
+            <div class="text-xs text-muted"><%= time_ago_in_words(sub.created_at) %> ago</div>
           </div>
         </div>
       <% end %>
@@ -677,13 +724,13 @@
 <%# ── PHASE: WRAP UP (current) ── %>
 <%# ══════════════════════════════════════════════════════════════ %>
 <% elsif @campaign.wrap_up? %>
-  <div class="card" style="margin-bottom:16px;">
-    <div style="text-align:center;padding:24px;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="48" height="48" style="margin-bottom:12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <h3 style="font-size:20px;font-weight:700;margin-bottom:6px;">Campaign Complete</h3>
-      <p style="font-size:14px;color:var(--text-secondary);">Great work! Here's a summary of your campaign.</p>
+  <div class="card mb-16">
+    <div class="centered-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="48" height="48" class="mb-12"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h3 class="text-2xl fw-700 mb-6">Campaign Complete</h3>
+      <p class="text-base text-secondary">Great work! Here's a summary of your campaign.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-top:16px;">
+    <div class="mt-16" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;">
       <div class="live-stat"><div class="ls-num"><%= @submission_count %></div><div class="ls-label">Total Leads</div></div>
       <div class="live-stat"><div class="ls-num"><%= @assets_count %></div><div class="ls-label">Assets Created</div></div>
       <div class="live-stat"><div class="ls-num"><%= @campaign.live_events.where(status: :ended).count %></div><div class="ls-label">Live Events</div></div>
@@ -694,9 +741,9 @@
   </div>
 
   <% if @campaign.royalties_enabled? %>
-    <div class="card" style="margin-bottom:16px;">
-      <h4 style="font-size:14px;font-weight:700;margin-bottom:8px;">Royalties</h4>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">View your earnings and payment history.</p>
+    <div class="card mb-16">
+      <h4 class="subheading" style="margin-bottom:8px;">Royalties</h4>
+      <p class="text-md text-secondary mb-12">View your earnings and payment history.</p>
       <%= link_to 'View Royalties', portal_royalties_path, class: 'btn btn-primary btn-sm' %>
     </div>
   <% end %>
@@ -710,18 +757,18 @@
     <% next_phase_name = Campaign.phases.key(Campaign.phases[@campaign.phase] + 1)&.titleize %>
     <div class="advance-bar ready">
       <div>
-        <div style="font-size:14px;font-weight:600;color:#16A34A;">All clear — ready to advance</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Move to the <%= next_phase_name %> phase</div>
+        <div class="text-base fw-600 text-success">All clear — ready to advance</div>
+        <div class="text-sm text-muted mt-2">Move to the <%= next_phase_name %> phase</div>
       </div>
       <%= button_to "Move to #{next_phase_name}", advance_phase_portal_campaign_path(@campaign), method: :patch, class: 'advance-btn' %>
     </div>
   <% elsif @blockers.any? %>
     <div class="advance-bar blocked">
       <div>
-        <div style="font-size:14px;font-weight:600;color:#D97706;"><%= @blockers.count %> item<%= 's' if @blockers.count != 1 %> remaining</div>
+        <div class="text-base fw-600 text-warning"><%= @blockers.count %> item<%= 's' if @blockers.count != 1 %> remaining</div>
         <ul style="margin:4px 0 0;padding-left:18px;">
           <% @blockers.each do |b| %>
-            <li style="font-size:12px;color:var(--text-secondary);margin-bottom:1px;"><%= b %></li>
+            <li class="text-sm text-secondary" style="margin-bottom:1px;"><%= b %></li>
           <% end %>
         </ul>
       </div>
@@ -734,26 +781,26 @@
 <%# ══════════════════════════════════════════════════════════════ %>
 <% Campaign.phases.each do |name, idx| %>
   <% next unless idx < @current_phase_idx %>
-  <details class="phase-card" style="margin-bottom:8px;">
-    <summary class="phase-card-header" style="list-style:none;">
+  <details class="phase-card mb-8">
+    <summary class="phase-card-header" style="list-style:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       <h3><%= name.titleize %></h3>
-      <span class="phase-badge" style="background:rgba(34,197,94,0.08);color:#16A34A;">Complete</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg>
+      <span class="phase-badge bg-success-light text-success">Complete</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" class="ml-auto"><polyline points="6 9 12 15 18 9"/></svg>
     </summary>
     <div class="phase-card-body">
       <% case name %>
       <% when 'setup' %>
         <% @campaign.confirmable_sections.each do |s| %>
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;">
+          <div class="d-flex items-center gap-8 text-md" style="padding:6px 0;">
             <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <span><%= s.titleize %> — confirmed</span>
           </div>
         <% end %>
       <% when 'content' %>
-        <div style="font-size:13px;color:var(--text-muted);">All content uploaded and deliverables reviewed.</div>
+        <div class="text-md text-muted">Content phase complete. Deliverables reviewed.</div>
       <% when 'review' %>
-        <div style="font-size:13px;color:var(--text-muted);">All items approved and landing page published.</div>
+        <div class="text-md text-muted">All items approved and landing page published.</div>
       <% end %>
     </div>
   </details>
@@ -771,8 +818,8 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     </div>
     <div>
-      <div style="font-size:13px;font-weight:600;color:var(--text-secondary);"><%= name.titleize %></div>
-      <div style="font-size:12px;color:var(--text-muted);"><%= preview %></div>
+      <div class="text-md fw-600 text-secondary"><%= name.titleize %></div>
+      <div class="text-sm text-muted"><%= preview %></div>
     </div>
   </div>
 <% end %>
@@ -780,24 +827,24 @@
 <%# ══════════════════════════════════════════════════════════════ %>
 <%# ── FULL CHECKLIST (collapsed) ── %>
 <%# ══════════════════════════════════════════════════════════════ %>
-<details class="card" style="cursor:pointer;margin-top:16px;">
-  <summary style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);list-style:none;display:flex;align-items:center;justify-content:space-between;">
+<details class="card mt-16" style="cursor:pointer;">
+  <summary class="detail-label d-flex items-center justify-between" style="list-style:none;">
     Full Campaign Checklist
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div style="margin-top:16px;">
+  <div class="mt-16">
     <% Campaign::CATEGORIES.each do |cat| %>
       <% items = @items_by_category[cat] || [] %>
       <% next if items.empty? %>
-      <div style="margin-bottom:16px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px;"><%= cat.titleize %></div>
+      <div class="mb-16">
+        <div class="detail-label fw-700 mb-8"><%= cat.titleize %></div>
         <% items.each do |item| %>
           <div class="checklist-mini-row">
             <div class="check-dot <%= 'done' if item.complete? %>">
               <% if item.complete? %><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><% end %>
             </div>
-            <span style="flex:1;color:<%= item.complete? ? 'var(--text-muted)' : 'var(--text-primary)' %>;<%= 'text-decoration:line-through;' if item.complete? %>"><%= item.title %></span>
-            <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);background:rgba(0,0,0,0.04);padding:2px 6px;border-radius:4px;">Optional</span><% end %>
+            <span class="flex-1" style="color:<%= item.complete? ? 'var(--text-muted)' : 'var(--text-primary)' %>;<%= 'text-decoration:line-through;' if item.complete? %>"><%= item.title %></span>
+            <% if item.optional? %><span class="text-muted rounded-sm" style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 6px;">Optional</span><% end %>
           </div>
         <% end %>
       </div>
@@ -809,24 +856,24 @@
 <%# ── ACTIVITY TIMELINE ── %>
 <%# ══════════════════════════════════════════════════════════════ %>
 <% if @activities.any? %>
-<details class="card" style="cursor:pointer;margin-top:16px;">
-  <summary style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);list-style:none;display:flex;align-items:center;justify-content:space-between;">
+<details class="card mt-16" style="cursor:pointer;">
+  <summary class="detail-label d-flex items-center justify-between" style="list-style:none;">
     Recent Activity
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div style="margin-top:16px;max-height:400px;overflow-y:auto;">
+  <div class="mt-16" style="max-height:400px;overflow-y:auto;">
     <% @activities.group_by { |a| a.created_at.to_date }.each do |date, day_activities| %>
-      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;">
+      <div class="detail-label border-bottom mb-6" style="padding:6px 0 4px;">
         <%= date == Date.today ? 'Today' : date == Date.yesterday ? 'Yesterday' : date.strftime('%B %d, %Y') %>
       </div>
       <% day_activities.each do |activity| %>
-        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
-          <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;">
+        <div class="d-flex gap-10 items-start" style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
+          <div class="d-flex items-center justify-center fw-700 rounded-full" style="width:26px;height:26px;background:var(--accent-wash);font-size:10px;color:var(--accent);flex-shrink:0;">
             <%= activity.user_initials %>
           </div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;color:var(--text-primary);"><%= activity.human_description %></div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+          <div class="flex-1" style="min-width:0;">
+            <div class="text-md text-primary"><%= activity.human_description %></div>
+            <div class="text-xs text-muted mt-2">
               <%= activity.user&.first_name || 'System' %> &middot; <%= activity.created_at.strftime('%-I:%M %p') %>
             </div>
           </div>
@@ -917,7 +964,7 @@
         <button class="ob-next-btn" onclick="goToStep2()">Next</button>
       </div>
     </div>
-    <div class="ob-examples-step" id="obStep2" style="display:none;">
+    <div class="ob-examples-step d-none" id="obStep2">
       <h2>Set up your campaign like...</h2>
       <div class="ob-sub">Here are some successful campaigns similar to yours. Pick one that inspires you, or skip to start from scratch.</div>
       <div class="example-grid">
@@ -932,9 +979,9 @@
       </div>
       <div class="ob-footer">
         <div class="ob-steps-dots"><div class="ob-dot"></div><div class="ob-dot active"></div></div>
-        <div style="display:flex;gap:10px;">
+        <div class="d-flex gap-10">
           <button class="ob-next-btn" style="background:var(--surface);color:var(--text-primary);border:1px solid var(--border-strong);box-shadow:var(--shadow-sm);" onclick="closeOnboarding()">Skip</button>
-          <%= button_to complete_onboarding_portal_campaign_path(@campaign), method: :patch, class: 'ob-next-btn', form: { style: 'display:inline', id: 'onboardForm' } do %>Get Started<% end %>
+          <%= button_to complete_onboarding_portal_campaign_path(@campaign), method: :patch, class: 'ob-next-btn', form: { class: 'd-inline', id: 'onboardForm' } do %>Get Started<% end %>
         </div>
       </div>
     </div>
@@ -943,7 +990,7 @@
 
 <script>
 (function() {
-  window.goToStep2 = function() { document.getElementById('obStep1').style.display = 'none'; document.getElementById('obStep2').style.display = ''; };
+  window.goToStep2 = function() { document.getElementById('obStep1').classList.add('d-none'); document.getElementById('obStep2').classList.remove('d-none'); };
   window.selectExample = function(card) { document.querySelectorAll('.example-card').forEach(function(c) { c.classList.remove('selected'); }); card.classList.add('selected'); };
   window.playVideo = function() { var p = document.querySelector('.ob-video-placeholder'); p.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:14px;z-index:1;">Video player will be embedded here</div>'; };
   window.closeOnboarding = function() { var o = document.getElementById('onboardOverlay'); o.style.opacity = '0'; o.style.transition = 'opacity 0.2s ease'; setTimeout(function() { o.remove(); }, 200); var f = document.getElementById('onboardForm'); if (f) { fetch(f.action, { method: 'PATCH', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'text/html' } }); } };

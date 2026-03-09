@@ -1,7 +1,7 @@
 <% content_for :page_title, @campaign.title %>
 <% content_for :page_actions do %>
   <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-primary btn-sm' %>
-  <%= button_to 'Duplicate', duplicate_manage_campaign_path(@campaign), method: :post, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline' }, data: { confirm: 'Duplicate this campaign for a new project?' } %>
+  <%= button_to 'Duplicate', duplicate_manage_campaign_path(@campaign), method: :post, class: 'btn btn-secondary btn-sm', form: { class: 'd-inline' }, data: { confirm: 'Duplicate this campaign for a new project?' } %>
   <%= link_to 'All Campaigns', manage_campaigns_path, class: 'btn btn-secondary btn-sm' %>
 <% end %>
 
@@ -22,7 +22,7 @@
 <div class="stats-grid">
   <div class="stat-card">
     <div class="label">Author</div>
-    <div style="font-size:16px;font-weight:600;margin-top:8px;"><%= @campaign.author.full_name %></div>
+    <div class="text-lg fw-600 mt-8"><%= @campaign.author.full_name %></div>
   </div>
   <div class="stat-card">
     <div class="label">Progress</div>
@@ -30,7 +30,7 @@
   </div>
   <div class="stat-card">
     <div class="label">Status</div>
-    <div style="margin-top:8px;"><span class="status-badge status-<%= @campaign.status %>"><%= @campaign.status.titleize %></span></div>
+    <div class="mt-8"><span class="status-badge status-<%= @campaign.status %>"><%= @campaign.status.titleize %></span></div>
   </div>
   <div class="stat-card">
     <div class="label">Pending Review</div>
@@ -39,26 +39,26 @@
 </div>
 
 <%# ── Campaign Phase ── %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+<div class="card mb-20">
+  <div class="section-header" style="margin-bottom:14px;">
     <h3>Campaign Phase</h3>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div class="d-flex gap-8 items-center">
       <% if @campaign.can_advance? %>
-        <%= button_to "Advance to #{Campaign.phases.key(Campaign.phases[@campaign.phase] + 1)&.titleize}", advance_phase_manage_campaign_path(@campaign), method: :patch, class: 'btn btn-primary btn-sm', form: { style: 'display:inline;' } %>
+        <%= button_to "Advance to #{Campaign.phases.key(Campaign.phases[@campaign.phase] + 1)&.titleize}", advance_phase_manage_campaign_path(@campaign), method: :patch, class: 'btn btn-primary btn-sm', form: { class: 'd-inline' } %>
       <% end %>
     </div>
   </div>
 
   <%# Phase progress bar %>
-  <div style="display:flex;gap:4px;margin-bottom:16px;">
+  <div class="d-flex gap-4 mb-16">
     <% Campaign.phases.each do |name, idx| %>
       <% current_idx = Campaign.phases[@campaign.phase] %>
       <% is_current = name == @campaign.phase %>
       <% is_past = idx < current_idx %>
       <% is_future = idx > current_idx %>
-      <div style="flex:1;text-align:center;">
+      <div class="flex-1 text-center">
         <div style="height:6px;border-radius:3px;margin-bottom:6px;background:<%= is_past ? '#16A34A' : (is_current ? 'var(--accent)' : 'var(--border)') %>;"></div>
-        <div style="font-size:11px;font-weight:<%= is_current ? '700' : '500' %>;color:<%= is_current ? 'var(--accent)' : (is_past ? '#16A34A' : 'var(--text-muted)') %>;text-transform:uppercase;letter-spacing:0.3px;"><%= name.titleize %></div>
+        <div class="text-xs text-upper" style="font-weight:<%= is_current ? '700' : '500' %>;color:<%= is_current ? 'var(--accent)' : (is_past ? '#16A34A' : 'var(--text-muted)') %>;letter-spacing:0.3px;"><%= name.titleize %></div>
       </div>
     <% end %>
   </div>
@@ -66,29 +66,29 @@
   <%# Blockers %>
   <% blockers = @campaign.phase_blockers %>
   <% if blockers.any? %>
-    <div style="padding:12px 16px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.15);border-radius:8px;margin-bottom:12px;">
-      <div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:6px;">Blockers for advancing past <%= @campaign.phase.titleize %></div>
+    <div class="rounded-md mb-12" style="padding:12px 16px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.15);">
+      <div class="text-sm fw-600 text-warning" style="margin-bottom:6px;">Blockers for advancing past <%= @campaign.phase.titleize %></div>
       <ul style="margin:0;padding-left:18px;">
         <% blockers.each do |b| %>
-          <li style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;"><%= b %></li>
+          <li class="text-md text-secondary" style="margin-bottom:2px;"><%= b %></li>
         <% end %>
       </ul>
     </div>
   <% elsif !%w[live wrap_up].include?(@campaign.phase) %>
-    <div style="padding:10px 16px;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.15);border-radius:8px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;color:#16A34A;">All clear — ready to advance</div>
+    <div class="rounded-md mb-12" style="padding:10px 16px;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.15);">
+      <div class="text-md fw-600 text-success">All clear — ready to advance</div>
     </div>
   <% end %>
 
   <%# Manual phase override %>
-  <details style="margin-top:4px;">
-    <summary style="font-size:12px;color:var(--text-muted);cursor:pointer;">Manual phase override</summary>
-    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+  <details class="mt-4">
+    <summary class="text-sm text-muted" style="cursor:pointer;">Manual phase override</summary>
+    <div class="d-flex gap-6 flex-wrap mt-8">
       <% Campaign.phases.each_key do |name| %>
         <% if name != @campaign.phase %>
-          <%= button_to name.titleize, set_phase_manage_campaign_path(@campaign, phase: name), method: :patch, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline;' }, data: { confirm: "Override phase to #{name.titleize}?" } %>
+          <%= button_to name.titleize, set_phase_manage_campaign_path(@campaign, phase: name), method: :patch, class: 'btn btn-secondary btn-sm', form: { class: 'd-inline' }, data: { confirm: "Override phase to #{name.titleize}?" } %>
         <% else %>
-          <span style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;background:var(--accent-wash);color:var(--accent);"><%= name.titleize %> (current)</span>
+          <span class="text-sm fw-600 text-accent rounded" style="padding:6px 14px;background:var(--accent-wash);"><%= name.titleize %> (current)</span>
         <% end %>
       <% end %>
     </div>
@@ -97,41 +97,41 @@
 
 <%# ── Campaign Brief & Dates ── %>
 <% if @campaign.brief.present? || @campaign.launch_date.present? || @campaign.content_deadline.present? %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+<div class="card mb-20">
+  <div class="section-header">
     <h3>Campaign Brief</h3>
     <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
   </div>
   <% if @campaign.brief.present? %>
-    <div style="font-size:14px;line-height:1.7;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:16px;padding:16px;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.brief %></div>
+    <div class="text-base text-secondary mb-16 p-16" style="line-height:1.7;white-space:pre-wrap;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.brief %></div>
   <% end %>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+  <div class="d-grid gap-12" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
     <% if @campaign.launch_date.present? %>
       <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid var(--accent);">
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Launch Date</div>
-        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div>
+        <div class="label-upper">Launch Date</div>
+        <div class="fw-700 mt-4" style="font-size:15px;"><%= @campaign.launch_date.strftime('%b %d, %Y') %></div>
         <% days_until = (@campaign.launch_date - Date.today).to_i %>
-        <div style="font-size:11px;color:<%= days_until > 14 ? '#16A34A' : (days_until > 0 ? '#D97706' : 'var(--text-muted)') %>;margin-top:2px;">
+        <div class="text-xs" style="color:<%= days_until > 14 ? '#16A34A' : (days_until > 0 ? '#D97706' : 'var(--text-muted)') %>;margin-top:2px;">
           <%= days_until > 0 ? "#{days_until} days away" : (days_until == 0 ? 'Today!' : "#{days_until.abs} days ago") %>
         </div>
       </div>
     <% end %>
     <% if @campaign.content_deadline.present? %>
       <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid #F59E0B;">
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Content Deadline</div>
-        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div>
+        <div class="label-upper">Content Deadline</div>
+        <div class="fw-700 mt-4" style="font-size:15px;"><%= @campaign.content_deadline.strftime('%b %d, %Y') %></div>
         <% days_until_cd = (@campaign.content_deadline - Date.today).to_i %>
-        <div style="font-size:11px;color:<%= days_until_cd > 7 ? '#16A34A' : (days_until_cd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
+        <div class="text-xs" style="color:<%= days_until_cd > 7 ? '#16A34A' : (days_until_cd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
           <%= days_until_cd > 0 ? "#{days_until_cd} days left" : (days_until_cd == 0 ? 'Due today' : "#{days_until_cd.abs} days overdue") %>
         </div>
       </div>
     <% end %>
     <% if @campaign.review_deadline.present? %>
       <div style="padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);border-left:3px solid #8B5CF6;">
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Review Deadline</div>
-        <div style="font-size:15px;font-weight:700;margin-top:4px;"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div>
+        <div class="label-upper">Review Deadline</div>
+        <div class="fw-700 mt-4" style="font-size:15px;"><%= @campaign.review_deadline.strftime('%b %d, %Y') %></div>
         <% days_until_rd = (@campaign.review_deadline - Date.today).to_i %>
-        <div style="font-size:11px;color:<%= days_until_rd > 7 ? '#16A34A' : (days_until_rd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
+        <div class="text-xs" style="color:<%= days_until_rd > 7 ? '#16A34A' : (days_until_rd > 0 ? '#D97706' : '#EF4444') %>;margin-top:2px;">
           <%= days_until_rd > 0 ? "#{days_until_rd} days left" : (days_until_rd == 0 ? 'Due today' : "#{days_until_rd.abs} days overdue") %>
         </div>
       </div>
@@ -143,74 +143,74 @@
 <%# ── Pre-filled Details (Links, Ad Access, Logistics) ── %>
 <% has_details = [@campaign.signed_editions_url, @campaign.ad_access_notes, @campaign.bookplate_address, @campaign.management_emails].any?(&:present?) %>
 <% if has_details %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+<div class="card mb-20">
+  <div class="section-header">
     <h3>Pre-filled Details</h3>
     <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div class="grid-2">
     <% if @campaign.signed_editions_url.present? %>
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Signed Editions URL</div>
-        <a href="<%= @campaign.signed_editions_url %>" target="_blank" style="font-size:13px;color:var(--accent);word-break:break-all;"><%= @campaign.signed_editions_url %></a>
+        <div class="label-upper mb-4">Signed Editions URL</div>
+        <a href="<%= @campaign.signed_editions_url %>" target="_blank" class="text-md text-accent" style="word-break:break-all;"><%= @campaign.signed_editions_url %></a>
       </div>
     <% end %>
     <% if @campaign.management_emails.present? %>
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Management Emails</div>
-        <div style="font-size:13px;"><%= @campaign.management_emails %></div>
+        <div class="label-upper mb-4">Management Emails</div>
+        <div class="text-md"><%= @campaign.management_emails %></div>
       </div>
     <% end %>
     <% if @campaign.bookplate_address.present? %>
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Bookplate Address</div>
-        <div style="font-size:13px;white-space:pre-wrap;"><%= @campaign.bookplate_address %></div>
+        <div class="label-upper mb-4">Bookplate Address</div>
+        <div class="text-md" style="white-space:pre-wrap;"><%= @campaign.bookplate_address %></div>
       </div>
     <% end %>
     <% if @campaign.bookplate_design.present? %>
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Bookplate Design</div>
-        <div style="font-size:13px;">Uploaded</div>
+        <div class="label-upper mb-4">Bookplate Design</div>
+        <div class="text-md">Uploaded</div>
       </div>
     <% end %>
   </div>
   <% if @campaign.ad_access_notes.present? %>
-    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;">Ad Access Instructions</div>
-      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;padding:12px;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.ad_access_notes %></div>
+    <div class="mt-16" style="padding-top:16px;border-top:1px solid var(--border);">
+      <div class="label-upper" style="margin-bottom:6px;">Ad Access Instructions</div>
+      <div class="text-md text-secondary p-12" style="white-space:pre-wrap;background:var(--page-bg);border-radius:var(--radius-sm);"><%= @campaign.ad_access_notes %></div>
     </div>
   <% end %>
 </div>
 <% end %>
 
 <%# ── Creator Confirmations Status ── %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+<div class="card mb-20">
+  <div class="section-header">
     <h3>Creator Confirmations</h3>
     <% conf_count = @campaign.confirmable_sections.count { |s| @confirmations[s]&.persisted? && !@confirmations[s]&.has_changes_requested? } %>
-    <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><%= conf_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
+    <span class="text-md fw-600 text-muted"><%= conf_count %>/<%= @campaign.confirmable_sections.size %> confirmed</span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:10px;">
+  <div class="d-grid gap-10" style="grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));">
     <% @campaign.confirmable_sections.each do |section| %>
       <% conf = @confirmations[section] %>
-      <div style="padding:14px;border-radius:10px;border:1px solid <%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)') : 'var(--border)' %>;background:<%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.02)' : 'rgba(34,197,94,0.02)') : 'var(--surface)' %>;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div class="rounded-lg" style="padding:14px;border:1px solid <%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)') : 'var(--border)' %>;background:<%= conf&.persisted? ? (conf.has_changes_requested? ? 'rgba(245,158,11,0.02)' : 'rgba(34,197,94,0.02)') : 'var(--surface)' %>;">
+        <div class="d-flex items-center gap-8" style="margin-bottom:6px;">
           <% if conf&.persisted? && !conf.has_changes_requested? %>
             <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           <% elsif conf&.has_changes_requested? %>
             <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <% else %>
-            <span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border-strong);display:inline-block;"></span>
+            <span class="d-inline-block rounded-full border-strong" style="width:16px;height:16px;"></span>
           <% end %>
-          <span style="font-size:14px;font-weight:600;"><%= section.titleize %></span>
+          <span class="text-base fw-600"><%= section.titleize %></span>
         </div>
         <% if conf&.persisted? && !conf.has_changes_requested? %>
-          <div style="font-size:12px;color:#16A34A;font-weight:500;">Confirmed <%= conf.confirmed_at.strftime('%b %d') %></div>
+          <div class="text-sm fw-500 text-success">Confirmed <%= conf.confirmed_at.strftime('%b %d') %></div>
         <% elsif conf&.has_changes_requested? %>
-          <div style="font-size:12px;color:#D97706;font-weight:600;">Changes Requested</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;background:rgba(245,158,11,0.04);padding:6px 8px;border-radius:6px;"><%= conf.notes %></div>
+          <div class="text-sm fw-600 text-warning">Changes Requested</div>
+          <div class="text-sm text-secondary mt-4" style="background:rgba(245,158,11,0.04);padding:6px 8px;border-radius:6px;"><%= conf.notes %></div>
         <% else %>
-          <div style="font-size:12px;color:var(--text-muted);">Awaiting creator review</div>
+          <div class="text-sm text-muted">Awaiting creator review</div>
         <% end %>
       </div>
     <% end %>
@@ -218,48 +218,48 @@
 </div>
 
 <%# ── Campaign Type & Features ── %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+<div class="card mb-20">
+  <div class="section-header">
     <h3>Campaign Type & Features</h3>
     <%= link_to 'Edit', edit_manage_campaign_path(@campaign), class: 'btn btn-secondary btn-sm' %>
   </div>
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+  <div class="gap-row mb-16">
     <% type_config = Campaign::CAMPAIGN_TYPES[@campaign.campaign_type] || Campaign::CAMPAIGN_TYPES['full'] %>
-    <span style="padding:5px 14px;border-radius:8px;font-size:13px;font-weight:700;background:var(--accent-wash);color:var(--accent);"><%= type_config[:label] %></span>
-    <span style="font-size:13px;color:var(--text-secondary);"><%= type_config[:description] %></span>
+    <span class="text-md fw-700 text-accent rounded-md" style="padding:5px 14px;background:var(--accent-wash);"><%= type_config[:label] %></span>
+    <span class="text-md text-secondary"><%= type_config[:description] %></span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));gap:8px;">
+  <div class="d-grid gap-8" style="grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));">
     <% Campaign::FEATURE_FLAGS.each do |flag| %>
       <% enabled = @campaign.send("#{flag}_enabled?") %>
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:<%= enabled ? 'rgba(34,197,94,0.04)' : 'var(--page-bg)' %>;">
-        <span style="width:8px;height:8px;border-radius:50%;background:<%= enabled ? '#16A34A' : '#D1D5DB' %>;flex-shrink:0;"></span>
-        <span style="font-size:13px;font-weight:500;color:<%= enabled ? 'var(--text-primary)' : 'var(--text-muted)' %>;"><%= flag.titleize %></span>
+      <div class="d-flex items-center gap-8 rounded-md border" style="padding:8px 12px;background:<%= enabled ? 'rgba(34,197,94,0.04)' : 'var(--page-bg)' %>;">
+        <span class="rounded-full" style="width:8px;height:8px;background:<%= enabled ? '#16A34A' : '#D1D5DB' %>;flex-shrink:0;"></span>
+        <span class="text-md fw-500" style="color:<%= enabled ? 'var(--text-primary)' : 'var(--text-muted)' %>;"><%= flag.titleize %></span>
       </div>
     <% end %>
   </div>
 </div>
 
 <%# ── Onboarding Example Category ── %>
-<div class="card" style="margin-bottom:20px;">
+<div class="card mb-20">
   <h3>Onboarding Examples</h3>
-  <p class="text-secondary" style="font-size:13px;margin-bottom:12px;">Choose which example campaigns the creator sees during their welcome onboarding.</p>
-  <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, style: 'display:flex;align-items:center;gap:12px;' do |f| %>
+  <p class="text-secondary text-md mb-12">Choose which example campaigns the creator sees during their welcome onboarding.</p>
+  <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, class: 'gap-row' do |f| %>
     <%= f.select :example_category, options_for_select(Campaign::EXAMPLE_CATEGORIES.map { |c| [c.titleize, c] }, @campaign.example_category), { include_blank: 'None (default)' }, style: 'padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);min-width:180px;' %>
     <button type="submit" class="btn btn-primary btn-sm">Save</button>
     <% if @campaign.onboarding_completed? %>
-      <span class="text-muted" style="font-size:12px;">Onboarding completed <%= time_ago_in_words(@campaign.onboarding_completed_at) %> ago</span>
+      <span class="text-muted text-sm">Onboarding completed <%= time_ago_in_words(@campaign.onboarding_completed_at) %> ago</span>
     <% else %>
-      <span style="font-size:12px;color:#D97706;">Not yet onboarded</span>
+      <span class="text-sm text-warning">Not yet onboarded</span>
     <% end %>
   <% end %>
 </div>
 
 <%# ── Personal Videos Toggle ── %>
-<div class="card" style="margin-bottom:20px;">
+<div class="card mb-20">
   <h3>Personal Videos</h3>
-  <p class="text-secondary" style="font-size:13px;margin-bottom:12px;">When enabled, creators can record rapid-fire personalized videos for each buyer from the recorder Queue mode.</p>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, style: 'display:inline;' do |f| %>
+  <p class="text-secondary text-md mb-12">When enabled, creators can record rapid-fire personalized videos for each buyer from the recorder Queue mode.</p>
+  <div class="gap-row">
+    <%= form_with model: @campaign, url: update_settings_manage_campaign_path(@campaign), method: :patch, class: 'd-inline' do |f| %>
       <%= f.hidden_field :personal_videos_enabled, value: !@campaign.personal_videos_enabled? %>
       <button type="submit" class="btn <%= @campaign.personal_videos_enabled? ? 'btn-success' : 'btn-secondary' %> btn-sm">
         Personal Videos: <%= @campaign.personal_videos_enabled? ? 'ON' : 'OFF' %>
@@ -268,7 +268,7 @@
     <% if @campaign.personal_videos_enabled? %>
       <% pv_total = @campaign.landing_page&.page_submissions&.count || 0 %>
       <% pv_done = @campaign.personal_videos.count %>
-      <span class="text-muted" style="font-size:12px;"><%= pv_done %>/<%= pv_total %> videos recorded</span>
+      <span class="text-muted text-sm"><%= pv_done %>/<%= pv_total %> videos recorded</span>
     <% end %>
   </div>
 </div>
@@ -280,13 +280,13 @@
     <% Campaign::CATEGORIES.each do |cat| %>
       <% items = @items_by_category[cat] || [] %>
       <% next if items.empty? %>
-      <div style="margin-bottom:16px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:8px;"><%= cat.titleize %></div>
+      <div class="mb-16">
+        <div class="text-xs fw-700 text-upper text-muted mb-8" style="letter-spacing:0.5px;"><%= cat.titleize %></div>
         <% items.each do |item| %>
-          <%= button_to toggle_checklist_item_manage_campaign_path(@campaign, checklist_item_id: item.id), method: :patch, class: "checklist-toggle #{item.status}", form: { style: 'display:inline' } do %>
+          <%= button_to toggle_checklist_item_manage_campaign_path(@campaign, checklist_item_id: item.id), method: :patch, class: "checklist-toggle #{item.status}", form: { class: 'd-inline' } do %>
             <span class="dot <%= item.status %>"></span>
             <%= item.title %>
-            <% if item.optional? %><span style="font-size:10px;color:var(--text-muted);">(optional)</span><% end %>
+            <% if item.optional? %><span class="text-muted" style="font-size:10px;">(optional)</span><% end %>
           <% end %>
           <br>
         <% end %>
@@ -296,8 +296,8 @@
 
   <!-- Deliverables -->
   <% if @campaign.deliverables_enabled? %>
-    <div class="card" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div class="card mb-16">
+      <div class="section-header">
         <h3>Deliverables</h3>
         <%= link_to 'Manage', manage_campaign_admin_deliverables_path(@campaign), class: 'btn btn-secondary btn-sm' %>
       </div>
@@ -305,20 +305,20 @@
       <% pending_del = @campaign.admin_deliverables.pending %>
       <% if revisions.any? %>
         <div style="padding:10px 14px;background:rgba(239,68,68,0.04);border-left:3px solid #EF4444;border-radius:0 8px 8px 0;margin-bottom:10px;">
-          <div style="font-size:12px;font-weight:600;color:#EF4444;"><%= revisions.count %> revision<%= 's' if revisions.count != 1 %> requested</div>
+          <div class="text-sm fw-600" style="color:#EF4444;"><%= revisions.count %> revision<%= 's' if revisions.count != 1 %> requested</div>
           <% revisions.limit(3).each do |del| %>
-            <div style="font-size:13px;margin-top:4px;">
-              <%= link_to del.title, manage_campaign_admin_deliverable_path(@campaign, del), style: 'color:var(--text-primary);font-weight:500;' %>
+            <div class="text-md mt-4">
+              <%= link_to del.title, manage_campaign_admin_deliverable_path(@campaign, del), class: 'text-primary fw-500' %>
             </div>
           <% end %>
         </div>
       <% end %>
-      <div style="display:flex;gap:16px;font-size:13px;">
+      <div class="d-flex gap-16 text-md">
         <span><strong><%= @campaign.admin_deliverables.count %></strong> total</span>
-        <span style="color:#D97706;"><strong><%= pending_del.count %></strong> awaiting review</span>
-        <span style="color:#16A34A;"><strong><%= @campaign.admin_deliverables.approved.count %></strong> approved</span>
+        <span class="text-warning"><strong><%= pending_del.count %></strong> awaiting review</span>
+        <span class="text-success"><strong><%= @campaign.admin_deliverables.approved.count %></strong> approved</span>
       </div>
-      <div style="margin-top:12px;">
+      <div class="mt-12">
         <%= link_to 'New Deliverable', new_manage_campaign_admin_deliverable_path(@campaign), class: 'btn btn-primary btn-sm' %>
       </div>
     </div>
@@ -331,24 +331,24 @@
       <% if @pending_assets.any? %>
         <% @pending_assets.each do |asset| %>
           <div class="asset-review-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="d-flex justify-between items-center">
               <div>
-                <div style="font-weight:600;font-size:14px;"><%= asset.original_filename || 'Unnamed' %></div>
-                <div class="text-muted" style="font-size:12px;"><%= asset.asset_type.titleize %> — uploaded <%= time_ago_in_words(asset.created_at) %> ago</div>
+                <div class="text-base fw-600"><%= asset.original_filename || 'Unnamed' %></div>
+                <div class="text-muted text-sm"><%= asset.asset_type.titleize %> — uploaded <%= time_ago_in_words(asset.created_at) %> ago</div>
               </div>
               <span class="status-badge status-pending">Pending</span>
             </div>
             <div class="asset-review-actions">
-              <%= button_to 'Approve', approve_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'btn btn-success btn-sm', form: { style: 'display:inline' } %>
-              <%= form_with url: request_changes_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, style: 'display:flex;gap:6px;flex:1;' do %>
-                <input type="text" name="admin_notes" placeholder="Notes for creator..." class="notes-input" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;">
+              <%= button_to 'Approve', approve_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'btn btn-success btn-sm', form: { class: 'd-inline' } %>
+              <%= form_with url: request_changes_manage_campaign_campaign_asset_path(@campaign, asset), method: :patch, class: 'd-flex gap-6 flex-1' do %>
+                <input type="text" name="admin_notes" placeholder="Notes for creator..." class="notes-input flex-1" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
                 <button type="submit" class="btn btn-danger btn-sm">Request Changes</button>
               <% end %>
             </div>
           </div>
         <% end %>
       <% else %>
-        <div style="text-align:center;padding:24px;color:var(--text-muted);">No assets pending review.</div>
+        <div class="centered-empty text-muted">No assets pending review.</div>
       <% end %>
     </div>
 
@@ -357,41 +357,41 @@
       <div class="card">
         <h3>Landing Page</h3>
         <% if @landing_page.build_requested? %>
-          <div style="padding:12px 16px;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:8px;margin-bottom:16px;">
-            <div style="font-size:13px;font-weight:600;color:#CA8A04;">Build Requested</div>
-            <div class="text-muted" style="font-size:12px;margin-top:2px;">
+          <div class="rounded-md mb-16" style="padding:12px 16px;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);">
+            <div class="text-md fw-600" style="color:#CA8A04;">Build Requested</div>
+            <div class="text-muted text-sm" style="margin-top:2px;">
               <%= @landing_page.build_requested_at ? "#{time_ago_in_words(@landing_page.build_requested_at)} ago" : '' %> by <%= @campaign.author.full_name %>
             </div>
           </div>
         <% end %>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div class="d-flex items-center gap-8 mb-12">
           <span class="status-badge status-<%= @landing_page.published? ? 'live' : 'draft' %>"><%= @landing_page.published? ? 'Published' : 'Draft' %></span>
           <% if @landing_page.has_content? %>
-            <span class="text-muted" style="font-size:12px;">Has content</span>
+            <span class="text-muted text-sm">Has content</span>
           <% else %>
-            <span class="text-muted" style="font-size:12px;">No content yet</span>
+            <span class="text-muted text-sm">No content yet</span>
           <% end %>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div class="d-flex gap-8 flex-wrap items-center">
           <%= link_to builder_manage_campaign_landing_page_path(@campaign), class: 'btn btn-primary btn-sm' do %>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
             Open Builder
           <% end %>
-          <div style="position:relative;display:inline-block;" id="generateDropdown">
+          <div class="d-inline-block" style="position:relative;" id="generateDropdown">
             <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('generateMenu').style.display = document.getElementById('generateMenu').style.display === 'block' ? 'none' : 'block'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
               Generate Page ▾
             </button>
             <div id="generateMenu" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow-lg);z-index:20;min-width:220px;padding:4px;">
               <% LandingPageGenerator::TEMPLATES.each do |key, label| %>
-                <%= button_to generate_manage_campaign_landing_page_path(@campaign, template: key), method: :patch, form: { style: 'display:block;' }, style: 'display:block;width:100%;text-align:left;padding:8px 12px;font-size:13px;border:none;background:none;cursor:pointer;border-radius:6px;font-family:inherit;color:var(--text-primary);', data: { turbo_confirm: @landing_page.has_content? ? "This will overwrite the current page content with the \"#{label}\" template. Continue?" : nil }, onmouseover: "this.style.background='var(--accent-wash)'", onmouseout: "this.style.background='none'" do %>
+                <%= button_to generate_manage_campaign_landing_page_path(@campaign, template: key), method: :patch, form: { class: 'd-block' }, style: 'display:block;width:100%;text-align:left;padding:8px 12px;font-size:13px;border:none;background:none;cursor:pointer;border-radius:6px;font-family:inherit;color:var(--text-primary);', data: { turbo_confirm: @landing_page.has_content? ? "This will overwrite the current page content with the \"#{label}\" template. Continue?" : nil }, onmouseover: "this.style.background='var(--accent-wash)'", onmouseout: "this.style.background='none'" do %>
                   <%= label %>
                 <% end %>
               <% end %>
             </div>
           </div>
           <script>document.addEventListener('click',function(e){if(!document.getElementById('generateDropdown').contains(e.target))document.getElementById('generateMenu').style.display='none';});</script>
-          <%= link_to wizard_manage_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm', style: 'display:inline-flex;align-items:center;gap:4px;' do %>
+          <%= link_to wizard_manage_campaign_landing_page_path(@campaign), class: 'btn btn-secondary btn-sm items-center gap-4', style: 'display:inline-flex;' do %>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             Page Wizard
           <% end %>
@@ -403,11 +403,11 @@
         </div>
 
         <%# Notification toggle %>
-        <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
-          <%= button_to toggle_notifications_manage_campaign_landing_page_path(@campaign), method: :patch, class: 'btn btn-secondary btn-sm', form: { style: 'display:inline' } do %>
+        <div class="d-flex items-center gap-8 mt-12">
+          <%= button_to toggle_notifications_manage_campaign_landing_page_path(@campaign), method: :patch, class: 'btn btn-secondary btn-sm', form: { class: 'd-inline' } do %>
             <%= @landing_page.notify_on_submission? ? 'Notifications: ON' : 'Notifications: OFF' %>
           <% end %>
-          <span class="text-muted" style="font-size:12px;">Email creator on new form submission</span>
+          <span class="text-muted text-sm">Email creator on new form submission</span>
         </div>
       </div>
     <% end %>
@@ -418,17 +418,17 @@
     <div class="card">
       <h3>Live Events</h3>
       <% if @campaign.is_live? %>
-        <div style="padding:12px;background:rgba(233,69,96,0.08);border:1px solid rgba(233,69,96,0.2);border-radius:8px;margin-bottom:12px;">
-          <span style="font-size:13px;font-weight:700;color:#e94560;">LIVE NOW — <%= @campaign.current_live_event&.title %></span>
+        <div class="rounded-md mb-12 p-12" style="background:rgba(233,69,96,0.08);border:1px solid rgba(233,69,96,0.2);">
+          <span class="text-md fw-700" style="color:#e94560;">LIVE NOW — <%= @campaign.current_live_event&.title %></span>
         </div>
       <% end %>
       <% live_events.each do |event| %>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:14px;"><%= event.title %></span>
+        <div class="d-flex items-center justify-between border-bottom" style="padding:8px 0;">
+          <span class="text-base"><%= event.title %></span>
           <span class="status-badge status-<%= event.live? ? 'live' : event.ended? ? 'draft' : 'pending' %>"><%= event.status.titleize %></span>
         </div>
       <% end %>
-      <%= link_to 'All Events', manage_campaign_live_events_path(@campaign), class: 'btn btn-secondary btn-sm', style: 'margin-top:12px;' %>
+      <%= link_to 'All Events', manage_campaign_live_events_path(@campaign), class: 'btn btn-secondary btn-sm mt-12' %>
     </div>
     <% end %>
 
@@ -437,8 +437,8 @@
       <div class="card">
         <h3>Approved Assets (<%= approved.count %>)</h3>
         <% approved.each do |asset| %>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:14px;"><%= asset.original_filename || asset.asset_type.titleize %></span>
+          <div class="d-flex items-center justify-between border-bottom" style="padding:8px 0;">
+            <span class="text-base"><%= asset.original_filename || asset.asset_type.titleize %></span>
             <span class="status-badge status-approved">Approved</span>
           </div>
         <% end %>
@@ -448,26 +448,26 @@
 </div>
 
 <%# ── Activity Feed ── %>
-<div class="card" style="margin-bottom:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+<div class="card mb-20">
+  <div class="section-header" style="margin-bottom:14px;">
     <h3>Activity Feed</h3>
-    <span style="font-size:12px;color:var(--text-muted);"><%= @activities.size %> events</span>
+    <span class="text-sm text-muted"><%= @activities.size %> events</span>
   </div>
 
   <% if @activities.any? %>
     <div style="max-height:500px;overflow-y:auto;">
       <% @activities.group_by { |a| a.created_at.to_date }.each do |date, day_activities| %>
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+        <div class="text-xs fw-600 text-muted text-upper border-bottom mb-8" style="letter-spacing:0.5px;padding:8px 0 4px;">
           <%= date == Date.today ? 'Today' : date == Date.yesterday ? 'Yesterday' : date.strftime('%B %d, %Y') %>
         </div>
         <% day_activities.each do |activity| %>
-          <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
-            <div style="width:28px;height:28px;border-radius:50%;background:<%= activity.user&.admin? ? 'var(--accent-wash)' : 'rgba(34,197,94,0.08)' %>;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:<%= activity.user&.admin? ? 'var(--accent)' : '#16A34A' %>;flex-shrink:0;">
+          <div class="d-flex gap-10 items-start" style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
+            <div class="d-flex items-center justify-center text-xs fw-700 rounded-full" style="width:28px;height:28px;background:<%= activity.user&.admin? ? 'var(--accent-wash)' : 'rgba(34,197,94,0.08)' %>;color:<%= activity.user&.admin? ? 'var(--accent)' : '#16A34A' %>;flex-shrink:0;">
               <%= activity.user_initials %>
             </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;color:var(--text-primary);"><%= activity.human_description %></div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+            <div class="flex-1" style="min-width:0;">
+              <div class="text-md text-primary"><%= activity.human_description %></div>
+              <div class="text-xs text-muted" style="margin-top:2px;">
                 <%= activity.user&.first_name || 'System' %> &middot; <%= activity.created_at.strftime('%-I:%M %p') %>
               </div>
             </div>
@@ -476,117 +476,117 @@
       <% end %>
     </div>
   <% else %>
-    <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">No activity recorded yet.</div>
+    <div class="centered-empty text-muted text-md">No activity recorded yet.</div>
   <% end %>
 </div>
 
 <%# ── Page Wizard Modal ── %>
 <% if @landing_page %>
 <div id="wizardOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:40px 16px;">
-<div style="max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<div class="mx-auto rounded-xl" style="max-width:720px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
   <!-- Header -->
-  <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+  <div class="d-flex items-center justify-between border-bottom" style="padding:20px 24px;">
     <div>
-      <h2 style="font-size:18px;font-weight:700;margin:0;">Page Wizard</h2>
-      <p class="text-muted" style="font-size:12px;margin:2px 0 0;">Step <span id="wizardStepNum">1</span> of 3</p>
+      <h2 class="text-xl fw-700" style="margin:0;">Page Wizard</h2>
+      <p class="text-muted text-sm" style="margin:2px 0 0;">Step <span id="wizardStepNum">1</span> of 3</p>
     </div>
     <button onclick="closeWizard()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
   </div>
 
   <!-- Step 1: Choose Template -->
-  <div id="wizardStep1" style="padding:24px;">
-    <h3 style="font-size:16px;margin-bottom:16px;">Choose a Template</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+  <div id="wizardStep1" class="p-24">
+    <h3 class="text-lg mb-16">Choose a Template</h3>
+    <div class="d-grid gap-12" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
       <% icons = { 'standard' => '&#128214;', 'personalized_video' => '&#127909;', 'preorder_incentive' => '&#127873;', 'address_capture' => '&#128230;', 'landing_page' => '&#127760;', 'vinyl' => '&#127926;' } %>
       <% descs = { 'standard' => 'Book page with author bio', 'personalized_video' => 'Steps + receipt form + video', 'preorder_incentive' => 'Bonus cards + receipt form', 'address_capture' => 'Shipping address form', 'landing_page' => 'Showcase + email signup', 'vinyl' => 'Dark theme for music' } %>
       <% LandingPageGenerator::TEMPLATES.each do |key, label| %>
-        <div class="wizard-tpl-card" data-tpl="<%= key %>" onclick="wizardSelectTemplate('<%= key %>')" style="padding:16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all 0.15s;">
-          <div style="font-size:28px;margin-bottom:8px;"><%= icons[key]&.html_safe %></div>
-          <div style="font-size:14px;font-weight:600;"><%= label %></div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><%= descs[key] %></div>
+        <div class="wizard-tpl-card text-center p-16 rounded-lg" data-tpl="<%= key %>" onclick="wizardSelectTemplate('<%= key %>')" style="border:2px solid var(--border);cursor:pointer;transition:all 0.15s;">
+          <div class="mb-8" style="font-size:28px;"><%= icons[key]&.html_safe %></div>
+          <div class="text-base fw-600"><%= label %></div>
+          <div class="text-xs text-muted mt-4"><%= descs[key] %></div>
         </div>
       <% end %>
     </div>
   </div>
 
   <!-- Step 2: Customize Content -->
-  <div id="wizardStep2" style="padding:24px;display:none;max-height:60vh;overflow-y:auto;">
-    <h3 style="font-size:16px;margin-bottom:16px;">Customize Content</h3>
+  <div id="wizardStep2" class="p-24" style="display:none;max-height:60vh;overflow-y:auto;">
+    <h3 class="text-lg mb-16">Customize Content</h3>
 
     <%# Hero — all templates %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-hero">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Hero</legend>
-      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Headline</label><input type="text" id="wiz-hero-headline" value="<%= h(@campaign.submission.title.presence || 'Your Book Title') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Subheadline</label><input type="text" id="wiz-hero-subheadline" value="by <%= h(@campaign.author.full_name) %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">CTA Text</label><input type="text" id="wiz-hero-cta-text" value="Order Your Copy" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">CTA URL</label><input type="text" id="wiz-hero-cta-url" value="<%= h(@campaign.signed_editions_url.presence || '#') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+    <fieldset class="border rounded-md p-16 mb-16" id="wiz-section-hero">
+      <legend class="text-md fw-700" style="padding:0 6px;">Hero</legend>
+      <div class="mb-12"><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Headline</label><input type="text" id="wiz-hero-headline" value="<%= h(@campaign.submission.title.presence || 'Your Book Title') %>" class="input-md"></div>
+      <div class="mb-12"><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Subheadline</label><input type="text" id="wiz-hero-subheadline" value="by <%= h(@campaign.author.full_name) %>" class="input-md"></div>
+      <div class="grid-2" style="gap:12px;">
+        <div><label class="d-block text-sm fw-600" style="margin-bottom:3px;">CTA Text</label><input type="text" id="wiz-hero-cta-text" value="Order Your Copy" class="input-md"></div>
+        <div><label class="d-block text-sm fw-600" style="margin-bottom:3px;">CTA URL</label><input type="text" id="wiz-hero-cta-url" value="<%= h(@campaign.signed_editions_url.presence || '#') %>" class="input-md"></div>
       </div>
     </fieldset>
 
     <%# Book — all templates %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-book">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Book</legend>
-      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Title</label><input type="text" id="wiz-book-title" value="<%= h(@campaign.submission.title.presence || '') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Description</label><textarea id="wiz-book-description" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;resize:vertical;"><%= h(@campaign.submission.description.presence || '') %></textarea></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Genre</label><input type="text" id="wiz-book-genre" value="<%= h(@campaign.submission.genre.presence || 'General') %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-        <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Release Date</label><input type="text" id="wiz-book-release-date" value="<%= @campaign.submission.release_date&.strftime('%B %d, %Y') || 'Coming Soon' %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+    <fieldset class="border rounded-md p-16 mb-16" id="wiz-section-book">
+      <legend class="text-md fw-700" style="padding:0 6px;">Book</legend>
+      <div class="mb-12"><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Title</label><input type="text" id="wiz-book-title" value="<%= h(@campaign.submission.title.presence || '') %>" class="input-md"></div>
+      <div class="mb-12"><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Description</label><textarea id="wiz-book-description" rows="3" class="input-md" style="resize:vertical;"><%= h(@campaign.submission.description.presence || '') %></textarea></div>
+      <div class="grid-2" style="gap:12px;">
+        <div><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Genre</label><input type="text" id="wiz-book-genre" value="<%= h(@campaign.submission.genre.presence || 'General') %>" class="input-md"></div>
+        <div><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Release Date</label><input type="text" id="wiz-book-release-date" value="<%= @campaign.submission.release_date&.strftime('%B %d, %Y') || 'Coming Soon' %>" class="input-md"></div>
       </div>
     </fieldset>
 
     <%# Author — standard, landing_page, address_capture, vinyl %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-author">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Author</legend>
-      <div style="margin-bottom:12px;"><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Name</label><input type="text" id="wiz-author-name" value="<%= h(@campaign.author.full_name) %>" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
-      <div><label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px;">Bio</label><textarea id="wiz-author-bio" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;resize:vertical;"><%= h(@campaign.author.description.presence || '') %></textarea></div>
+    <fieldset class="border rounded-md p-16 mb-16" id="wiz-section-author">
+      <legend class="text-md fw-700" style="padding:0 6px;">Author</legend>
+      <div class="mb-12"><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Name</label><input type="text" id="wiz-author-name" value="<%= h(@campaign.author.full_name) %>" class="input-md"></div>
+      <div><label class="d-block text-sm fw-600" style="margin-bottom:3px;">Bio</label><textarea id="wiz-author-bio" rows="3" class="input-md" style="resize:vertical;"><%= h(@campaign.author.description.presence || '') %></textarea></div>
     </fieldset>
 
     <%# Steps — personalized_video, preorder_incentive %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-steps">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">How It Works (Steps)</legend>
+    <fieldset class="border rounded-md p-16 mb-16" style="display:none;" id="wiz-section-steps">
+      <legend class="text-md fw-700" style="padding:0 6px;">How It Works (Steps)</legend>
       <div id="wiz-steps-list">
         <% 4.times do |i| %>
-        <div style="display:grid;grid-template-columns:auto 1fr 2fr;gap:8px;align-items:center;margin-bottom:8px;">
-          <span style="font-size:12px;font-weight:700;color:var(--text-muted);"><%= i+1 %>.</span>
-          <input type="text" class="wiz-step-title" data-idx="<%= i %>" value="" placeholder="Step title" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-          <input type="text" class="wiz-step-desc" data-idx="<%= i %>" value="" placeholder="Description" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <div class="d-grid gap-8 items-center mb-8" style="grid-template-columns:auto 1fr 2fr;">
+          <span class="text-sm fw-700 text-muted"><%= i+1 %>.</span>
+          <input type="text" class="wiz-step-title input-sm" data-idx="<%= i %>" value="" placeholder="Step title">
+          <input type="text" class="wiz-step-desc input-sm" data-idx="<%= i %>" value="" placeholder="Description">
         </div>
         <% end %>
       </div>
     </fieldset>
 
     <%# Retailers — personalized_video, preorder_incentive, landing_page %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-retailers">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Retailers</legend>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+    <fieldset class="border rounded-md p-16 mb-16" style="display:none;" id="wiz-section-retailers">
+      <legend class="text-md fw-700" style="padding:0 6px;">Retailers</legend>
+      <div class="grid-2" style="gap:6px;">
         <% [['Amazon','amazon'], ['Barnes & Noble','barnes_noble'], ['Bookshop.org','bookshop'], ['Target','target'], ['Walmart','walmart'], ['Books-A-Million','bam']].each do |name, key| %>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="wiz-retailer" data-name="<%= name %>" checked> <%= name %></label>
+          <label class="d-flex items-center gap-6 text-md" style="cursor:pointer;"><input type="checkbox" class="wiz-retailer" data-name="<%= name %>" checked> <%= name %></label>
         <% end %>
       </div>
     </fieldset>
 
     <%# Testimonials — personalized_video, landing_page, standard, vinyl %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;" id="wiz-section-testimonials">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Testimonials</legend>
+    <fieldset class="border rounded-md p-16 mb-16" id="wiz-section-testimonials">
+      <legend class="text-md fw-700" style="padding:0 6px;">Testimonials</legend>
       <div id="wiz-testimonials-list">
-        <div class="wiz-testimonial-row" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;">
-          <input type="text" class="wiz-testimonial-quote" placeholder="Quote text..." value="&quot;An absolutely captivating read from start to finish.&quot;" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-          <input type="text" class="wiz-testimonial-attr" placeholder="- Attribution" value="- Reader Review" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <div class="wiz-testimonial-row d-grid gap-8 mb-8" style="grid-template-columns:2fr 1fr;">
+          <input type="text" class="wiz-testimonial-quote input-sm" placeholder="Quote text..." value="&quot;An absolutely captivating read from start to finish.&quot;">
+          <input type="text" class="wiz-testimonial-attr input-sm" placeholder="- Attribution" value="- Reader Review">
         </div>
       </div>
-      <button type="button" onclick="wizardAddTestimonial()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:4px 0;">+ Add testimonial</button>
+      <button type="button" onclick="wizardAddTestimonial()" class="text-sm text-accent" style="background:none;border:none;cursor:pointer;padding:4px 0;">+ Add testimonial</button>
     </fieldset>
 
     <%# Bonuses — preorder_incentive only %>
-    <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:none;" id="wiz-section-bonuses">
-      <legend style="font-size:13px;font-weight:700;padding:0 6px;">Bonus Items</legend>
+    <fieldset class="border rounded-md p-16 mb-16" style="display:none;" id="wiz-section-bonuses">
+      <legend class="text-md fw-700" style="padding:0 6px;">Bonus Items</legend>
       <div id="wiz-bonuses-list">
         <% [['&#9997;&#65039;', 'Signed Bookplate', 'A personal signed bookplate from the author'], ['&#128214;', 'Bonus Chapter', 'An exclusive bonus chapter not in the final book'], ['&#127873;', 'Limited Print', 'Exclusive art print (first 500 orders)']].each_with_index do |(emoji, title, desc), i| %>
-        <div class="wiz-bonus-row" style="display:grid;grid-template-columns:50px 1fr 2fr;gap:8px;align-items:center;margin-bottom:8px;">
-          <input type="text" class="wiz-bonus-emoji" data-idx="<%= i %>" value="<%= emoji %>" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:16px;text-align:center;">
-          <input type="text" class="wiz-bonus-title" data-idx="<%= i %>" value="<%= title %>" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-          <input type="text" class="wiz-bonus-desc" data-idx="<%= i %>" value="<%= desc %>" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <div class="wiz-bonus-row d-grid gap-8 items-center mb-8" style="grid-template-columns:50px 1fr 2fr;">
+          <input type="text" class="wiz-bonus-emoji text-center" data-idx="<%= i %>" value="<%= emoji %>" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-size:16px;">
+          <input type="text" class="wiz-bonus-title input-sm" data-idx="<%= i %>" value="<%= title %>">
+          <input type="text" class="wiz-bonus-desc input-sm" data-idx="<%= i %>" value="<%= desc %>">
         </div>
         <% end %>
       </div>
@@ -594,22 +594,22 @@
   </div>
 
   <!-- Step 3: Review & Generate -->
-  <div id="wizardStep3" style="padding:24px;display:none;">
-    <h3 style="font-size:16px;margin-bottom:16px;">Review & Generate</h3>
-    <div style="background:var(--surface-alt,#f8f9fa);border-radius:8px;padding:20px;margin-bottom:20px;">
-      <div style="margin-bottom:12px;"><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Template</span><div id="wiz-review-template" style="font-size:15px;font-weight:600;margin-top:2px;">Standard</div></div>
-      <div style="margin-bottom:12px;"><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Sections Included</span><div id="wiz-review-sections" style="font-size:13px;margin-top:2px;color:var(--text-primary);">—</div></div>
-      <div><span style="font-size:12px;font-weight:600;color:var(--text-muted);">Customized Fields</span><div id="wiz-review-fields" style="font-size:13px;margin-top:2px;color:var(--text-primary);">—</div></div>
+  <div id="wizardStep3" class="p-24" style="display:none;">
+    <h3 class="text-lg mb-16">Review & Generate</h3>
+    <div class="rounded-md mb-20" style="background:var(--surface-alt,#f8f9fa);padding:20px;">
+      <div class="mb-12"><span class="text-sm fw-600 text-muted">Template</span><div id="wiz-review-template" class="fw-600" style="font-size:15px;margin-top:2px;">Standard</div></div>
+      <div class="mb-12"><span class="text-sm fw-600 text-muted">Sections Included</span><div id="wiz-review-sections" class="text-md text-primary" style="margin-top:2px;">—</div></div>
+      <div><span class="text-sm fw-600 text-muted">Customized Fields</span><div id="wiz-review-fields" class="text-md text-primary" style="margin-top:2px;">—</div></div>
     </div>
     <% if @landing_page.has_content? %>
-      <p style="font-size:12px;color:#b45309;margin-bottom:12px;">This will overwrite the current page content.</p>
+      <p class="text-sm mb-12" style="color:#b45309;">This will overwrite the current page content.</p>
     <% end %>
   </div>
 
   <!-- Footer -->
-  <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+  <div class="d-flex justify-between" style="padding:16px 24px;border-top:1px solid var(--border);">
     <button type="button" id="wizardBackBtn" onclick="wizardBack()" style="display:none;padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">Back</button>
-    <div style="margin-left:auto;display:flex;gap:8px;">
+    <div class="ml-auto d-flex gap-8">
       <button type="button" onclick="closeWizard()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">Cancel</button>
       <button type="button" id="wizardNextBtn" onclick="wizardNext()" class="btn btn-primary btn-sm" style="padding:8px 20px;">Next</button>
     </div>
@@ -710,8 +710,8 @@
     var row = document.createElement('div');
     row.className = 'wiz-testimonial-row';
     row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;';
-    row.innerHTML = '<input type="text" class="wiz-testimonial-quote" placeholder="Quote text..." style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">' +
-                    '<input type="text" class="wiz-testimonial-attr" placeholder="- Attribution" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">';
+    row.innerHTML = '<input type="text" class="wiz-testimonial-quote input-sm" placeholder="Quote text...">' +
+                    '<input type="text" class="wiz-testimonial-attr input-sm" placeholder="- Attribution">';
     list.appendChild(row);
   };
 

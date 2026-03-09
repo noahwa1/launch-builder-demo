@@ -78,9 +78,9 @@
           <h2><%= @contact.display_name %></h2>
           <div class="email"><%= @contact.email %></div>
         </div>
-        <div style="margin-left:auto;">
-          <span class="status-dot <%= @contact.status %>" style="width:8px;height:8px;border-radius:50;display:inline-block;margin-right:4px;background:<%= @contact.active? ? '#16A34A' : (@contact.unsubscribed? ? '#EF4444' : 'var(--text-muted)') %>;"></span>
-          <span style="font-size:12px;font-weight:600;"><%= @contact.status.titleize %></span>
+        <div class="ml-auto">
+          <span class="status-dot <%= @contact.status %> d-inline-block rounded-full" style="width:8px;height:8px;margin-right:4px;background:<%= @contact.active? ? '#16A34A' : (@contact.unsubscribed? ? '#EF4444' : 'var(--text-muted)') %>;"></span>
+          <span class="text-sm fw-600"><%= @contact.status.titleize %></span>
         </div>
       </div>
 
@@ -121,17 +121,17 @@
 
       <% if @referral_code %>
         <div class="referral-section">
-          <h3 style="font-size:14px;font-weight:700;">Referral Link</h3>
+          <h3 class="text-base fw-700">Referral Link</h3>
           <% page_url = @campaign.landing_page&.slug.present? ? "/pages/#{@campaign.landing_page.slug}" : '#' %>
           <div class="referral-link-box"><%= request.base_url %><%= page_url %>?ref=<%= @referral_code.code %></div>
-          <div style="display:flex;gap:16px;margin-top:8px;">
-            <div style="font-size:13px;"><strong><%= @referral_code.referral_count %></strong> <span style="color:var(--text-muted);">referrals</span></div>
+          <div class="d-flex gap-16 mt-8">
+            <div class="text-md"><strong><%= @referral_code.referral_count %></strong> <span class="text-muted">referrals</span></div>
           </div>
           <% if @referrals.any? %>
-            <div style="margin-top:12px;">
+            <div class="mt-12">
               <% @referrals.each do |ref| %>
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
-                  <span style="font-weight:600;"><%= ref.referred_contact.display_name %></span>
+                <div class="d-flex items-center gap-8 text-md border-bottom" style="padding:6px 0;">
+                  <span class="fw-600"><%= ref.referred_contact.display_name %></span>
                   <span style="color:var(--text-muted);margin-left:auto;font-size:12px;"><%= ref.created_at.strftime('%b %d') %></span>
                 </div>
               <% end %>

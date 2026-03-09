@@ -1,6 +1,7 @@
 module Portal
   class ReferralsController < BaseController
     before_action :set_campaign
+    before_action :require_fan_crm_enabled
 
     def index
       @landing_page = @campaign.landing_page
@@ -18,6 +19,10 @@ module Portal
     end
 
     private
+
+    def require_fan_crm_enabled
+      require_feature!('fan_crm')
+    end
 
     def set_campaign
       @campaign = current_author.campaigns.find(params[:campaign_id])
